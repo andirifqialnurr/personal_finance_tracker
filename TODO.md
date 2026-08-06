@@ -11,6 +11,7 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 - [ ] Light mode memakai neutral warm/gray, dark mode memakai charcoal, dengan accent emerald/teal.
 - [ ] Warna merah dibatasi untuk expense dan destructive action.
 - [ ] Target utama mobile portrait dengan dukungan lebar small (320–359dp), medium (360–399dp), dan large (≥400dp).
+- [ ] Gunakan satu set component dan layout yang sama untuk Light, Dark, dan System; perbedaan hanya melalui design tokens.
 
 ## Urutan pengerjaan
 
@@ -23,11 +24,15 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 2. Design system dan theme
 
-- [ ] Buat palette warna light/dark: warm background, surface kartu, text, muted text, emerald/teal accent, income, expense, dan destructive.
-- [ ] Buat `ThemeData` light/dark dengan Montserrat sebagai font family utama.
+- [ ] Buat color bank/token Light: background `#F7F7F4`, surface/card `#FFFFFF`, text `#182321`, muted text `#6F7B78`, accent emerald/teal `#168C78`, income, expense, dan destructive.
+- [ ] Buat color bank/token Dark: background `#171C1B`, surface/card `#222927`, text `#F2F5F3`, muted text `#AAB8B3`, serta semantic color yang tetap kontras.
+- [ ] Tambahkan dan gunakan font **Montserrat** untuk seluruh typography aplikasi.
+- [ ] Buat `ThemeData` light/dark dan dukungan `ThemeMode.system`.
 - [ ] Tetapkan skala typography untuk greeting, page title, card label, nominal uang, body, caption, dan button.
 - [ ] Tetapkan spacing, minimum touch target 44–48dp, radius kartu besar, radius input/button, dan shadow/glow yang konsisten.
-- [ ] Buat reusable style/helper untuk kartu rounded, icon container, amount text, dan status/transaction color.
+- [ ] Buat design tokens terpusat agar screen tidak menyimpan warna, radius, spacing, atau shadow secara hard-coded.
+- [ ] Buat component reusable, satu component utama per file, dengan variant terukur: `FlowCard`, `FlowButton`, `FlowAmountText`, `FlowIconContainer`, `FlowTransactionTile`, `FlowEmptyState`, `FlowSegmentedControl`, `FlowSelector`, dan `FlowConfirmationSheet`.
+- [ ] Pastikan variant component hanya mengubah visual/behavior yang relevan, tanpa menggandakan component untuk setiap screen.
 - [ ] Verifikasi kontras, overflow, dan keterbacaan pada tiga ukuran layar target.
 
 ### 3. Model data dan local persistence

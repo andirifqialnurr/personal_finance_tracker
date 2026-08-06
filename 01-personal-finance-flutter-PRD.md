@@ -150,6 +150,32 @@ Karakter: tenang, bersih, terpercaya, modern. Hindari dashboard finansial yang t
 - Semua destructive action membutuhkan confirmation sheet/dialog.
 - Jangan menggunakan hover-dependent interaction.
 
+### Design system dan component architecture
+
+UI harus dibangun secara component-based. Komponen yang dipakai berulang dibuat sebagai Flutter widget reusable, idealnya satu komponen utama per file, lalu dipanggil dari screen dengan variant dan data yang sesuai. Jangan membuat satu file raksasa yang berisi seluruh komponen aplikasi.
+
+Komponen minimum yang perlu dipusatkan:
+
+- `FlowCard`: `balance`, `summary`, `chart`, `transaction`, dan `action`.
+- `FlowButton`: `primary`, `secondary`, `ghost`, dan `destructive`.
+- `FlowAmountText`: `balance`, `income`, `expense`, dan `transfer`.
+- `FlowIconContainer`: `account`, `category`, `income`, `expense`, dan `transfer`.
+- `FlowTransactionTile`, `FlowEmptyState`, `FlowSegmentedControl`, `FlowSelector`, dan `FlowConfirmationSheet`.
+
+Variant hanya mengubah hal yang memang relevan seperti warna, icon treatment, padding, emphasis, atau elevation. Struktur, touch target, radius, dan typography tetap mengikuti design tokens yang sama.
+
+#### Design tokens
+
+- Font utama: **Montserrat** untuk heading, nominal, label, body, dan button. Angka uang memakai tabular numerals bila tersedia.
+- Light background: warm gray `#F7F7F4`; light surface/card: `#FFFFFF`; light text: `#182321`; light muted text: `#6F7B78`.
+- Dark background: charcoal `#171C1B`; dark surface/card: `#222927`; dark text: `#F2F5F3`; dark muted text: `#AAB8B3`.
+- Primary accent: emerald/teal `#168C78`; accent soft untuk surface/icon boleh memakai tint transparan dari warna utama.
+- Income: teal/green yang tetap terbaca di light dan dark mode. Expense: muted red seperlunya. Destructive: red yang lebih tegas hanya pada aksi destructive.
+- Card memakai radius besar dan konsisten, border tipis bila dibutuhkan, serta shadow lembut dengan glow tipis. Hindari drop shadow berat, gradient berlebihan, dan pure black.
+- Spacing menggunakan skala kecil yang konsisten; semua kontrol interaktif memiliki minimum touch target 44–48dp.
+
+Light, Dark, dan System theme harus memakai component dan layout yang sama. Yang berubah adalah token warna, contrast, surface, border, dan shadow agar pengalaman tetap konsisten.
+
 ### Adaptive mobile
 
 - **Small:** 320–359dp — satu kolom, chart disederhanakan, label panjang truncate/wrap aman.
@@ -179,4 +205,3 @@ Karakter: tenang, bersih, terpercaya, modern. Hindari dashboard finansial yang t
 ## 13. V2, bukan untuk prototype awal
 
 Budget, recurring transactions, saving goals, attachment receipt, backup/restore, biometric lock, multi-currency, dan cloud sync.
-
