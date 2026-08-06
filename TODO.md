@@ -16,10 +16,10 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 1. Fondasi aplikasi
 
-- [ ] Ganti starter counter app menjadi shell aplikasi Flow.
-- [ ] Tambahkan dependency yang dibutuhkan secara minimal: Montserrat, SQLite (`sqflite`), path database, dan chart bila benar-benar diperlukan.
-- [ ] Rapikan struktur folder Flutter untuk `core`, `data`, `models`, `screens`, dan `widgets`.
-- [ ] Pastikan aplikasi dapat dijalankan pada kondisi kosong tanpa crash.
+- [x] Ganti starter counter app menjadi shell aplikasi Flow.
+- [x] Tambahkan dependency SQLite (`sqflite`) yang sudah dipasang; dependency Montserrat dan chart ditunda ke task design system/statistics.
+- [x] Mulai merapikan struktur Flutter dengan memisahkan entry point (`main.dart`) dan app shell (`app.dart`).
+- [x] Pastikan aplikasi dapat dijalankan pada kondisi kosong tanpa crash.
 
 ### 2. Design system dan theme
 
