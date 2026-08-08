@@ -23,6 +23,11 @@ abstract final class FlowControlSize {
   static const iconContainer = 44.0;
 }
 
+abstract final class FlowIconSize {
+  static const emptyState = 64.0;
+  static const pageEmptyState = 56.0;
+}
+
 abstract final class FlowShadows {
   static const card = <BoxShadow>[
     BoxShadow(color: Color(0x140F2420), blurRadius: 20, offset: Offset(0, 8)),

@@ -30,10 +30,10 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 - [x] Buat `ThemeData` light/dark dan dukungan `ThemeMode.system`.
 - [x] Tetapkan skala typography untuk greeting, page title, card label, nominal uang, body, caption, dan button.
 - [x] Tetapkan spacing, minimum touch target 44–48dp, radius kartu besar, radius input/button, dan shadow/glow yang konsisten.
-- [ ] Buat design tokens terpusat agar screen tidak menyimpan warna, radius, spacing, atau shadow secara hard-coded.
-- [ ] Buat component reusable, satu component utama per file, dengan variant terukur: `FlowCard`, `FlowButton`, `FlowAmountText`, `FlowIconContainer`, `FlowTransactionTile`, `FlowEmptyState`, `FlowSegmentedControl`, `FlowSelector`, dan `FlowConfirmationSheet`.
-- [ ] Pastikan variant component hanya mengubah visual/behavior yang relevan, tanpa menggandakan component untuk setiap screen.
-- [ ] Verifikasi kontras, overflow, dan keterbacaan pada tiga ukuran layar target.
+- [x] Buat design tokens terpusat agar screen tidak menyimpan warna, radius, spacing, atau shadow secara hard-coded.
+- [x] Buat component reusable, satu component utama per file, dengan variant terukur: `FlowCard`, `FlowButton`, `FlowAmountText`, `FlowIconContainer`, `FlowTransactionTile`, `FlowEmptyState`, `FlowSegmentedControl`, `FlowSelector`, dan `FlowConfirmationSheet`.
+- [x] Pastikan variant component hanya mengubah visual/behavior yang relevan, tanpa menggandakan component untuk setiap screen.
+- [x] Verifikasi kontras, overflow, dan keterbacaan pada tiga ukuran layar target.
 
 ### 3. Model data dan local persistence
 

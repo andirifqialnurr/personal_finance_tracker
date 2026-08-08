@@ -95,7 +95,7 @@ class _EmptyHomePage extends StatelessWidget {
           children: [
             Icon(
               Icons.account_balance_wallet_outlined,
-              size: 64,
+              size: FlowIconSize.emptyState,
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: FlowSpacing.md),
@@ -132,7 +132,7 @@ class _EmptyPage extends StatelessWidget {
           children: [
             Icon(
               data.icon,
-              size: 56,
+              size: FlowIconSize.pageEmptyState,
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: FlowSpacing.md),
