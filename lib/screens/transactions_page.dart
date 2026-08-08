@@ -9,9 +9,11 @@ class TransactionsPage extends StatefulWidget {
     super.key,
     required this.transactions,
     required this.accounts,
+    required this.onOpenDetail,
   });
   final List<Transaction> transactions;
   final List<Account> accounts;
+  final ValueChanged<Transaction> onOpenDetail;
 
   @override
   State<TransactionsPage> createState() => _TransactionsPageState();
@@ -176,6 +178,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                           '${transaction.type == TransactionType.expense ? '-' : '+'} Rp ${_format(transaction.amount)}',
                       icon: _icon(transaction.type),
                       amountVariant: _amountVariant(transaction.type),
+                      onTap: () => widget.onOpenDetail(transaction),
                     ),
                 ],
               ),

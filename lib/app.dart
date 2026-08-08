@@ -6,6 +6,7 @@ import 'screens/accounts_page.dart';
 import 'screens/add_transaction_page.dart';
 import 'screens/settings_page.dart';
 import 'screens/transactions_page.dart';
+import 'screens/transaction_detail_page.dart';
 import 'screens/welcome_page.dart';
 import 'screens/home_dashboard.dart';
 import 'theme/flow_theme.dart';
@@ -41,6 +42,8 @@ class _FlowAppState extends State<FlowApp> {
               onEditAccount: (account) => _openAccountForm(context, account),
               onArchiveAccount: _archiveAccount,
               onAddTransaction: () => _openAddTransaction(context),
+              onOpenTransactionDetail: (transaction) =>
+                  _openTransactionDetail(context, transaction),
             )
           : FlowWelcomePage(
               onCreateFirstAccount: () => _openAccountForm(context),
@@ -59,13 +62,54 @@ class _FlowAppState extends State<FlowApp> {
     );
   }
 
-  Future<void> _openAddTransaction(BuildContext context) async {
+  Future<void> _openAddTransaction(
+    BuildContext context, [
+    Transaction? initialTransaction,
+  ]) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => AddTransactionPage(
           accounts: _accounts,
+          initialTransaction: initialTransaction,
           onSaved: (transaction) =>
-              setState(() => _transactions.add(transaction)),
+              _saveTransaction(transaction, initialTransaction),
+        ),
+      ),
+    );
+  }
+
+  void _saveTransaction(Transaction transaction, Transaction? editing) {
+    setState(() {
+      if (editing == null) {
+        _transactions.add(transaction.copyWith(id: _transactions.length + 1));
+      } else {
+        final index = _transactions.indexOf(editing);
+        if (index != -1) {
+          _transactions[index] = transaction.copyWith(id: editing.id);
+        }
+      }
+    });
+  }
+
+  Future<void> _openTransactionDetail(
+    BuildContext context,
+    Transaction transaction,
+  ) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => TransactionDetailPage(
+          transaction: transaction,
+          accountName: _accounts
+              .firstWhere((account) => account.id == transaction.accountId)
+              .name,
+          onEdit: () {
+            Navigator.of(context).pop();
+            _openAddTransaction(context, transaction);
+          },
+          onDelete: () {
+            setState(() => _transactions.remove(transaction));
+            Navigator.of(context).pop();
+          },
         ),
       ),
     );
@@ -144,6 +188,7 @@ class FlowShell extends StatefulWidget {
     required this.onEditAccount,
     required this.onArchiveAccount,
     required this.onAddTransaction,
+    required this.onOpenTransactionDetail,
   });
 
   final List<Account> accounts;
@@ -153,6 +198,7 @@ class FlowShell extends StatefulWidget {
   final ValueChanged<Account> onEditAccount;
   final ValueChanged<Account> onArchiveAccount;
   final VoidCallback onAddTransaction;
+  final ValueChanged<Transaction> onOpenTransactionDetail;
 
   @override
   State<FlowShell> createState() => _FlowShellState();
@@ -196,6 +242,7 @@ class _FlowShellState extends State<FlowShell> {
             TransactionsPage(
               transactions: widget.transactions,
               accounts: widget.accounts,
+              onOpenDetail: widget.onOpenTransactionDetail,
             ),
             _EmptyPage(data: _pages[2]),
             AccountsPage(

@@ -5,10 +5,16 @@ import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
 
 class AddTransactionPage extends StatefulWidget {
-  const AddTransactionPage({super.key, this.accounts = const [], this.onSaved});
+  const AddTransactionPage({
+    super.key,
+    this.accounts = const [],
+    this.onSaved,
+    this.initialTransaction,
+  });
 
   final List<Account> accounts;
   final ValueChanged<Transaction>? onSaved;
+  final Transaction? initialTransaction;
 
   @override
   State<AddTransactionPage> createState() => _AddTransactionPageState();
@@ -43,6 +49,41 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       color: '#168C78',
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final transaction = widget.initialTransaction;
+    if (transaction == null) return;
+    _selectedType = switch (transaction.type) {
+      TransactionType.expense => 0,
+      TransactionType.income => 1,
+      TransactionType.transfer => 2,
+    };
+    _amountController.text = transaction.amount.toString();
+    _selectedAccount = _findAccount(transaction.accountId);
+    _destinationAccount = transaction.destinationAccountId == null
+        ? null
+        : _findAccount(transaction.destinationAccountId!);
+    _selectedCategory = transaction.categoryId == null
+        ? null
+        : Category(
+            id: transaction.categoryId,
+            name: 'Category ${transaction.categoryId}',
+            transactionType: transaction.type,
+            icon: 'category',
+            color: '#C96B6B',
+          );
+    _noteController.text = transaction.note ?? '';
+    _occurredAt = transaction.occurredAt;
+  }
+
+  Account? _findAccount(int id) {
+    for (final account in widget.accounts) {
+      if (account.id == id) return account;
+    }
+    return null;
+  }
 
   @override
   void dispose() {
@@ -217,6 +258,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     final now = DateTime.now().toUtc();
     widget.onSaved?.call(
       Transaction(
+        id: widget.initialTransaction?.id,
         type: _selectedType == 0
             ? TransactionType.expense
             : _selectedType == 1

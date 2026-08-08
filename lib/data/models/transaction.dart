@@ -25,6 +25,30 @@ class Transaction {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  Transaction copyWith({
+    int? id,
+    TransactionType? type,
+    int? amount,
+    int? accountId,
+    int? destinationAccountId,
+    int? categoryId,
+    String? note,
+    DateTime? occurredAt,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => Transaction(
+    id: id ?? this.id,
+    type: type ?? this.type,
+    amount: amount ?? this.amount,
+    accountId: accountId ?? this.accountId,
+    destinationAccountId: destinationAccountId ?? this.destinationAccountId,
+    categoryId: categoryId ?? this.categoryId,
+    note: note ?? this.note,
+    occurredAt: occurredAt ?? this.occurredAt,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+
   factory Transaction.fromMap(Map<String, Object?> map) => Transaction(
     id: map['id'] as int?,
     type: TransactionType.values.byName(map['type'] as String),
