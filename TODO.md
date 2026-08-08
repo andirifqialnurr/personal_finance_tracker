@@ -72,9 +72,9 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 7. Add/Edit Transaction dan transfer
 
-- [ ] Buat segmented control Expense / Income / Transfer.
-- [ ] Jadikan amount sebagai elemen paling dominan dan tampilkan numeric keypad langsung.
-- [ ] Buat account selector dan category bottom sheet berisi icon + nama.
+- [x] Buat segmented control Expense / Income / Transfer.
+- [x] Jadikan amount sebagai elemen paling dominan dan tampilkan numeric keypad langsung.
+- [x] Buat account selector dan category bottom sheet berisi icon + nama.
 - [ ] Tambahkan date dan note opsional.
 - [ ] Saat Transfer dipilih, tampilkan From Account dan To Account serta sembunyikan kategori.
 - [ ] Nonaktifkan Save sampai field wajib valid.

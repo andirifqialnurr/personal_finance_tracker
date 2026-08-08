@@ -58,7 +58,9 @@ class _FlowAppState extends State<FlowApp> {
 
   Future<void> _openAddTransaction(BuildContext context) async {
     await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => const AddTransactionPage()),
+      MaterialPageRoute<void>(
+        builder: (_) => AddTransactionPage(accounts: _accounts),
+      ),
     );
   }
 
