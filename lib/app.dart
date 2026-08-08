@@ -37,6 +37,7 @@ class _FlowAppState extends State<FlowApp> {
               onAddAccount: () => _openAccountForm(context),
               onEditAccount: (account) => _openAccountForm(context, account),
               onArchiveAccount: _archiveAccount,
+              onAddTransaction: () => _openAddTransaction(context),
             )
           : FlowWelcomePage(
               onCreateFirstAccount: () => _openAccountForm(context),
@@ -52,6 +53,12 @@ class _FlowAppState extends State<FlowApp> {
           onThemeModeChanged: (mode) => setState(() => _themeMode = mode),
         ),
       ),
+    );
+  }
+
+  Future<void> _openAddTransaction(BuildContext context) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const AddTransactionPage()),
     );
   }
 
@@ -126,6 +133,7 @@ class FlowShell extends StatefulWidget {
     required this.onAddAccount,
     required this.onEditAccount,
     required this.onArchiveAccount,
+    required this.onAddTransaction,
   });
 
   final List<Account> accounts;
@@ -133,6 +141,7 @@ class FlowShell extends StatefulWidget {
   final VoidCallback onAddAccount;
   final ValueChanged<Account> onEditAccount;
   final ValueChanged<Account> onArchiveAccount;
+  final VoidCallback onAddTransaction;
 
   @override
   State<FlowShell> createState() => _FlowShellState();
@@ -168,7 +177,10 @@ class _FlowShellState extends State<FlowShell> {
         child: IndexedStack(
           index: _selectedIndex,
           children: [
-            HomeDashboard(accounts: widget.accounts),
+            HomeDashboard(
+              accounts: widget.accounts,
+              onAddTransaction: widget.onAddTransaction,
+            ),
             _EmptyPage(data: _pages[1]),
             _EmptyPage(data: _pages[2]),
             AccountsPage(
@@ -181,9 +193,7 @@ class _FlowShellState extends State<FlowShell> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const AddTransactionPage()),
-        ),
+        onPressed: widget.onAddTransaction,
         tooltip: 'Add transaction',
         child: const Icon(Icons.add),
       ),

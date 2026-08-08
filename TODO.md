@@ -66,9 +66,9 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 - [x] Tampilkan ringkasan Income dan Expense bulan aktif.
 - [x] Buat mini cash-flow chart sederhana dengan angka/label pendamping.
 - [x] Buat Spending by Category dengan maksimal 4 kategori + Others.
-- [ ] Tampilkan 5 Recent Transactions terakhir.
-- [ ] Tambahkan quick action Add transaction.
-- [ ] Implementasikan empty, populated, light, dan dark state untuk Home.
+- [x] Tampilkan 5 Recent Transactions terakhir.
+- [x] Tambahkan quick action Add transaction.
+- [x] Implementasikan empty, populated, light, dan dark state untuk Home.
 
 ### 7. Add/Edit Transaction dan transfer
 

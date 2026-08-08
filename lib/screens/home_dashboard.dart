@@ -5,8 +5,15 @@ import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
 
 class HomeDashboard extends StatefulWidget {
-  const HomeDashboard({super.key, required this.accounts});
+  const HomeDashboard({
+    super.key,
+    required this.accounts,
+    this.transactions = const [],
+    required this.onAddTransaction,
+  });
   final List<Account> accounts;
+  final List<Transaction> transactions;
+  final VoidCallback onAddTransaction;
 
   @override
   State<HomeDashboard> createState() => _HomeDashboardState();
@@ -89,10 +96,21 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ),
           ],
         ),
+        const SizedBox(height: FlowSpacing.md),
+        FlowButton(
+          label: 'Add transaction',
+          icon: Icons.add,
+          onPressed: widget.onAddTransaction,
+        ),
         const SizedBox(height: FlowSpacing.lg),
         const _CashFlowCard(),
         const SizedBox(height: FlowSpacing.md),
         const _SpendingByCategoryCard(),
+        const SizedBox(height: FlowSpacing.lg),
+        _RecentTransactionsCard(
+          transactions: widget.transactions,
+          onAddTransaction: widget.onAddTransaction,
+        ),
       ],
     );
   }
@@ -254,5 +272,84 @@ class _SpendingByCategoryCard extends StatelessWidget {
         ),
       ],
     ),
+  );
+}
+
+class _RecentTransactionsCard extends StatelessWidget {
+  const _RecentTransactionsCard({
+    required this.transactions,
+    required this.onAddTransaction,
+  });
+  final List<Transaction> transactions;
+  final VoidCallback onAddTransaction;
+
+  @override
+  Widget build(BuildContext context) {
+    final recent = transactions.take(5).toList(growable: false);
+    return FlowCard(
+      variant: FlowCardVariant.transaction,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recent transactions',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              if (recent.isNotEmpty)
+                Text(
+                  '${recent.length} of 5',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+            ],
+          ),
+          const SizedBox(height: FlowSpacing.xs),
+          if (recent.isEmpty)
+            FlowEmptyState(
+              icon: Icons.receipt_long_outlined,
+              title: 'No transactions yet',
+              message: 'Add your first income or expense to see it here.',
+              action: FlowButton(
+                label: 'Add transaction',
+                onPressed: onAddTransaction,
+              ),
+            )
+          else
+            for (final transaction in recent)
+              FlowTransactionTile(
+                title: _title(transaction.type),
+                subtitle:
+                    transaction.note ?? 'Account ${transaction.accountId}',
+                amount:
+                    '${transaction.type == TransactionType.expense ? '-' : '+'} Rp ${_format(transaction.amount)}',
+                icon: _icon(transaction.type),
+                amountVariant: _amountVariant(transaction.type),
+              ),
+        ],
+      ),
+    );
+  }
+
+  static String _title(TransactionType type) => switch (type) {
+    TransactionType.income => 'Income',
+    TransactionType.expense => 'Expense',
+    TransactionType.transfer => 'Transfer',
+  };
+  static IconData _icon(TransactionType type) => switch (type) {
+    TransactionType.income => Icons.arrow_downward,
+    TransactionType.expense => Icons.arrow_upward,
+    TransactionType.transfer => Icons.swap_horiz,
+  };
+  static FlowAmountVariant _amountVariant(TransactionType type) =>
+      switch (type) {
+        TransactionType.income => FlowAmountVariant.income,
+        TransactionType.expense => FlowAmountVariant.expense,
+        TransactionType.transfer => FlowAmountVariant.transfer,
+      };
+  static String _format(int value) => value.toString().replaceAllMapped(
+    RegExp(r'(?<!^)(?=(\d{3})+$)'),
+    (_) => '.',
   );
 }

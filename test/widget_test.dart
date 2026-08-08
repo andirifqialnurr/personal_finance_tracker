@@ -26,7 +26,7 @@ void main() {
     await tester.tap(find.text('Create account'));
     await tester.pumpAndSettle();
     expect(find.text('Home'), findsWidgets);
-    expect(find.text('Cash'), findsOneWidget);
+    expect(find.text('Total balance'), findsOneWidget);
     expect(
       find.text('You have pushed the button this many times:'),
       findsNothing,
