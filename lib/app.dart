@@ -6,6 +6,7 @@ import 'screens/accounts_page.dart';
 import 'screens/add_transaction_page.dart';
 import 'screens/settings_page.dart';
 import 'screens/welcome_page.dart';
+import 'screens/home_dashboard.dart';
 import 'theme/flow_theme.dart';
 import 'theme/flow_tokens.dart';
 
@@ -167,7 +168,7 @@ class _FlowShellState extends State<FlowShell> {
         child: IndexedStack(
           index: _selectedIndex,
           children: [
-            const _EmptyHomePage(),
+            HomeDashboard(accounts: widget.accounts),
             _EmptyPage(data: _pages[1]),
             _EmptyPage(data: _pages[2]),
             AccountsPage(
@@ -195,41 +196,6 @@ class _FlowShellState extends State<FlowShell> {
           for (final item in _pages)
             NavigationDestination(icon: Icon(item.icon), label: item.title),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyHomePage extends StatelessWidget {
-  const _EmptyHomePage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(FlowSpacing.lg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.account_balance_wallet_outlined,
-              size: FlowIconSize.emptyState,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: FlowSpacing.md),
-            Text(
-              'Start your Flow',
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: FlowSpacing.xs),
-            Text(
-              'Create your first account to see your balance and transactions here.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
       ),
     );
   }

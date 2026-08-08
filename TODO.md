@@ -53,17 +53,17 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 5. First use dan akun
 
-- [ ] Buat flow Welcome → pilih currency (default IDR) → buat akun pertama → Home.
-- [ ] Buat form Add/Edit Account untuk Cash, Bank, E-wallet, dan Other.
-- [ ] Tampilkan total balance dan saldo per akun dalam kartu rounded dengan visual ringkas.
+- [x] Buat flow Welcome → pilih currency (default IDR) → buat akun pertama → Home.
+- [x] Buat form Add/Edit Account untuk Cash, Bank, E-wallet, dan Other.
+- [x] Tampilkan total balance dan saldo per akun dalam kartu rounded dengan visual ringkas.
 - [x] Implementasikan archive account; jangan menghapus akun yang sudah memiliki transaksi secara sembarangan.
 - [x] Buat empty state akun yang mengarahkan pengguna membuat akun pertama.
 
 ### 6. Home dashboard
 
-- [ ] Buat greeting singkat dan bulan aktif.
-- [ ] Buat kartu Total Balance dengan hide/show balance.
-- [ ] Tampilkan ringkasan Income dan Expense bulan aktif.
+- [x] Buat greeting singkat dan bulan aktif.
+- [x] Buat kartu Total Balance dengan hide/show balance.
+- [x] Tampilkan ringkasan Income dan Expense bulan aktif.
 - [ ] Buat mini cash-flow chart sederhana dengan angka/label pendamping.
 - [ ] Buat Spending by Category dengan maksimal 4 kategori + Others.
 - [ ] Tampilkan 5 Recent Transactions terakhir.
