@@ -20,6 +20,7 @@ class FlowApp extends StatefulWidget {
 class _FlowAppState extends State<FlowApp> {
   ThemeMode _themeMode = ThemeMode.system;
   final List<Account> _accounts = [];
+  final List<Transaction> _transactions = [];
   bool _hasCompletedWelcome = false;
 
   @override
@@ -33,6 +34,7 @@ class _FlowAppState extends State<FlowApp> {
       home: _hasCompletedWelcome
           ? FlowShell(
               accounts: _accounts,
+              transactions: _transactions,
               onOpenSettings: _openSettings,
               onAddAccount: () => _openAccountForm(context),
               onEditAccount: (account) => _openAccountForm(context, account),
@@ -59,7 +61,11 @@ class _FlowAppState extends State<FlowApp> {
   Future<void> _openAddTransaction(BuildContext context) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => AddTransactionPage(accounts: _accounts),
+        builder: (_) => AddTransactionPage(
+          accounts: _accounts,
+          onSaved: (transaction) =>
+              setState(() => _transactions.add(transaction)),
+        ),
       ),
     );
   }
@@ -131,6 +137,7 @@ class FlowShell extends StatefulWidget {
   const FlowShell({
     super.key,
     required this.accounts,
+    required this.transactions,
     required this.onOpenSettings,
     required this.onAddAccount,
     required this.onEditAccount,
@@ -139,6 +146,7 @@ class FlowShell extends StatefulWidget {
   });
 
   final List<Account> accounts;
+  final List<Transaction> transactions;
   final Future<void> Function(BuildContext context) onOpenSettings;
   final VoidCallback onAddAccount;
   final ValueChanged<Account> onEditAccount;
@@ -181,6 +189,7 @@ class _FlowShellState extends State<FlowShell> {
           children: [
             HomeDashboard(
               accounts: widget.accounts,
+              transactions: widget.transactions,
               onAddTransaction: widget.onAddTransaction,
             ),
             _EmptyPage(data: _pages[1]),

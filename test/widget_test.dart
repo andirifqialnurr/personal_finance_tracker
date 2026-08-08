@@ -110,4 +110,25 @@ void main() {
     expect(find.text('No accounts yet'), findsOneWidget);
     expect(find.text('Create account'), findsOneWidget);
   });
+
+  testWidgets(
+    'transaction form validates and adapts transfer fields on small screens',
+    (WidgetTester tester) async {
+      await pumpWithFirstAccount(tester);
+      await tester.binding.setSurfaceSize(const Size(320, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.tap(find.byTooltip('Add transaction'));
+      await tester.pumpAndSettle();
+
+      final saveButton = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Save transaction'),
+      );
+      expect(saveButton.onPressed, isNull);
+      await tester.tap(find.text('Transfer'));
+      await tester.pumpAndSettle();
+      expect(find.text('To account'), findsOneWidget);
+      expect(find.text('Category'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

@@ -5,9 +5,10 @@ import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
 
 class AddTransactionPage extends StatefulWidget {
-  const AddTransactionPage({super.key, this.accounts = const []});
+  const AddTransactionPage({super.key, this.accounts = const [], this.onSaved});
 
   final List<Account> accounts;
+  final ValueChanged<Transaction>? onSaved;
 
   @override
   State<AddTransactionPage> createState() => _AddTransactionPageState();
@@ -209,7 +210,32 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     return amount > 0 && hasAccount && hasTypeSpecificField;
   }
 
-  void _save() => Navigator.of(context).pop();
+  void _save() {
+    final amount = int.parse(
+      _amountController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+    );
+    final now = DateTime.now().toUtc();
+    widget.onSaved?.call(
+      Transaction(
+        type: _selectedType == 0
+            ? TransactionType.expense
+            : _selectedType == 1
+            ? TransactionType.income
+            : TransactionType.transfer,
+        amount: amount.abs(),
+        accountId: _selectedAccount!.id!,
+        destinationAccountId: _destinationAccount?.id,
+        categoryId: _selectedCategory?.id,
+        note: _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
+        occurredAt: _occurredAt,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+    Navigator.of(context).pop();
+  }
 
   static String _dateLabel(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';

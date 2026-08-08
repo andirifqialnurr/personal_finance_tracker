@@ -30,9 +30,24 @@ class _HomeDashboardState extends State<HomeDashboard> {
       < 18 => 'Good afternoon',
       _ => 'Good evening',
     };
-    final totalBalance = widget.accounts
-        .where((account) => !account.isArchived)
-        .fold<int>(0, (sum, account) => sum + account.openingBalance);
+    final activeAccounts = widget.accounts.where(
+      (account) => !account.isArchived,
+    );
+    final totalBalance = activeAccounts.fold<int>(
+      0,
+      (sum, account) => sum + _balanceFor(account),
+    );
+    final monthTransactions = widget.transactions.where(
+      (transaction) =>
+          transaction.occurredAt.year == now.year &&
+          transaction.occurredAt.month == now.month,
+    );
+    final income = monthTransactions
+        .where((transaction) => transaction.type == TransactionType.income)
+        .fold<int>(0, (sum, transaction) => sum + transaction.amount);
+    final expense = monthTransactions
+        .where((transaction) => transaction.type == TransactionType.expense)
+        .fold<int>(0, (sum, transaction) => sum + transaction.amount);
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.lg),
       children: [
@@ -80,7 +95,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             Expanded(
               child: _SummaryCard(
                 label: 'Income',
-                amount: 'Rp 0',
+                amount: 'Rp ${_format(income)}',
                 variant: FlowAmountVariant.income,
                 icon: Icons.arrow_downward,
               ),
@@ -89,7 +104,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             Expanded(
               child: _SummaryCard(
                 label: 'Expense',
-                amount: 'Rp 0',
+                amount: 'Rp ${_format(expense)}',
                 variant: FlowAmountVariant.expense,
                 icon: Icons.arrow_upward,
               ),
@@ -134,6 +149,24 @@ class _HomeDashboardState extends State<HomeDashboard> {
     RegExp(r'(?<!^)(?=(\d{3})+$)'),
     (_) => '.',
   );
+
+  int _balanceFor(Account account) {
+    return account.openingBalance +
+        widget.transactions.fold<int>(0, (sum, transaction) {
+          if (transaction.type == TransactionType.transfer &&
+              transaction.destinationAccountId == account.id) {
+            return sum + transaction.amount;
+          }
+          if (transaction.accountId != account.id) {
+            return sum;
+          }
+          return switch (transaction.type) {
+            TransactionType.income => sum + transaction.amount,
+            TransactionType.expense => sum - transaction.amount,
+            TransactionType.transfer => sum - transaction.amount,
+          };
+        });
+  }
 }
 
 class _SummaryCard extends StatelessWidget {
