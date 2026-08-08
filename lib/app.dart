@@ -35,6 +35,7 @@ class _FlowAppState extends State<FlowApp> {
               onOpenSettings: _openSettings,
               onAddAccount: () => _openAccountForm(context),
               onEditAccount: (account) => _openAccountForm(context, account),
+              onArchiveAccount: _archiveAccount,
             )
           : FlowWelcomePage(
               onCreateFirstAccount: () => _openAccountForm(context),
@@ -96,6 +97,24 @@ class _FlowAppState extends State<FlowApp> {
       ),
     );
   }
+
+  void _archiveAccount(Account account) {
+    setState(() {
+      final index = _accounts.indexWhere((item) => item.id == account.id);
+      if (index == -1) return;
+      _accounts[index] = Account(
+        id: account.id,
+        name: account.name,
+        type: account.type,
+        openingBalance: account.openingBalance,
+        icon: account.icon,
+        color: account.color,
+        isArchived: true,
+        createdAt: account.createdAt,
+        updatedAt: DateTime.now().toUtc(),
+      );
+    });
+  }
 }
 
 class FlowShell extends StatefulWidget {
@@ -105,12 +124,14 @@ class FlowShell extends StatefulWidget {
     required this.onOpenSettings,
     required this.onAddAccount,
     required this.onEditAccount,
+    required this.onArchiveAccount,
   });
 
   final List<Account> accounts;
   final Future<void> Function(BuildContext context) onOpenSettings;
   final VoidCallback onAddAccount;
   final ValueChanged<Account> onEditAccount;
+  final ValueChanged<Account> onArchiveAccount;
 
   @override
   State<FlowShell> createState() => _FlowShellState();
@@ -153,6 +174,7 @@ class _FlowShellState extends State<FlowShell> {
               accounts: widget.accounts,
               onAdd: widget.onAddAccount,
               onEdit: widget.onEditAccount,
+              onArchive: widget.onArchiveAccount,
             ),
           ],
         ),

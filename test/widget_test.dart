@@ -93,4 +93,21 @@ void main() {
     expect(find.text('Your accounts'), findsOneWidget);
     expect(find.text('Cash'), findsOneWidget);
   });
+
+  testWidgets('account archive preserves the shell and shows empty state', (
+    WidgetTester tester,
+  ) async {
+    await pumpWithFirstAccount(tester);
+    await tester.tap(find.text('Accounts'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Archive account'));
+    await tester.pumpAndSettle();
+    expect(find.text('Archive Cash?'), findsOneWidget);
+    await tester.tap(find.text('Archive account'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No accounts yet'), findsOneWidget);
+    expect(find.text('Create account'), findsOneWidget);
+  });
 }

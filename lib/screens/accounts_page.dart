@@ -10,15 +10,20 @@ class AccountsPage extends StatelessWidget {
     required this.accounts,
     required this.onAdd,
     required this.onEdit,
+    required this.onArchive,
   });
 
   final List<Account> accounts;
   final VoidCallback onAdd;
   final ValueChanged<Account> onEdit;
+  final ValueChanged<Account> onArchive;
 
   @override
   Widget build(BuildContext context) {
-    final total = accounts.fold<int>(
+    final activeAccounts = accounts
+        .where((account) => !account.isArchived)
+        .toList(growable: false);
+    final total = activeAccounts.fold<int>(
       0,
       (sum, account) => sum + account.openingBalance,
     );
@@ -55,48 +60,72 @@ class AccountsPage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: FlowSpacing.xs),
-        for (final account in accounts) ...[
-          FlowCard(
-            variant: FlowCardVariant.action,
-            child: InkWell(
-              onTap: () => onEdit(account),
-              borderRadius: BorderRadius.circular(FlowRadii.card),
-              child: Row(
-                children: [
-                  FlowIconContainer(
-                    icon: _iconFor(account.type),
-                    variant: FlowIconContainerVariant.account,
-                  ),
-                  const SizedBox(width: FlowSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          account.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text(
-                          _typeLabel(account.type),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
+        if (activeAccounts.isEmpty)
+          FlowEmptyState(
+            icon: Icons.account_balance_wallet_outlined,
+            title: 'No accounts yet',
+            message: 'Create an account to start tracking your balance.',
+            action: FlowButton(label: 'Create account', onPressed: onAdd),
+          )
+        else
+          for (final account in activeAccounts) ...[
+            FlowCard(
+              variant: FlowCardVariant.action,
+              child: InkWell(
+                onTap: () => onEdit(account),
+                borderRadius: BorderRadius.circular(FlowRadii.card),
+                child: Row(
+                  children: [
+                    FlowIconContainer(
+                      icon: _iconFor(account.type),
+                      variant: FlowIconContainerVariant.account,
                     ),
-                  ),
-                  FlowAmountText(
-                    amount: 'Rp ${_format(account.openingBalance)}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
+                    const SizedBox(width: FlowSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            account.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          Text(
+                            _typeLabel(account.type),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    FlowAmountText(
+                      amount: 'Rp ${_format(account.openingBalance)}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    IconButton(
+                      onPressed: () => _confirmArchive(context, account),
+                      tooltip: 'Archive account',
+                      icon: const Icon(Icons.archive_outlined),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: FlowSpacing.sm),
-        ],
+            const SizedBox(height: FlowSpacing.sm),
+          ],
       ],
     );
+  }
+
+  Future<void> _confirmArchive(BuildContext context, Account account) async {
+    final confirmed = await FlowConfirmationSheet.show(
+      context: context,
+      title: 'Archive ${account.name}?',
+      message:
+          'The account and its transaction history will stay safe but be hidden from active accounts.',
+      confirmLabel: 'Archive account',
+    );
+    if (confirmed == true) onArchive(account);
   }
 
   static String _format(int value) => value.toString().replaceAllMapped(
