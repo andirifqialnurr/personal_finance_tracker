@@ -75,9 +75,9 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 - [x] Buat segmented control Expense / Income / Transfer.
 - [x] Jadikan amount sebagai elemen paling dominan dan tampilkan numeric keypad langsung.
 - [x] Buat account selector dan category bottom sheet berisi icon + nama.
-- [ ] Tambahkan date dan note opsional.
-- [ ] Saat Transfer dipilih, tampilkan From Account dan To Account serta sembunyikan kategori.
-- [ ] Nonaktifkan Save sampai field wajib valid.
+- [x] Tambahkan date dan note opsional.
+- [x] Saat Transfer dipilih, tampilkan From Account dan To Account serta sembunyikan kategori.
+- [x] Nonaktifkan Save sampai field wajib valid.
 - [ ] Simpan amount sebagai nilai positif; bedakan expense/income melalui type dan treatment warna di UI.
 - [ ] Pastikan transfer hanya memengaruhi saldo akun, bukan total income/expense.
 - [ ] Uji form pada keyboard aktif, nama panjang, validasi error, dan lebar layar kecil.

@@ -16,8 +16,11 @@ class AddTransactionPage extends StatefulWidget {
 class _AddTransactionPageState extends State<AddTransactionPage> {
   int _selectedType = 0;
   final _amountController = TextEditingController();
+  final _noteController = TextEditingController();
   Account? _selectedAccount;
+  Account? _destinationAccount;
   Category? _selectedCategory;
+  DateTime _occurredAt = DateTime.now();
 
   static const _categories = <Category>[
     Category(
@@ -43,6 +46,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   @override
   void dispose() {
     _amountController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -63,7 +67,11 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           FlowSegmentedControl(
             labels: const ['Expense', 'Income', 'Transfer'],
             selectedIndex: _selectedType,
-            onChanged: (index) => setState(() => _selectedType = index),
+            onChanged: (index) => setState(() {
+              _selectedType = index;
+              _selectedCategory = null;
+              _destinationAccount = null;
+            }),
           ),
           const SizedBox(height: FlowSpacing.lg),
           Text('Amount', style: Theme.of(context).textTheme.labelMedium),
@@ -71,6 +79,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           TextField(
             autofocus: true,
             controller: _amountController,
+            onChanged: (_) => setState(() {}),
             keyboardType: const TextInputType.numberWithOptions(decimal: false),
             textInputAction: TextInputAction.next,
             style: Theme.of(context).textTheme.displaySmall,
@@ -85,10 +94,11 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           ),
           if (_selectedType == 2) ...[
             const SizedBox(height: FlowSpacing.md),
-            const FlowSelector(
+            FlowSelector(
               label: 'To account',
-              value: 'Select destination',
+              value: _destinationAccount?.name ?? 'Select destination',
               icon: Icons.account_balance_wallet_outlined,
+              onTap: _selectDestinationAccount,
             ),
           ] else ...[
             const SizedBox(height: FlowSpacing.md),
@@ -100,11 +110,22 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
             ),
           ],
           const SizedBox(height: FlowSpacing.md),
-          const TextField(
-            decoration: InputDecoration(labelText: 'Note (optional)'),
+          FlowSelector(
+            label: 'Date',
+            value: _dateLabel(_occurredAt),
+            icon: Icons.calendar_today_outlined,
+            onTap: _selectDate,
+          ),
+          const SizedBox(height: FlowSpacing.md),
+          TextField(
+            controller: _noteController,
+            decoration: const InputDecoration(labelText: 'Note (optional)'),
           ),
           const SizedBox(height: FlowSpacing.lg),
-          FlowButton(label: 'Save transaction', onPressed: () {}),
+          FlowButton(
+            label: 'Save transaction',
+            onPressed: _canSave ? _save : null,
+          ),
         ],
       ),
     );
@@ -145,6 +166,53 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     );
     if (selected != null) setState(() => _selectedCategory = selected);
   }
+
+  Future<void> _selectDestinationAccount() async {
+    final selected = await _showAccountSheet(title: 'Select destination');
+    if (selected != null) setState(() => _destinationAccount = selected);
+  }
+
+  Future<Account?> _showAccountSheet({required String title}) {
+    return showModalBottomSheet<Account>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => _SelectionSheet<Account>(
+        title: title,
+        items: widget.accounts,
+        titleOf: (account) => account.name,
+        subtitleOf: (account) => _accountTypeLabel(account.type),
+        iconOf: (_) => Icons.account_balance_wallet_outlined,
+      ),
+    );
+  }
+
+  Future<void> _selectDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      initialDate: _occurredAt,
+    );
+    if (selected != null) setState(() => _occurredAt = selected);
+  }
+
+  bool get _canSave {
+    final amount =
+        int.tryParse(
+          _amountController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        ) ??
+        0;
+    final hasAccount = _selectedAccount != null;
+    final hasTypeSpecificField = _selectedType == 2
+        ? _destinationAccount != null && _destinationAccount != _selectedAccount
+        : _selectedCategory != null;
+    return amount > 0 && hasAccount && hasTypeSpecificField;
+  }
+
+  void _save() => Navigator.of(context).pop();
+
+  static String _dateLabel(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
   static String _accountTypeLabel(AccountType type) => switch (type) {
     AccountType.cash => 'Cash',
