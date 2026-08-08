@@ -20,6 +20,10 @@ class TransactionsPage extends StatefulWidget {
 class _TransactionsPageState extends State<TransactionsPage> {
   final _searchController = TextEditingController();
   String _query = '';
+  TransactionType? _typeFilter;
+  int? _accountFilter;
+  int? _categoryFilter;
+  DateTimeRange? _dateRange;
 
   @override
   void dispose() {
@@ -34,9 +38,18 @@ class _TransactionsPageState extends State<TransactionsPage> {
     };
     final filtered =
         widget.transactions
-            .where((transaction) => _matchesQuery(transaction))
+            .where(
+              (transaction) =>
+                  _matchesQuery(transaction) && _matchesFilters(transaction),
+            )
             .toList()
           ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    final incomeTotal = filtered
+        .where((transaction) => transaction.type == TransactionType.income)
+        .fold<int>(0, (sum, transaction) => sum + transaction.amount);
+    final expenseTotal = filtered
+        .where((transaction) => transaction.type == TransactionType.expense)
+        .fold<int>(0, (sum, transaction) => sum + transaction.amount);
     final grouped = <DateTime, List<Transaction>>{};
     for (final transaction in filtered) {
       final day = DateTime(
@@ -69,6 +82,69 @@ class _TransactionsPageState extends State<TransactionsPage> {
           ),
         ),
         const SizedBox(height: FlowSpacing.md),
+        Wrap(
+          spacing: FlowSpacing.xs,
+          runSpacing: FlowSpacing.xs,
+          children: [
+            FilterChip(
+              label: Text(
+                _typeFilter == null
+                    ? 'Type: All'
+                    : 'Type: ${_typeLabel(_typeFilter!)}',
+              ),
+              selected: _typeFilter != null,
+              onSelected: (_) => _selectType(),
+            ),
+            FilterChip(
+              label: Text(
+                _accountFilter == null
+                    ? 'Account: All'
+                    : 'Account: ${_accountName(_accountFilter!, accountNames)}',
+              ),
+              selected: _accountFilter != null,
+              onSelected: (_) => _selectAccount(accountNames),
+            ),
+            FilterChip(
+              label: Text(
+                _categoryFilter == null
+                    ? 'Category: All'
+                    : 'Category: $_categoryFilter',
+              ),
+              selected: _categoryFilter != null,
+              onSelected: (_) => _selectCategory(),
+            ),
+            FilterChip(
+              label: Text(
+                _dateRange == null
+                    ? 'Date: All'
+                    : '${_dateLabel(_dateRange!.start)} - ${_dateLabel(_dateRange!.end)}',
+              ),
+              selected: _dateRange != null,
+              onSelected: (_) => _selectDateRange(),
+            ),
+          ],
+        ),
+        const SizedBox(height: FlowSpacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: _TotalCard(
+                label: 'Income',
+                amount: incomeTotal,
+                variant: FlowAmountVariant.income,
+              ),
+            ),
+            const SizedBox(width: FlowSpacing.sm),
+            Expanded(
+              child: _TotalCard(
+                label: 'Expense',
+                amount: expenseTotal,
+                variant: FlowAmountVariant.expense,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: FlowSpacing.lg),
         if (widget.transactions.isEmpty)
           const FlowEmptyState(
             icon: Icons.receipt_long_outlined,
@@ -119,6 +195,115 @@ class _TransactionsPageState extends State<TransactionsPage> {
         category.contains(_query);
   }
 
+  bool _matchesFilters(Transaction transaction) {
+    if (_typeFilter != null && transaction.type != _typeFilter) {
+      return false;
+    }
+    if (_accountFilter != null &&
+        transaction.accountId != _accountFilter &&
+        transaction.destinationAccountId != _accountFilter) {
+      return false;
+    }
+    if (_categoryFilter != null && transaction.categoryId != _categoryFilter) {
+      return false;
+    }
+    if (_dateRange != null &&
+        (transaction.occurredAt.isBefore(_dateRange!.start) ||
+            transaction.occurredAt.isAfter(
+              _dateRange!.end.add(const Duration(days: 1)),
+            ))) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _selectType() async {
+    final selected = await _showFilterSheet<String>('Filter type', [
+      'All types',
+      'Income',
+      'Expense',
+      'Transfer',
+    ]);
+    if (selected != null) {
+      setState(
+        () => _typeFilter = selected == 'All types'
+            ? null
+            : TransactionType.values.byName(selected.toLowerCase()),
+      );
+    }
+  }
+
+  Future<void> _selectAccount(Map<int?, String> names) async {
+    final options = <int>[
+      0,
+      ...widget.accounts.map((account) => account.id ?? 0),
+    ];
+    final selected = await _showFilterSheet<int>(
+      'Filter account',
+      options,
+      labelOf: (id) => id == 0 ? 'All accounts' : _accountName(id, names),
+    );
+    if (selected != null) {
+      setState(() => _accountFilter = selected == 0 ? null : selected);
+    }
+  }
+
+  Future<void> _selectCategory() async {
+    final options = <int>[
+      0,
+      ...widget.transactions
+          .map((transaction) => transaction.categoryId)
+          .whereType<int>()
+          .toSet(),
+    ];
+    final selected = await _showFilterSheet<int>(
+      'Filter category',
+      options,
+      labelOf: (id) => id == 0 ? 'All categories' : 'Category $id',
+    );
+    if (selected != null) {
+      setState(() => _categoryFilter = selected == 0 ? null : selected);
+    }
+  }
+
+  Future<void> _selectDateRange() async {
+    final selected = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      currentDate: DateTime.now(),
+      initialDateRange: _dateRange,
+    );
+    if (selected != null) setState(() => _dateRange = selected);
+  }
+
+  Future<T?> _showFilterSheet<T>(
+    String title,
+    List<T> options, {
+    String Function(T value)? labelOf,
+  }) {
+    return showModalBottomSheet<T>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(FlowSpacing.md),
+              child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+            ),
+            for (final option in options)
+              ListTile(
+                title: Text(labelOf?.call(option) ?? '$option'),
+                onTap: () => Navigator.of(context).pop(option),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   static String _subtitle(
     Transaction transaction,
     Map<int?, String> accountNames,
@@ -157,5 +342,35 @@ class _TransactionsPageState extends State<TransactionsPage> {
   static String _format(int value) => value.toString().replaceAllMapped(
     RegExp(r'(?<!^)(?=(\d{3})+$)'),
     (_) => '.',
+  );
+  static String _accountName(int id, Map<int?, String> names) =>
+      names[id] ?? 'Account $id';
+}
+
+class _TotalCard extends StatelessWidget {
+  const _TotalCard({
+    required this.label,
+    required this.amount,
+    required this.variant,
+  });
+  final String label;
+  final int amount;
+  final FlowAmountVariant variant;
+
+  @override
+  Widget build(BuildContext context) => FlowCard(
+    variant: FlowCardVariant.summary,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(height: FlowSpacing.xs),
+        FlowAmountText(
+          amount: 'Rp $amount',
+          variant: variant,
+          style: const TextStyle(fontSize: 16),
+        ),
+      ],
+    ),
   );
 }

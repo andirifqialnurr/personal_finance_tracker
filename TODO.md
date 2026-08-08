@@ -87,8 +87,8 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 - [x] Buat list transaksi yang dikelompokkan per tanggal.
 - [x] Tampilkan nominal, type, account, category, dan note secara ringkas.
 - [x] Tambahkan pencarian berdasarkan note/category.
-- [ ] Tambahkan filter type, account, category, dan date range.
-- [ ] Tampilkan total income dan expense untuk hasil filter.
+- [x] Tambahkan filter type, account, category, dan date range.
+- [x] Tampilkan total income dan expense untuk hasil filter.
 - [ ] Buat detail transaksi dengan aksi Edit dan Delete.
 - [ ] Tambahkan confirmation dialog/sheet untuk delete.
 - [ ] Buat no-search-result state.
