@@ -5,6 +5,7 @@ import 'screens/account_form_page.dart';
 import 'screens/accounts_page.dart';
 import 'screens/add_transaction_page.dart';
 import 'screens/settings_page.dart';
+import 'screens/statistics_page.dart';
 import 'screens/transactions_page.dart';
 import 'screens/transaction_detail_page.dart';
 import 'screens/welcome_page.dart';
@@ -244,7 +245,7 @@ class _FlowShellState extends State<FlowShell> {
               accounts: widget.accounts,
               onOpenDetail: widget.onOpenTransactionDetail,
             ),
-            _EmptyPage(data: _pages[2]),
+            StatisticsPage(transactions: widget.transactions),
             AccountsPage(
               accounts: widget.accounts,
               onAdd: widget.onAddAccount,
