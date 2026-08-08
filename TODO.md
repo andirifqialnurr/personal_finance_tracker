@@ -37,9 +37,9 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 3. Model data dan local persistence
 
-- [ ] Definisikan model `Account`, `Category`, `Transaction`, dan `AppSettings` sesuai field di PRD.
-- [ ] Buat SQLite database lokal dengan migration/versioning sejak versi pertama.
-- [ ] Buat repository/service untuk CRUD account, category, transaction, dan settings.
+- [x] Definisikan model `Account`, `Category`, `Transaction`, dan `AppSettings` sesuai field di PRD.
+- [x] Buat SQLite database lokal dengan migration/versioning sejak versi pertama.
+- [x] Buat repository/service untuk CRUD account, category, transaction, dan settings.
 - [ ] Implementasikan kalkulasi saldo: opening balance + income - expense + transfer masuk - transfer keluar.
 - [ ] Pastikan edit dan delete transaksi langsung menghitung ulang saldo.
 - [ ] Tambahkan seed kategori default yang dapat diedit tanpa mengubah referensi transaksi lama.
