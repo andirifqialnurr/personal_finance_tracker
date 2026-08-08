@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 
 import 'screens/add_transaction_page.dart';
+import 'screens/settings_page.dart';
 import 'theme/flow_theme.dart';
 import 'theme/flow_tokens.dart';
 
-class FlowApp extends StatelessWidget {
+class FlowApp extends StatefulWidget {
   const FlowApp({super.key});
+
+  @override
+  State<FlowApp> createState() => _FlowAppState();
+}
+
+class _FlowAppState extends State<FlowApp> {
+  ThemeMode _themeMode = ThemeMode.system;
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +22,27 @@ class FlowApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: FlowTheme.light(),
       darkTheme: FlowTheme.dark(),
-      themeMode: ThemeMode.system,
-      home: const FlowShell(),
+      themeMode: _themeMode,
+      home: FlowShell(onOpenSettings: _openSettings),
+    );
+  }
+
+  Future<void> _openSettings(BuildContext context) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => FlowSettingsPage(
+          initialThemeMode: _themeMode,
+          onThemeModeChanged: (mode) => setState(() => _themeMode = mode),
+        ),
+      ),
     );
   }
 }
 
 class FlowShell extends StatefulWidget {
-  const FlowShell({super.key});
+  const FlowShell({super.key, required this.onOpenSettings});
+
+  final Future<void> Function(BuildContext context) onOpenSettings;
 
   @override
   State<FlowShell> createState() => _FlowShellState();
@@ -47,7 +68,7 @@ class _FlowShellState extends State<FlowShell> {
         actions: [
           if (_selectedIndex == 0)
             IconButton(
-              onPressed: () {},
+              onPressed: () => widget.onOpenSettings(context),
               tooltip: 'Settings',
               icon: const Icon(Icons.person_outline),
             ),

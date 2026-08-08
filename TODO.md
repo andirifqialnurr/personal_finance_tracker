@@ -48,8 +48,8 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 - [x] Implementasikan bottom navigation: Home, Transactions, Statistics, Accounts.
 - [x] Tambahkan primary action `+` untuk membuka alur tambah transaksi.
-- [ ] Tambahkan akses Settings dari avatar/icon pada Home.
-- [ ] Pastikan state navigasi dan theme tidak hilang saat berpindah tab.
+- [x] Tambahkan akses Settings dari avatar/icon pada Home.
+- [x] Pastikan state navigasi dan theme tidak hilang saat berpindah tab.
 
 ### 5. First use dan akun
 
