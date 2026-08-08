@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'theme/flow_colors.dart';
-import 'theme/flow_font.dart';
+import 'theme/flow_theme.dart';
+import 'theme/flow_tokens.dart';
 
 class FlowApp extends StatelessWidget {
   const FlowApp({super.key});
@@ -11,19 +11,9 @@ class FlowApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flow',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: FlowColors.accent,
-          brightness: Brightness.light,
-          surface: FlowColors.lightSurface,
-        ),
-        scaffoldBackgroundColor: FlowColors.lightBackground,
-        textTheme: FlowFont.applyTo(ThemeData.light().textTheme).apply(
-          bodyColor: FlowColors.lightText,
-          displayColor: FlowColors.lightText,
-        ),
-        useMaterial3: true,
-      ),
+      theme: FlowTheme.light(),
+      darkTheme: FlowTheme.dark(),
+      themeMode: ThemeMode.system,
       home: const FlowShell(),
     );
   }
@@ -85,10 +75,7 @@ class _FlowShellState extends State<FlowShell> {
         },
         destinations: [
           for (final item in _pages)
-            NavigationDestination(
-              icon: Icon(item.icon),
-              label: item.title,
-            ),
+            NavigationDestination(icon: Icon(item.icon), label: item.title),
         ],
       ),
     );
@@ -102,7 +89,7 @@ class _EmptyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(FlowSpacing.lg),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -111,13 +98,13 @@ class _EmptyHomePage extends StatelessWidget {
               size: 64,
               color: Theme.of(context).colorScheme.primary,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: FlowSpacing.md),
             Text(
               'Start your Flow',
               style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: FlowSpacing.xs),
             Text(
               'Create your first account to see your balance and transactions here.',
               textAlign: TextAlign.center,
@@ -139,18 +126,22 @@ class _EmptyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(FlowSpacing.lg),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(data.icon, size: 56, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 16),
+            Icon(
+              data.icon,
+              size: 56,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: FlowSpacing.md),
             Text(
               '${data.title} will appear here',
               style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: FlowSpacing.xs),
             const Text(
               'Your local finance data will be available once the first account and transaction flow is added.',
               textAlign: TextAlign.center,
