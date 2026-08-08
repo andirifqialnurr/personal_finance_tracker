@@ -3,14 +3,30 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:personal_finance_tracker/app.dart';
 
+Future<void> pumpWithFirstAccount(WidgetTester tester) async {
+  await tester.pumpWidget(const FlowApp());
+  await tester.tap(find.text('Create first account'));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byType(TextFormField).first, 'Cash');
+  await tester.tap(find.text('Create account'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
-  testWidgets('Flow starts in an empty Home state', (
+  testWidgets('Flow starts in Welcome and creates the first account', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const FlowApp());
 
+    expect(find.text('Welcome to Flow'), findsOneWidget);
+    expect(find.text('IDR'), findsOneWidget);
+    await tester.tap(find.text('Create first account'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Cash');
+    await tester.tap(find.text('Create account'));
+    await tester.pumpAndSettle();
     expect(find.text('Home'), findsWidgets);
-    expect(find.text('Start your Flow'), findsOneWidget);
+    expect(find.text('Cash'), findsOneWidget);
     expect(
       find.text('You have pushed the button this many times:'),
       findsNothing,
@@ -20,7 +36,7 @@ void main() {
   testWidgets('Flow shell switches between primary destinations', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const FlowApp());
+    await pumpWithFirstAccount(tester);
 
     await tester.tap(find.text('Transactions'));
     await tester.pumpAndSettle();
@@ -31,7 +47,7 @@ void main() {
   testWidgets('primary action opens the add transaction flow', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const FlowApp());
+    await pumpWithFirstAccount(tester);
 
     await tester.tap(find.byTooltip('Add transaction'));
     await tester.pumpAndSettle();
@@ -43,7 +59,7 @@ void main() {
   testWidgets('Home avatar opens settings and theme selection persists', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const FlowApp());
+    await pumpWithFirstAccount(tester);
 
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
@@ -63,5 +79,18 @@ void main() {
       Theme.of(tester.element(find.text('Home').first)).brightness,
       Brightness.dark,
     );
+  });
+
+  testWidgets('Accounts shows total and per-account balance cards', (
+    WidgetTester tester,
+  ) async {
+    await pumpWithFirstAccount(tester);
+
+    await tester.tap(find.text('Accounts'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Total balance'), findsOneWidget);
+    expect(find.text('Your accounts'), findsOneWidget);
+    expect(find.text('Cash'), findsOneWidget);
   });
 }

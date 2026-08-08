@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'data/models/models.dart';
+import 'screens/account_form_page.dart';
+import 'screens/accounts_page.dart';
 import 'screens/add_transaction_page.dart';
 import 'screens/settings_page.dart';
+import 'screens/welcome_page.dart';
 import 'theme/flow_theme.dart';
 import 'theme/flow_tokens.dart';
 
@@ -14,6 +18,8 @@ class FlowApp extends StatefulWidget {
 
 class _FlowAppState extends State<FlowApp> {
   ThemeMode _themeMode = ThemeMode.system;
+  final List<Account> _accounts = [];
+  bool _hasCompletedWelcome = false;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +29,16 @@ class _FlowAppState extends State<FlowApp> {
       theme: FlowTheme.light(),
       darkTheme: FlowTheme.dark(),
       themeMode: _themeMode,
-      home: FlowShell(onOpenSettings: _openSettings),
+      home: _hasCompletedWelcome
+          ? FlowShell(
+              accounts: _accounts,
+              onOpenSettings: _openSettings,
+              onAddAccount: () => _openAccountForm(context),
+              onEditAccount: (account) => _openAccountForm(context, account),
+            )
+          : FlowWelcomePage(
+              onCreateFirstAccount: () => _openAccountForm(context),
+            ),
     );
   }
 
@@ -37,12 +52,65 @@ class _FlowAppState extends State<FlowApp> {
       ),
     );
   }
+
+  Future<void> _openAccountForm(
+    BuildContext context, [
+    Account? account,
+  ]) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => AccountFormPage(
+          account: account,
+          onSaved: (savedAccount) {
+            final accountWithId = savedAccount.id == null
+                ? Account(
+                    id: _accounts.isEmpty
+                        ? 1
+                        : _accounts
+                                  .map((item) => item.id ?? 0)
+                                  .reduce((a, b) => a > b ? a : b) +
+                              1,
+                    name: savedAccount.name,
+                    type: savedAccount.type,
+                    openingBalance: savedAccount.openingBalance,
+                    icon: savedAccount.icon,
+                    color: savedAccount.color,
+                    isArchived: savedAccount.isArchived,
+                    createdAt: savedAccount.createdAt,
+                    updatedAt: savedAccount.updatedAt,
+                  )
+                : savedAccount;
+            setState(() {
+              final index = _accounts.indexWhere(
+                (item) => item.id == accountWithId.id,
+              );
+              if (index == -1) {
+                _accounts.add(accountWithId);
+              } else {
+                _accounts[index] = accountWithId;
+              }
+              _hasCompletedWelcome = true;
+            });
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class FlowShell extends StatefulWidget {
-  const FlowShell({super.key, required this.onOpenSettings});
+  const FlowShell({
+    super.key,
+    required this.accounts,
+    required this.onOpenSettings,
+    required this.onAddAccount,
+    required this.onEditAccount,
+  });
 
+  final List<Account> accounts;
   final Future<void> Function(BuildContext context) onOpenSettings;
+  final VoidCallback onAddAccount;
+  final ValueChanged<Account> onEditAccount;
 
   @override
   State<FlowShell> createState() => _FlowShellState();
@@ -81,7 +149,11 @@ class _FlowShellState extends State<FlowShell> {
             const _EmptyHomePage(),
             _EmptyPage(data: _pages[1]),
             _EmptyPage(data: _pages[2]),
-            _EmptyPage(data: _pages[3]),
+            AccountsPage(
+              accounts: widget.accounts,
+              onAdd: widget.onAddAccount,
+              onEdit: widget.onEditAccount,
+            ),
           ],
         ),
       ),
