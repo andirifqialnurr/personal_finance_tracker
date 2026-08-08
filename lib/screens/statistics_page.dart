@@ -46,20 +46,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
           const SizedBox(height: FlowSpacing.sm),
           FlowCard(
             variant: FlowCardVariant.chart,
-            child: Text(
-              'Category chart will appear here',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            child: _CategoryChart(categories: data.categories),
           ),
           const SizedBox(height: FlowSpacing.md),
           const _SectionHeading(title: 'Weekly spending trend'),
           const SizedBox(height: FlowSpacing.sm),
           FlowCard(
             variant: FlowCardVariant.chart,
-            child: Text(
-              'Weekly trend will appear here',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            child: _WeeklyTrendChart(weeks: data.weeks),
           ),
         ] else
           const FlowEmptyState(
@@ -79,10 +73,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
 }
 
 class StatisticsData {
-  const StatisticsData({required this.income, required this.expense});
+  const StatisticsData({
+    required this.income,
+    required this.expense,
+    required this.categories,
+    required this.weeks,
+  });
 
   final int income;
   final int expense;
+  final List<CategoryStat> categories;
+  final List<WeekStat> weeks;
 
   bool get hasData => income > 0 || expense > 0;
 
@@ -92,6 +93,8 @@ class StatisticsData {
   ) {
     var income = 0;
     var expense = 0;
+    final categoryTotals = <int?, int>{};
+    final weekTotals = List<int>.filled(5, 0);
     for (final transaction in transactions) {
       if (transaction.occurredAt.year != month.year ||
           transaction.occurredAt.month != month.month) {
@@ -102,13 +105,241 @@ class StatisticsData {
           income += transaction.amount;
         case TransactionType.expense:
           expense += transaction.amount;
+          categoryTotals.update(
+            transaction.categoryId,
+            (value) => value + transaction.amount,
+            ifAbsent: () => transaction.amount,
+          );
+          final week = ((transaction.occurredAt.day - 1) ~/ 7).clamp(0, 4);
+          weekTotals[week] += transaction.amount;
         case TransactionType.transfer:
           break;
       }
     }
-    return StatisticsData(income: income, expense: expense);
+    final categories = categoryTotals.entries
+        .map((entry) => CategoryStat(id: entry.key, amount: entry.value))
+        .toList()
+      ..sort((a, b) => b.amount.compareTo(a.amount));
+    return StatisticsData(
+      income: income,
+      expense: expense,
+      categories: categories,
+      weeks: [
+        for (var index = 0; index < weekTotals.length; index++)
+          WeekStat(label: 'W${index + 1}', amount: weekTotals[index]),
+      ],
+    );
   }
 }
+
+class CategoryStat {
+  const CategoryStat({required this.id, required this.amount});
+
+  final int? id;
+  final int amount;
+
+  String get label => id == null ? 'Uncategorized' : 'Category $id';
+}
+
+class WeekStat {
+  const WeekStat({required this.label, required this.amount});
+
+  final String label;
+  final int amount;
+}
+
+class _CategoryChart extends StatelessWidget {
+  const _CategoryChart({required this.categories});
+
+  final List<CategoryStat> categories;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = categories.fold<int>(0, (sum, item) => sum + item.amount);
+    return Column(
+      children: [
+        SizedBox(
+          height: 176,
+          child: Row(
+            children: [
+              Expanded(
+                child: CustomPaint(
+                  painter: _DonutPainter(
+                    categories: categories,
+                    total: total,
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Rp ${_formatAmount(total)}',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: FlowSpacing.md),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var index = 0; index < categories.length; index++)
+                      _LegendRow(
+                        label: categories[index].label,
+                        amount: categories[index].amount,
+                        color: _chartColor(index, context),
+                        total: total,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          'Each segment shows its category share of expense.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+
+  static Color _chartColor(int index, BuildContext context) {
+    final colors = [
+      FlowColors.expense,
+      Theme.of(context).colorScheme.primary,
+      const Color(0xFFE0A458),
+      const Color(0xFF6D8FC7),
+      const Color(0xFF9B7EBD),
+    ];
+    return colors[index % colors.length];
+  }
+}
+
+class _LegendRow extends StatelessWidget {
+  const _LegendRow({required this.label, required this.amount, required this.color, required this.total});
+
+  final String label;
+  final int amount;
+  final Color color;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = total == 0 ? 0 : (amount * 100 / total).round();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: FlowSpacing.xxs),
+      child: Row(
+        children: [
+          Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: FlowSpacing.xs),
+          Expanded(child: Text(label, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall)),
+          Text('$percent%', style: Theme.of(context).textTheme.labelMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeeklyTrendChart extends StatelessWidget {
+  const _WeeklyTrendChart({required this.weeks});
+
+  final List<WeekStat> weeks;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      SizedBox(
+        height: 180,
+        child: CustomPaint(
+          painter: _BarChartPainter(
+            weeks: weeks,
+            color: Theme.of(context).colorScheme.primary,
+            mutedColor: Theme.of(context).colorScheme.outline,
+          ),
+          child: const SizedBox.expand(),
+        ),
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [for (final week in weeks) Text(week.label, style: Theme.of(context).textTheme.labelSmall)],
+      ),
+      const SizedBox(height: FlowSpacing.xs),
+      Text(
+        'Bars show expense totals for each week of the month.',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+    ],
+  );
+}
+
+class _DonutPainter extends CustomPainter {
+  const _DonutPainter({required this.categories, required this.total});
+
+  final List<CategoryStat> categories;
+  final int total;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.shortestSide / 2 - 10;
+    final stroke = radius * 0.32;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    var start = -3.14159 / 2;
+    for (var index = 0; index < categories.length; index++) {
+      final sweep = total == 0 ? 0.0 : categories[index].amount / total * 6.28318;
+      canvas.drawArc(
+        rect,
+        start,
+        sweep,
+        false,
+        Paint()
+          ..color = _colors[index % _colors.length]
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke,
+      );
+      start += sweep;
+    }
+  }
+
+  static const _colors = [FlowColors.expense, FlowColors.accent, Color(0xFFE0A458), Color(0xFF6D8FC7), Color(0xFF9B7EBD)];
+
+  @override
+  bool shouldRepaint(covariant _DonutPainter oldDelegate) => oldDelegate.categories != categories || oldDelegate.total != total;
+}
+
+class _BarChartPainter extends CustomPainter {
+  const _BarChartPainter({required this.weeks, required this.color, required this.mutedColor});
+
+  final List<WeekStat> weeks;
+  final Color color;
+  final Color mutedColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final maxAmount = weeks.fold<int>(0, (max, week) => week.amount > max ? week.amount : max);
+    final baseline = size.height - 8;
+    final chartHeight = size.height - 24;
+    final width = size.width / weeks.length;
+    canvas.drawLine(Offset(0, baseline), Offset(size.width, baseline), Paint()..color = mutedColor);
+    for (var index = 0; index < weeks.length; index++) {
+      final height = maxAmount == 0 ? 0.0 : chartHeight * weeks[index].amount / maxAmount;
+      final bar = RRect.fromRectAndRadius(
+        Rect.fromLTWH(width * index + width * .25, baseline - height, width * .5, height),
+        const Radius.circular(8),
+      );
+      canvas.drawRRect(bar, Paint()..color = color);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BarChartPainter oldDelegate) => oldDelegate.weeks != weeks;
+}
+
+String _formatAmount(int amount) => amount.toString().replaceAllMapped(
+  RegExp(r'(?=(\d{3})+(?!\d))'),
+  (match) => '.',
+);
 
 class _MonthSelector extends StatelessWidget {
   const _MonthSelector({
