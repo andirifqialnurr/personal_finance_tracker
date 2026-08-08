@@ -24,9 +24,9 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 2. Design system dan theme
 
-- [ ] Buat color bank/token Light: background `#F7F7F4`, surface/card `#FFFFFF`, text `#182321`, muted text `#6F7B78`, accent emerald/teal `#168C78`, income, expense, dan destructive.
-- [ ] Buat color bank/token Dark: background `#171C1B`, surface/card `#222927`, text `#F2F5F3`, muted text `#AAB8B3`, serta semantic color yang tetap kontras.
-- [ ] Tambahkan dan gunakan font **Montserrat** untuk seluruh typography aplikasi.
+- [x] Buat color bank/token Light: background `#F7F7F4`, surface/card `#FFFFFF`, text `#182321`, muted text `#6F7B78`, accent emerald/teal `#168C78`, income, expense, dan destructive.
+- [x] Buat color bank/token Dark: background `#171C1B`, surface/card `#222927`, text `#F2F5F3`, muted text `#AAB8B3`, serta semantic color yang tetap kontras.
+- [x] Tambahkan dan gunakan font **Montserrat** untuk seluruh typography aplikasi.
 - [ ] Buat `ThemeData` light/dark dan dukungan `ThemeMode.system`.
 - [ ] Tetapkan skala typography untuk greeting, page title, card label, nominal uang, body, caption, dan button.
 - [ ] Tetapkan spacing, minimum touch target 44–48dp, radius kartu besar, radius input/button, dan shadow/glow yang konsisten.

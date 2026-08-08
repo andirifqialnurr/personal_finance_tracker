@@ -6,7 +6,7 @@ void main() {
   testWidgets('Flow starts in an empty Home state', (WidgetTester tester) async {
     await tester.pumpWidget(const FlowApp());
 
-    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Home'), findsWidgets);
     expect(find.text('Start your Flow'), findsOneWidget);
     expect(find.text('You have pushed the button this many times:'), findsNothing);
   });

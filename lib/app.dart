@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'theme/flow_colors.dart';
+import 'theme/flow_font.dart';
+
 class FlowApp extends StatelessWidget {
   const FlowApp({super.key});
 
@@ -9,8 +12,16 @@ class FlowApp extends StatelessWidget {
       title: 'Flow',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF168C78)),
-        scaffoldBackgroundColor: const Color(0xFFF8F8F6),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: FlowColors.accent,
+          brightness: Brightness.light,
+          surface: FlowColors.lightSurface,
+        ),
+        scaffoldBackgroundColor: FlowColors.lightBackground,
+        textTheme: FlowFont.applyTo(ThemeData.light().textTheme).apply(
+          bodyColor: FlowColors.lightText,
+          displayColor: FlowColors.lightText,
+        ),
         useMaterial3: true,
       ),
       home: const FlowShell(),
