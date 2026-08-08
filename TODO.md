@@ -95,13 +95,13 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 9. Statistics
 
-- [ ] Buat month selector.
-- [ ] Tampilkan summary Income vs Expense.
-- [ ] Buat donut/bar chart kategori pengeluaran.
-- [ ] Buat trend pengeluaran per minggu.
-- [ ] Tampilkan top categories dengan nominal dan persentase.
-- [ ] Pastikan setiap chart memiliki angka/label sehingga bukan satu-satunya penyampai informasi.
-- [ ] Buat empty state dan pastikan chart tetap aman ketika data sedikit.
+- [x] Buat month selector.
+- [x] Tampilkan summary Income vs Expense.
+- [x] Buat donut/bar chart kategori pengeluaran.
+- [x] Buat trend pengeluaran per minggu.
+- [x] Tampilkan top categories dengan nominal dan persentase.
+- [x] Pastikan setiap chart memiliki angka/label sehingga bukan satu-satunya penyampai informasi.
+- [x] Buat empty state dan pastikan chart tetap aman ketika data sedikit.
 
 ### 10. Accounts detail dan Settings
 

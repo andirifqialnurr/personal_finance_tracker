@@ -55,6 +55,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
             variant: FlowCardVariant.chart,
             child: _WeeklyTrendChart(weeks: data.weeks),
           ),
+          const SizedBox(height: FlowSpacing.md),
+          const _SectionHeading(title: 'Top categories'),
+          const SizedBox(height: FlowSpacing.sm),
+          FlowCard(
+            variant: FlowCardVariant.summary,
+            child: _TopCategories(categories: data.categories),
+          ),
         ] else
           const FlowEmptyState(
             icon: Icons.insights_outlined,
@@ -271,6 +278,58 @@ class _WeeklyTrendChart extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _TopCategories extends StatelessWidget {
+  const _TopCategories({required this.categories});
+
+  final List<CategoryStat> categories;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = categories.fold<int>(0, (sum, item) => sum + item.amount);
+    if (categories.isEmpty) {
+      return Text(
+        'No categorized expenses this month.',
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
+    }
+    return Column(
+      children: [
+        for (var index = 0; index < categories.length && index < 5; index++)
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: index == categories.length - 1 || index == 4
+                  ? 0
+                  : FlowSpacing.sm,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    categories[index].label,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+                Text(
+                  'Rp ${_formatAmount(categories[index].amount)}',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+                const SizedBox(width: FlowSpacing.sm),
+                SizedBox(
+                  width: 42,
+                  child: Text(
+                    '${(categories[index].amount * 100 / total).round()}%',
+                    textAlign: TextAlign.end,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _DonutPainter extends CustomPainter {
