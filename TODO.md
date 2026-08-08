@@ -46,8 +46,8 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 4. App shell dan navigasi
 
-- [ ] Implementasikan bottom navigation: Home, Transactions, Statistics, Accounts.
-- [ ] Tambahkan primary action `+` untuk membuka alur tambah transaksi.
+- [x] Implementasikan bottom navigation: Home, Transactions, Statistics, Accounts.
+- [x] Tambahkan primary action `+` untuk membuka alur tambah transaksi.
 - [ ] Tambahkan akses Settings dari avatar/icon pada Home.
 - [ ] Pastikan state navigasi dan theme tidak hilang saat berpindah tab.
 

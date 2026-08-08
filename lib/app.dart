@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'screens/add_transaction_page.dart';
 import 'theme/flow_theme.dart';
 import 'theme/flow_tokens.dart';
 
@@ -64,7 +65,9 @@ class _FlowShellState extends State<FlowShell> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const AddTransactionPage()),
+        ),
         tooltip: 'Add transaction',
         child: const Icon(Icons.add),
       ),
