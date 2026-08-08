@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'data/models/models.dart';
+import 'data/default_category_seeder.dart';
 import 'screens/account_form_page.dart';
 import 'screens/account_detail_page.dart';
 import 'screens/accounts_page.dart';
@@ -25,6 +26,18 @@ class _FlowAppState extends State<FlowApp> {
   ThemeMode _themeMode = ThemeMode.system;
   final List<Account> _accounts = [];
   final List<Transaction> _transactions = [];
+  List<Category> _categories = [
+    for (var index = 0; index < DefaultCategorySeeder.defaults.length; index++)
+      Category(
+        id: index + 1,
+        name: DefaultCategorySeeder.defaults[index].name,
+        transactionType: DefaultCategorySeeder.defaults[index].transactionType,
+        icon: DefaultCategorySeeder.defaults[index].icon,
+        color: DefaultCategorySeeder.defaults[index].color,
+        isDefault: true,
+      ),
+  ];
+  String _currency = 'IDR';
   bool _hasCompletedWelcome = false;
 
   @override
@@ -61,6 +74,16 @@ class _FlowAppState extends State<FlowApp> {
         builder: (_) => FlowSettingsPage(
           initialThemeMode: _themeMode,
           onThemeModeChanged: (mode) => setState(() => _themeMode = mode),
+          currency: _currency,
+          onCurrencyChanged: (currency) => setState(() => _currency = currency),
+          categories: _categories,
+          onCategoriesChanged: (categories) => setState(() => _categories = categories),
+          onDeleteAll: () => setState(() {
+            _accounts.clear();
+            _transactions.clear();
+            _categories = [];
+            _hasCompletedWelcome = false;
+          }),
         ),
       ),
     );

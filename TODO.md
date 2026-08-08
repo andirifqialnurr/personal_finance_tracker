@@ -105,12 +105,12 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 10. Accounts detail dan Settings
 
-- [ ] Buat account detail dengan transaksi milik akun tersebut.
-- [ ] Tambahkan pengaturan currency display.
-- [ ] Tambahkan pilihan Light / Dark / System.
-- [ ] Tambahkan Manage Categories untuk edit/archive kategori.
+- [x] Buat account detail dengan transaksi milik akun tersebut.
+- [x] Tambahkan pengaturan currency display.
+- [x] Tambahkan pilihan Light / Dark / System.
+- [x] Tambahkan Manage Categories untuk edit/archive kategori.
 - [ ] Sediakan Export CSV sebagai stretch goal lokal setelah core flow selesai.
-- [ ] Tambahkan Delete all data dengan konfirmasi kuat.
+- [x] Tambahkan Delete all data dengan konfirmasi kuat.
 
 ### 11. Validasi MVP dan polish terbatas
 

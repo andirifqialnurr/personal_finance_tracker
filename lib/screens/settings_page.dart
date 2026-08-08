@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../components/flow_components.dart';
+import '../data/models/models.dart';
+import 'manage_categories_page.dart';
 import '../theme/flow_tokens.dart';
 
 class FlowSettingsPage extends StatefulWidget {
@@ -8,9 +10,19 @@ class FlowSettingsPage extends StatefulWidget {
     super.key,
     required this.initialThemeMode,
     required this.onThemeModeChanged,
+    required this.currency,
+    required this.onCurrencyChanged,
+    required this.categories,
+    required this.onCategoriesChanged,
+    required this.onDeleteAll,
   });
   final ThemeMode initialThemeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
+  final String currency;
+  final ValueChanged<String> onCurrencyChanged;
+  final List<Category> categories;
+  final ValueChanged<List<Category>> onCategoriesChanged;
+  final VoidCallback onDeleteAll;
 
   @override
   State<FlowSettingsPage> createState() => _FlowSettingsPageState();
@@ -54,13 +66,78 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
             },
           ),
           const SizedBox(height: FlowSpacing.lg),
-          const FlowSelector(
+          FlowSelector(
             label: 'Currency',
-            value: 'IDR',
+            value: widget.currency,
             icon: Icons.payments_outlined,
+            onTap: _selectCurrency,
+          ),
+          const SizedBox(height: FlowSpacing.md),
+          FlowSelector(
+            label: 'Categories',
+            value: '${widget.categories.where((category) => !category.isArchived).length} active',
+            icon: Icons.category_outlined,
+            onTap: () => Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(
+                builder: (_) => ManageCategoriesPage(
+                  categories: widget.categories,
+                  onChanged: widget.onCategoriesChanged,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: FlowSpacing.xl),
+          Text('Danger zone', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: FlowSpacing.sm),
+          FlowButton(
+            label: 'Delete all data',
+            variant: FlowButtonVariant.destructive,
+            onPressed: _confirmDeleteAll,
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _selectCurrency() async {
+    final currency = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final option in ['IDR', 'USD', 'SGD'])
+              ListTile(
+                title: Text(option),
+                trailing: option == widget.currency ? const Icon(Icons.check) : null,
+                onTap: () => Navigator.pop(context, option),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (currency != null) widget.onCurrencyChanged(currency);
+  }
+
+  Future<void> _confirmDeleteAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete all data?'),
+        content: const Text('This permanently removes every account, transaction, and category from this device.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete everything'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      widget.onDeleteAll();
+      Navigator.of(context).pop();
+    }
   }
 }
