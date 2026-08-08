@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
+import 'default_category_seeder.dart';
+
 class FlowDatabase {
   FlowDatabase._(this._database);
 
@@ -25,7 +27,9 @@ class FlowDatabase {
         }
       },
     );
-    return FlowDatabase._(database);
+    final flowDatabase = FlowDatabase._(database);
+    await DefaultCategorySeeder(flowDatabase).seed();
+    return flowDatabase;
   }
 
   Future<void> close() => _database.close();

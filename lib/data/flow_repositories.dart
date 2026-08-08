@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart' hide Transaction;
 
+import 'flow_balance_service.dart';
 import 'flow_database.dart';
 import 'models/models.dart';
 
@@ -95,8 +96,10 @@ class CategoryRepository {
 }
 
 class TransactionRepository {
-  TransactionRepository(this._database);
+  TransactionRepository(this._database)
+    : _balanceService = AccountBalanceService(_database);
   final FlowDatabase _database;
+  final AccountBalanceService _balanceService;
 
   Future<int> create(Transaction transaction) =>
       _database.database.insert('transactions', transaction.toMap());
@@ -149,6 +152,30 @@ class TransactionRepository {
     where: 'id = ?',
     whereArgs: [id],
   );
+
+  Future<Map<int, int>> updateAndRecalculate(Transaction transaction) async {
+    final previous = await findById(_id(transaction.id, 'transaction'));
+    if (previous == null) {
+      throw StateError('Transaction ${transaction.id} does not exist');
+    }
+    await update(transaction);
+    return _balanceService.calculateForAccounts([
+      previous.accountId,
+      ?previous.destinationAccountId,
+      transaction.accountId,
+      ?transaction.destinationAccountId,
+    ]);
+  }
+
+  Future<Map<int, int>> deleteAndRecalculate(int id) async {
+    final previous = await findById(id);
+    if (previous == null) throw StateError('Transaction $id does not exist');
+    await delete(id);
+    return _balanceService.calculateForAccounts([
+      previous.accountId,
+      ?previous.destinationAccountId,
+    ]);
+  }
 }
 
 class SettingsRepository {
