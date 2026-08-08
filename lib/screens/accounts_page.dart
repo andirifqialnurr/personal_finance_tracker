@@ -11,12 +11,16 @@ class AccountsPage extends StatelessWidget {
     required this.onAdd,
     required this.onEdit,
     required this.onArchive,
+    required this.transactions,
+    required this.onOpenDetail,
   });
 
   final List<Account> accounts;
   final VoidCallback onAdd;
   final ValueChanged<Account> onEdit;
   final ValueChanged<Account> onArchive;
+  final List<Transaction> transactions;
+  final ValueChanged<Account> onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +76,7 @@ class AccountsPage extends StatelessWidget {
             FlowCard(
               variant: FlowCardVariant.action,
               child: InkWell(
-                onTap: () => onEdit(account),
+                onTap: () => onOpenDetail(account),
                 borderRadius: BorderRadius.circular(FlowRadii.card),
                 child: Row(
                   children: [

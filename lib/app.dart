@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'data/models/models.dart';
 import 'screens/account_form_page.dart';
+import 'screens/account_detail_page.dart';
 import 'screens/accounts_page.dart';
 import 'screens/add_transaction_page.dart';
 import 'screens/settings_page.dart';
@@ -42,6 +43,8 @@ class _FlowAppState extends State<FlowApp> {
               onAddAccount: () => _openAccountForm(context),
               onEditAccount: (account) => _openAccountForm(context, account),
               onArchiveAccount: _archiveAccount,
+              onOpenAccountDetail: (account) =>
+                  _openAccountDetail(context, account),
               onAddTransaction: () => _openAddTransaction(context),
               onOpenTransactionDetail: (transaction) =>
                   _openTransactionDetail(context, transaction),
@@ -111,6 +114,23 @@ class _FlowAppState extends State<FlowApp> {
             setState(() => _transactions.remove(transaction));
             Navigator.of(context).pop();
           },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openAccountDetail(BuildContext context, Account account) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => AccountDetailPage(
+          account: account,
+          transactions: _transactions,
+          onEdit: () {
+            Navigator.of(context).pop();
+            _openAccountForm(context, account);
+          },
+          onOpenTransaction: (transaction) =>
+              _openTransactionDetail(context, transaction),
         ),
       ),
     );
@@ -188,6 +208,7 @@ class FlowShell extends StatefulWidget {
     required this.onAddAccount,
     required this.onEditAccount,
     required this.onArchiveAccount,
+    required this.onOpenAccountDetail,
     required this.onAddTransaction,
     required this.onOpenTransactionDetail,
   });
@@ -198,6 +219,7 @@ class FlowShell extends StatefulWidget {
   final VoidCallback onAddAccount;
   final ValueChanged<Account> onEditAccount;
   final ValueChanged<Account> onArchiveAccount;
+  final ValueChanged<Account> onOpenAccountDetail;
   final VoidCallback onAddTransaction;
   final ValueChanged<Transaction> onOpenTransactionDetail;
 
@@ -251,6 +273,8 @@ class _FlowShellState extends State<FlowShell> {
               onAdd: widget.onAddAccount,
               onEdit: widget.onEditAccount,
               onArchive: widget.onArchiveAccount,
+              transactions: widget.transactions,
+              onOpenDetail: widget.onOpenAccountDetail,
             ),
           ],
         ),
