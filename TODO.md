@@ -4,14 +4,14 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ## Arah desain yang disepakati
 
-- [ ] Gunakan gaya visual **clean, modern, dan futuristik** dengan fokus pada kartu UI sebagai elemen utama.
-- [ ] Terapkan sudut kartu yang sangat membulat, border/radius yang rapi, dan shadow lembut dengan glow tipis.
-- [ ] Gunakan font **Montserrat** secara konsisten untuk seluruh aplikasi.
-- [ ] Pertahankan visual tetap tenang dan mudah dipindai; jangan menambahkan dashboard, animasi, atau fitur dekoratif di luar kebutuhan MVP.
-- [ ] Light mode memakai neutral warm/gray, dark mode memakai charcoal, dengan accent emerald/teal.
-- [ ] Warna merah dibatasi untuk expense dan destructive action.
-- [ ] Target utama mobile portrait dengan dukungan lebar small (320–359dp), medium (360–399dp), dan large (≥400dp).
-- [ ] Gunakan satu set component dan layout yang sama untuk Light, Dark, dan System; perbedaan hanya melalui design tokens.
+- [x] Gunakan gaya visual **clean, modern, dan futuristik** dengan fokus pada kartu UI sebagai elemen utama.
+- [x] Terapkan sudut kartu yang sangat membulat, border/radius yang rapi, dan shadow lembut dengan glow tipis.
+- [x] Gunakan font **Montserrat** secara konsisten untuk seluruh aplikasi.
+- [x] Pertahankan visual tetap tenang dan mudah dipindai; jangan menambahkan dashboard, animasi, atau fitur dekoratif di luar kebutuhan MVP.
+- [x] Light mode memakai neutral warm/gray, dark mode memakai charcoal, dengan accent emerald/teal.
+- [x] Warna merah dibatasi untuk expense dan destructive action.
+- [x] Target utama mobile portrait dengan dukungan lebar small (320–359dp), medium (360–399dp), dan large (≥400dp).
+- [x] Gunakan satu set component dan layout yang sama untuk Light, Dark, dan System; perbedaan hanya melalui design tokens.
 
 ## Urutan pengerjaan
 
@@ -109,17 +109,17 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 - [x] Tambahkan pengaturan currency display.
 - [x] Tambahkan pilihan Light / Dark / System.
 - [x] Tambahkan Manage Categories untuk edit/archive kategori.
-- [ ] Sediakan Export CSV sebagai stretch goal lokal setelah core flow selesai.
+- [x] Sediakan Export CSV sebagai stretch goal lokal setelah core flow selesai.
 - [x] Tambahkan Delete all data dengan konfirmasi kuat.
 
 ### 11. Validasi MVP dan polish terbatas
 
-- [ ] Tambahkan test untuk kalkulasi saldo, transfer, filter, dan persistence.
-- [ ] Jalankan analyzer/test/build Flutter dan perbaiki blocker pertama yang ditemukan.
-- [ ] Smoke test core flow: buat akun → income/expense → edit/delete → transfer → tutup/buka aplikasi.
-- [ ] Cek semua state wajib PRD: empty, normal, validation error, no result, delete confirmation, nama panjang, light/dark.
-- [ ] Cek touch target, safe area, keyboard, overflow, dan scrolling pada small/medium/large phone.
-- [ ] Lakukan final visual pass pada konsistensi Montserrat, rounded card, shadow/glow, spacing, dan warna.
+- [x] Tambahkan test untuk kalkulasi saldo, transfer, filter, dan persistence.
+- [x] Jalankan analyzer/test/build Flutter dan perbaiki blocker pertama yang ditemukan.
+- [x] Smoke test core flow: buat akun → income/expense → edit/delete → transfer → tutup/buka aplikasi.
+- [x] Cek semua state wajib PRD: empty, normal, validation error, no result, delete confirmation, nama panjang, light/dark.
+- [x] Cek touch target, safe area, keyboard, overflow, dan scrolling pada small/medium/large phone.
+- [x] Lakukan final visual pass pada konsistensi Montserrat, rounded card, shadow/glow, spacing, dan warna.
 
 ## Di luar scope prototype awal
 
@@ -129,10 +129,10 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ## Definition of Done MVP
 
-- [ ] User dapat membuat akun dan mencatat income/expense secara offline.
-- [ ] Total balance dan saldo akun konsisten setelah create/edit/delete.
-- [ ] Transfer tidak masuk ke income/expense.
-- [ ] Transactions dan Statistics mendukung filter/pemahaman data dasar.
-- [ ] Data tetap ada setelah aplikasi ditutup dan dibuka kembali.
-- [ ] Core flow usable pada small, medium, dan large phone widths.
-- [ ] Visual mengikuti arah desain dan menggunakan Montserrat.
+- [x] User dapat membuat akun dan mencatat income/expense secara offline.
+- [x] Total balance dan saldo akun konsisten setelah create/edit/delete.
+- [x] Transfer tidak masuk ke income/expense.
+- [x] Transactions dan Statistics mendukung filter/pemahaman data dasar.
+- [x] Data tetap ada setelah aplikasi ditutup dan dibuka kembali.
+- [x] Core flow usable pada small, medium, dan large phone widths.
+- [x] Visual mengikuti arah desain dan menggunakan Montserrat.
