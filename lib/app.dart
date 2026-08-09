@@ -13,7 +13,6 @@ import 'screens/transaction_detail_page.dart';
 import 'screens/welcome_page.dart';
 import 'screens/home_dashboard.dart';
 import 'theme/flow_theme.dart';
-import 'theme/flow_tokens.dart';
 
 class FlowApp extends StatefulWidget {
   const FlowApp({super.key});
@@ -23,6 +22,7 @@ class FlowApp extends StatefulWidget {
 }
 
 class _FlowAppState extends State<FlowApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
   ThemeMode _themeMode = ThemeMode.system;
   final List<Account> _accounts = [];
   final List<Transaction> _transactions = [];
@@ -45,6 +45,7 @@ class _FlowAppState extends State<FlowApp> {
     return MaterialApp(
       title: 'Flow',
       debugShowCheckedModeBanner: false,
+      navigatorKey: _navigatorKey,
       theme: FlowTheme.light(),
       darkTheme: FlowTheme.dark(),
       themeMode: _themeMode,
@@ -69,7 +70,7 @@ class _FlowAppState extends State<FlowApp> {
   }
 
   Future<void> _openSettings(BuildContext context) async {
-    await Navigator.of(context).push<void>(
+    await _navigatorKey.currentState!.push<void>(
       MaterialPageRoute<void>(
         builder: (_) => FlowSettingsPage(
           initialThemeMode: _themeMode,
@@ -93,7 +94,7 @@ class _FlowAppState extends State<FlowApp> {
     BuildContext context, [
     Transaction? initialTransaction,
   ]) async {
-    await Navigator.of(context).push<void>(
+    await _navigatorKey.currentState!.push<void>(
       MaterialPageRoute<void>(
         builder: (_) => AddTransactionPage(
           accounts: _accounts,
@@ -122,7 +123,7 @@ class _FlowAppState extends State<FlowApp> {
     BuildContext context,
     Transaction transaction,
   ) async {
-    await Navigator.of(context).push<void>(
+    await _navigatorKey.currentState!.push<void>(
       MaterialPageRoute<void>(
         builder: (_) => TransactionDetailPage(
           transaction: transaction,
@@ -143,7 +144,7 @@ class _FlowAppState extends State<FlowApp> {
   }
 
   Future<void> _openAccountDetail(BuildContext context, Account account) async {
-    await Navigator.of(context).push<void>(
+    await _navigatorKey.currentState!.push<void>(
       MaterialPageRoute<void>(
         builder: (_) => AccountDetailPage(
           account: account,
@@ -163,7 +164,7 @@ class _FlowAppState extends State<FlowApp> {
     BuildContext context, [
     Account? account,
   ]) async {
-    await Navigator.of(context).push<void>(
+    await _navigatorKey.currentState!.push<void>(
       MaterialPageRoute<void>(
         builder: (_) => AccountFormPage(
           account: account,
@@ -309,6 +310,7 @@ class _FlowShellState extends State<FlowShell> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
         },
@@ -316,42 +318,6 @@ class _FlowShellState extends State<FlowShell> {
           for (final item in _pages)
             NavigationDestination(icon: Icon(item.icon), label: item.title),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyPage extends StatelessWidget {
-  const _EmptyPage({required this.data});
-
-  final _FlowPageData data;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(FlowSpacing.lg),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              data.icon,
-              size: FlowIconSize.pageEmptyState,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: FlowSpacing.md),
-            Text(
-              '${data.title} will appear here',
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: FlowSpacing.xs),
-            const Text(
-              'Your local finance data will be available once the first account and transaction flow is added.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }

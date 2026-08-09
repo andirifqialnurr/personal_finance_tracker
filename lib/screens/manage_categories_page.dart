@@ -15,7 +15,7 @@ class ManageCategoriesPage extends StatefulWidget {
 }
 
 class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
-  late List<Category> _categories = List.of(widget.categories);
+  late final List<Category> _categories = List.of(widget.categories);
 
   @override
   Widget build(BuildContext context) {

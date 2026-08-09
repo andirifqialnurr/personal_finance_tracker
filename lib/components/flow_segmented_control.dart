@@ -17,28 +17,48 @@ class FlowSegmentedControl extends StatelessWidget {
   Widget build(BuildContext context) {
     assert(labels.isNotEmpty);
     assert(selectedIndex >= 0 && selectedIndex < labels.length);
-    return SegmentedButton<int>(
-      segments: [
-        for (var i = 0; i < labels.length; i++)
-          ButtonSegment(
-            value: i,
-            label: Text(
-              labels[i],
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-      ],
-      selected: {selectedIndex},
-      onSelectionChanged: (selection) => onChanged(selection.first),
-      style: ButtonStyle(
-        minimumSize: const WidgetStatePropertyAll(
-          Size(0, FlowControlSize.minTouchTarget),
-        ),
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FlowRadii.button),
-          ),
+    final colors = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border.all(color: colors.outline),
+        borderRadius: BorderRadius.circular(FlowRadii.button),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(FlowRadii.button),
+        child: Row(
+          children: [
+            for (var i = 0; i < labels.length; i++)
+              Expanded(
+                child: Semantics(
+                  button: true,
+                  selected: i == selectedIndex,
+                  label: labels[i],
+                  child: InkWell(
+                    onTap: () => onChanged(i),
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minHeight: FlowControlSize.minTouchTarget,
+                      ),
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: FlowSpacing.xs,
+                      ),
+                      color: i == selectedIndex
+                          ? colors.primary.withValues(alpha: 0.14)
+                          : null,
+                      child: Text(
+                        labels[i],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

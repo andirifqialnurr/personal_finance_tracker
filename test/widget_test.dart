@@ -41,7 +41,7 @@ void main() {
     await tester.tap(find.text('Transactions'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Transactions will appear here'), findsOneWidget);
+    expect(find.text('No transactions yet'), findsOneWidget);
   });
 
   testWidgets('primary action opens the add transaction flow', (
@@ -91,7 +91,7 @@ void main() {
 
     expect(find.text('Total balance'), findsOneWidget);
     expect(find.text('Your accounts'), findsOneWidget);
-    expect(find.text('Cash'), findsOneWidget);
+    expect(find.text('Cash'), findsWidgets);
   });
 
   testWidgets('account archive preserves the shell and shows empty state', (

@@ -31,7 +31,13 @@ class FlowButton extends StatelessWidget {
             children: [
               Icon(icon),
               const SizedBox(width: FlowSpacing.xs),
-              Text(label),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           );
     final base = ButtonStyle(
