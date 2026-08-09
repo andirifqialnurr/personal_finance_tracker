@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'data/flow_store.dart';
+import 'data/flow_csv_exporter.dart';
 import 'data/models/models.dart';
 import 'screens/account_form_page.dart';
 import 'screens/account_detail_page.dart';
@@ -98,6 +99,8 @@ class _FlowAppState extends State<FlowApp> {
                   _openTransactionDetail(context, transaction),
             )
           : FlowWelcomePage(
+              currency: _currency,
+              onCurrencyChanged: _changeCurrency,
               onCreateFirstAccount: () => _openAccountForm(context),
             ),
     );
@@ -112,7 +115,13 @@ class _FlowAppState extends State<FlowApp> {
           currency: _currency,
           onCurrencyChanged: _changeCurrency,
           categories: _categories,
-          onCategoriesChanged: (categories) => setState(() => _categories = categories),
+          onCategoriesChanged: (categories) {
+            setState(() => _categories = categories);
+            for (final category in categories) {
+              _persist(_store.saveCategory(category));
+            }
+          },
+          onExportCsv: _exportCsv,
           onDeleteAll: _deleteAllData,
         ),
       ),
@@ -127,6 +136,8 @@ class _FlowAppState extends State<FlowApp> {
       MaterialPageRoute<void>(
         builder: (_) => AddTransactionPage(
           accounts: _accounts,
+          categories: _categories,
+          currency: _currency,
           initialTransaction: initialTransaction,
           onSaved: (transaction) =>
               _saveTransaction(transaction, initialTransaction),
@@ -163,6 +174,29 @@ class _FlowAppState extends State<FlowApp> {
           accountName: _accounts
               .firstWhere((account) => account.id == transaction.accountId)
               .name,
+          destinationAccountName: transaction.destinationAccountId == null
+              ? null
+              : _accounts
+                    .firstWhere(
+                      (account) =>
+                          account.id == transaction.destinationAccountId,
+                    )
+                    .name,
+          categoryName: transaction.categoryId == null
+              ? null
+              : _categories
+                    .firstWhere(
+                      (category) => category.id == transaction.categoryId,
+                      orElse: () => Category(
+                        id: transaction.categoryId,
+                        name: 'Category ${transaction.categoryId}',
+                        transactionType: transaction.type,
+                        icon: 'category',
+                        color: '#C96B6B',
+                      ),
+                    )
+                    .name,
+          currency: _currency,
           onEdit: () {
             _navigatorKey.currentState!.pop();
             unawaited(_openAddTransaction(context, transaction));
@@ -183,6 +217,7 @@ class _FlowAppState extends State<FlowApp> {
         builder: (_) => AccountDetailPage(
           account: account,
           transactions: _transactions,
+          currency: _currency,
           onEdit: () {
             _navigatorKey.currentState!.pop();
             unawaited(_openAccountForm(context, account));
@@ -270,13 +305,22 @@ class _FlowAppState extends State<FlowApp> {
     setState(() {
       _accounts.clear();
       _transactions.clear();
-      _categories = [];
+      _categories = MemoryFlowStore.defaultCategories();
       _currency = 'IDR';
       _themeMode = ThemeMode.system;
       _hideBalance = false;
       _hasCompletedWelcome = false;
     });
     _persist(_store.deleteAll());
+  }
+
+  Future<String> _exportCsv() async {
+    final file = await FlowCsvExporter.write(
+      transactions: _transactions,
+      accounts: _accounts,
+      categories: _categories,
+    );
+    return file.path;
   }
 
   void _persist(Future<dynamic> operation) {
@@ -406,15 +450,22 @@ class _FlowShellState extends State<FlowShell> {
             TransactionsPage(
               transactions: widget.transactions,
               accounts: widget.accounts,
+              categories: widget.categories,
+              currency: widget.currency,
               onOpenDetail: widget.onOpenTransactionDetail,
             ),
-            StatisticsPage(transactions: widget.transactions),
+            StatisticsPage(
+              transactions: widget.transactions,
+              categories: widget.categories,
+              currency: widget.currency,
+            ),
             AccountsPage(
               accounts: widget.accounts,
               onAdd: widget.onAddAccount,
               onEdit: widget.onEditAccount,
               onArchive: widget.onArchiveAccount,
               transactions: widget.transactions,
+              currency: widget.currency,
               onOpenDetail: widget.onOpenAccountDetail,
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../components/flow_components.dart';
 import '../data/models/models.dart';
+import '../utils/flow_format.dart';
 import '../theme/flow_tokens.dart';
 
 class AccountDetailPage extends StatelessWidget {
@@ -11,12 +12,14 @@ class AccountDetailPage extends StatelessWidget {
     required this.transactions,
     required this.onEdit,
     required this.onOpenTransaction,
+    this.currency = 'IDR',
   });
 
   final Account account;
   final List<Transaction> transactions;
   final VoidCallback onEdit;
   final ValueChanged<Transaction> onOpenTransaction;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +53,7 @@ class AccountDetailPage extends StatelessWidget {
               children: [
                 Text('Current balance', style: Theme.of(context).textTheme.labelMedium),
                 const SizedBox(height: FlowSpacing.xs),
-                FlowAmountText(amount: 'Rp ${_format(balance)}'),
+                FlowAmountText(amount: formatCurrency(balance, currency)),
                 const SizedBox(height: FlowSpacing.sm),
                 Text(
                   '${accountTransactions.length} transaction${accountTransactions.length == 1 ? '' : 's'}',
@@ -95,7 +98,8 @@ class AccountDetailPage extends StatelessWidget {
                         ),
                       ),
                       FlowAmountText(
-                        amount: '${_isIncoming(transaction, account.id) ? '+' : '-'} Rp ${_format(transaction.amount)}',
+                        amount:
+                            '${_isIncoming(transaction, account.id) ? '+' : '-'} ${formatCurrency(transaction.amount, currency)}',
                         variant: _amountVariant(transaction, account.id),
                         style: const TextStyle(fontSize: 13),
                       ),
@@ -157,8 +161,4 @@ class AccountDetailPage extends StatelessWidget {
               ? FlowAmountVariant.transfer
               : FlowAmountVariant.expense;
 
-  static String _format(int value) => value.toString().replaceAllMapped(
-    RegExp(r'(?<!^)(?=(\d{3})+$)'),
-    (_) => '.',
-  );
 }

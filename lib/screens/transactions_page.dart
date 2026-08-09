@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../components/flow_components.dart';
 import '../data/models/models.dart';
+import '../data/transaction_filter.dart';
 import '../theme/flow_tokens.dart';
+import '../utils/flow_format.dart';
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({
@@ -10,10 +12,14 @@ class TransactionsPage extends StatefulWidget {
     required this.transactions,
     required this.accounts,
     required this.onOpenDetail,
+    this.categories = const [],
+    this.currency = 'IDR',
   });
   final List<Transaction> transactions;
   final List<Account> accounts;
   final ValueChanged<Transaction> onOpenDetail;
+  final List<Category> categories;
+  final String currency;
 
   @override
   State<TransactionsPage> createState() => _TransactionsPageState();
@@ -38,14 +44,20 @@ class _TransactionsPageState extends State<TransactionsPage> {
     final accountNames = {
       for (final account in widget.accounts) account.id: account.name,
     };
-    final filtered =
-        widget.transactions
-            .where(
-              (transaction) =>
-                  _matchesQuery(transaction) && _matchesFilters(transaction),
-            )
-            .toList()
-          ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    final categoryNames = {
+      for (final category in widget.categories)
+        if (category.id != null) category.id!: category.name,
+    };
+    final filtered = FlowTransactionFilter(
+        query: _query,
+        type: _typeFilter,
+        accountId: _accountFilter,
+        categoryId: _categoryFilter,
+        startDate: _dateRange?.start,
+        endDate: _dateRange?.end.add(const Duration(days: 1)),
+      )
+        .apply(widget.transactions, categoryNames: categoryNames)
+      ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
     final incomeTotal = filtered
         .where((transaction) => transaction.type == TransactionType.income)
         .fold<int>(0, (sum, transaction) => sum + transaction.amount);
@@ -134,6 +146,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 label: 'Income',
                 amount: incomeTotal,
                 variant: FlowAmountVariant.income,
+                currency: widget.currency,
               ),
             ),
             const SizedBox(width: FlowSpacing.sm),
@@ -142,6 +155,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 label: 'Expense',
                 amount: expenseTotal,
                 variant: FlowAmountVariant.expense,
+                currency: widget.currency,
               ),
             ),
           ],
@@ -173,9 +187,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   for (final transaction in entry.value)
                     FlowTransactionTile(
                       title: _typeLabel(transaction.type),
-                      subtitle: _subtitle(transaction, accountNames),
+                      subtitle: _subtitle(
+                        transaction,
+                        accountNames,
+                        categoryNames,
+                      ),
                       amount:
-                          '${transaction.type == TransactionType.expense ? '-' : '+'} Rp ${_format(transaction.amount)}',
+                          '${transaction.type == TransactionType.expense ? '-' : '+'} ${formatCurrency(transaction.amount, widget.currency)}',
                       icon: _icon(transaction.type),
                       amountVariant: _amountVariant(transaction.type),
                       onTap: () => widget.onOpenDetail(transaction),
@@ -187,37 +205,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
           ],
       ],
     );
-  }
-
-  bool _matchesQuery(Transaction transaction) {
-    if (_query.isEmpty) return true;
-    final category = transaction.categoryId == null
-        ? ''
-        : 'category ${transaction.categoryId}';
-    return (transaction.note ?? '').toLowerCase().contains(_query) ||
-        category.contains(_query);
-  }
-
-  bool _matchesFilters(Transaction transaction) {
-    if (_typeFilter != null && transaction.type != _typeFilter) {
-      return false;
-    }
-    if (_accountFilter != null &&
-        transaction.accountId != _accountFilter &&
-        transaction.destinationAccountId != _accountFilter) {
-      return false;
-    }
-    if (_categoryFilter != null && transaction.categoryId != _categoryFilter) {
-      return false;
-    }
-    if (_dateRange != null &&
-        (transaction.occurredAt.isBefore(_dateRange!.start) ||
-            transaction.occurredAt.isAfter(
-              _dateRange!.end.add(const Duration(days: 1)),
-            ))) {
-      return false;
-    }
-    return true;
   }
 
   Future<void> _selectType() async {
@@ -259,10 +246,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
           .whereType<int>()
           .toSet(),
     ];
+    final categoryNames = {
+      for (final category in widget.categories)
+        if (category.id != null) category.id!: category.name,
+    };
     final selected = await _showFilterSheet<int>(
       'Filter category',
       options,
-      labelOf: (id) => id == 0 ? 'All categories' : 'Category $id',
+      labelOf: (id) => id == 0
+          ? 'All categories'
+          : categoryNames[id] ?? 'Category $id',
     );
     if (selected != null) {
       setState(() => _categoryFilter = selected == 0 ? null : selected);
@@ -310,13 +303,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
   static String _subtitle(
     Transaction transaction,
     Map<int?, String> accountNames,
+    Map<int, String> categoryNames,
   ) {
     final account =
         accountNames[transaction.accountId] ??
         'Account ${transaction.accountId}';
     final category = transaction.categoryId == null
         ? 'No category'
-        : 'Category ${transaction.categoryId}';
+        : categoryNames[transaction.categoryId] ??
+              'Category ${transaction.categoryId}';
     return [
       account,
       category,
@@ -342,10 +337,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
         TransactionType.expense => FlowAmountVariant.expense,
         TransactionType.transfer => FlowAmountVariant.transfer,
       };
-  static String _format(int value) => value.toString().replaceAllMapped(
-    RegExp(r'(?<!^)(?=(\d{3})+$)'),
-    (_) => '.',
-  );
   static String _accountName(int id, Map<int?, String> names) =>
       names[id] ?? 'Account $id';
 }
@@ -355,10 +346,12 @@ class _TotalCard extends StatelessWidget {
     required this.label,
     required this.amount,
     required this.variant,
+    required this.currency,
   });
   final String label;
   final int amount;
   final FlowAmountVariant variant;
+  final String currency;
 
   @override
   Widget build(BuildContext context) => FlowCard(
@@ -369,7 +362,7 @@ class _TotalCard extends StatelessWidget {
         Text(label, style: Theme.of(context).textTheme.labelMedium),
         const SizedBox(height: FlowSpacing.xs),
         FlowAmountText(
-          amount: 'Rp $amount',
+          amount: formatCurrency(amount, currency),
           variant: variant,
           style: const TextStyle(fontSize: 16),
         ),

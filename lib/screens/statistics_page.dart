@@ -5,11 +5,19 @@ import '../components/flow_empty_state.dart';
 import '../data/models/models.dart';
 import '../theme/flow_colors.dart';
 import '../theme/flow_tokens.dart';
+import '../utils/flow_format.dart';
 
 class StatisticsPage extends StatefulWidget {
-  const StatisticsPage({super.key, required this.transactions});
+  const StatisticsPage({
+    super.key,
+    required this.transactions,
+    this.categories = const [],
+    this.currency = 'IDR',
+  });
 
   final List<Transaction> transactions;
+  final List<Category> categories;
+  final String currency;
 
   @override
   State<StatisticsPage> createState() => _StatisticsPageState();
@@ -23,6 +31,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
     final data = StatisticsData.fromTransactions(
       widget.transactions,
       _selectedMonth,
+      categoryNames: {
+        for (final category in widget.categories)
+          if (category.id != null) category.id!: category.name,
+      },
     );
 
     return ListView(
@@ -40,13 +52,16 @@ class _StatisticsPageState extends State<StatisticsPage> {
         ),
         const SizedBox(height: FlowSpacing.md),
         if (data.hasData) ...[
-          _SummaryCard(data: data),
+          _SummaryCard(data: data, currency: widget.currency),
           const SizedBox(height: FlowSpacing.md),
           const _SectionHeading(title: 'Spending by category'),
           const SizedBox(height: FlowSpacing.sm),
           FlowCard(
             variant: FlowCardVariant.chart,
-            child: _CategoryChart(categories: data.categories),
+            child: _CategoryChart(
+              categories: data.categories,
+              currency: widget.currency,
+            ),
           ),
           const SizedBox(height: FlowSpacing.md),
           const _SectionHeading(title: 'Weekly spending trend'),
@@ -60,7 +75,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
           const SizedBox(height: FlowSpacing.sm),
           FlowCard(
             variant: FlowCardVariant.summary,
-            child: _TopCategories(categories: data.categories),
+            child: _TopCategories(
+              categories: data.categories,
+              currency: widget.currency,
+            ),
           ),
         ] else
           const FlowEmptyState(
@@ -85,18 +103,22 @@ class StatisticsData {
     required this.expense,
     required this.categories,
     required this.weeks,
+    this.categoryNames = const {},
   });
 
   final int income;
   final int expense;
   final List<CategoryStat> categories;
   final List<WeekStat> weeks;
+  final Map<int, String> categoryNames;
 
   bool get hasData => income > 0 || expense > 0;
 
   factory StatisticsData.fromTransactions(
     List<Transaction> transactions,
-    DateTime month,
+    DateTime month, {
+    Map<int, String> categoryNames = const {},
+  }
   ) {
     var income = 0;
     var expense = 0;
@@ -124,7 +146,13 @@ class StatisticsData {
       }
     }
     final categories = categoryTotals.entries
-        .map((entry) => CategoryStat(id: entry.key, amount: entry.value))
+        .map(
+          (entry) => CategoryStat(
+            id: entry.key,
+            amount: entry.value,
+            name: entry.key == null ? null : categoryNames[entry.key],
+          ),
+        )
         .toList()
       ..sort((a, b) => b.amount.compareTo(a.amount));
     return StatisticsData(
@@ -135,17 +163,19 @@ class StatisticsData {
         for (var index = 0; index < weekTotals.length; index++)
           WeekStat(label: 'W${index + 1}', amount: weekTotals[index]),
       ],
+      categoryNames: categoryNames,
     );
   }
 }
 
 class CategoryStat {
-  const CategoryStat({required this.id, required this.amount});
+  const CategoryStat({required this.id, required this.amount, this.name});
 
   final int? id;
   final int amount;
+  final String? name;
 
-  String get label => id == null ? 'Uncategorized' : 'Category $id';
+  String get label => name ?? (id == null ? 'Uncategorized' : 'Category $id');
 }
 
 class WeekStat {
@@ -156,9 +186,10 @@ class WeekStat {
 }
 
 class _CategoryChart extends StatelessWidget {
-  const _CategoryChart({required this.categories});
+  const _CategoryChart({required this.categories, required this.currency});
 
   final List<CategoryStat> categories;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +208,7 @@ class _CategoryChart extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      'Rp ${_formatAmount(total)}',
+                      formatCurrency(total, currency),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.labelMedium,
                     ),
@@ -215,9 +246,9 @@ class _CategoryChart extends StatelessWidget {
     final colors = [
       FlowColors.expense,
       Theme.of(context).colorScheme.primary,
-      const Color(0xFFE0A458),
-      const Color(0xFF6D8FC7),
-      const Color(0xFF9B7EBD),
+      FlowColors.chartAmber,
+      FlowColors.chartBlue,
+      FlowColors.chartPurple,
     ];
     return colors[index % colors.length];
   }
@@ -281,9 +312,10 @@ class _WeeklyTrendChart extends StatelessWidget {
 }
 
 class _TopCategories extends StatelessWidget {
-  const _TopCategories({required this.categories});
+  const _TopCategories({required this.categories, required this.currency});
 
   final List<CategoryStat> categories;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -312,7 +344,7 @@ class _TopCategories extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Rp ${_formatAmount(categories[index].amount)}',
+                  formatCurrency(categories[index].amount, currency),
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
                 const SizedBox(width: FlowSpacing.sm),
@@ -361,7 +393,13 @@ class _DonutPainter extends CustomPainter {
     }
   }
 
-  static const _colors = [FlowColors.expense, FlowColors.accent, Color(0xFFE0A458), Color(0xFF6D8FC7), Color(0xFF9B7EBD)];
+  static const _colors = [
+    FlowColors.expense,
+    FlowColors.accent,
+    FlowColors.chartAmber,
+    FlowColors.chartBlue,
+    FlowColors.chartPurple,
+  ];
 
   @override
   bool shouldRepaint(covariant _DonutPainter oldDelegate) => oldDelegate.categories != categories || oldDelegate.total != total;
@@ -394,11 +432,6 @@ class _BarChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _BarChartPainter oldDelegate) => oldDelegate.weeks != weeks;
 }
-
-String _formatAmount(int amount) => amount.toString().replaceAllMapped(
-  RegExp(r'(?=(\d{3})+(?!\d))'),
-  (match) => '.',
-);
 
 class _MonthSelector extends StatelessWidget {
   const _MonthSelector({
@@ -442,29 +475,31 @@ class _MonthSelector extends StatelessWidget {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.data});
+  const _SummaryCard({required this.data, required this.currency});
 
   final StatisticsData data;
+  final String currency;
 
   @override
   Widget build(BuildContext context) => FlowCard(
     variant: FlowCardVariant.summary,
     child: Row(
       children: [
-        Expanded(child: _SummaryValue(label: 'Income', value: data.income, color: FlowColors.income)),
+        Expanded(child: _SummaryValue(label: 'Income', value: data.income, color: FlowColors.income, currency: currency)),
         const SizedBox(width: FlowSpacing.md),
-        Expanded(child: _SummaryValue(label: 'Expense', value: data.expense, color: FlowColors.expense)),
+        Expanded(child: _SummaryValue(label: 'Expense', value: data.expense, color: FlowColors.expense, currency: currency)),
       ],
     ),
   );
 }
 
 class _SummaryValue extends StatelessWidget {
-  const _SummaryValue({required this.label, required this.value, required this.color});
+  const _SummaryValue({required this.label, required this.value, required this.color, required this.currency});
 
   final String label;
   final int value;
   final Color color;
+  final String currency;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -473,15 +508,10 @@ class _SummaryValue extends StatelessWidget {
       Text(label, style: Theme.of(context).textTheme.labelMedium),
       const SizedBox(height: FlowSpacing.xs),
       Text(
-        'Rp ${_formatAmount(value)}',
+        formatCurrency(value, currency),
         style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color),
       ),
     ],
-  );
-
-  static String _formatAmount(int amount) => amount.toString().replaceAllMapped(
-    RegExp(r'(?=(\d{3})+(?!\d))'),
-    (match) => '.',
   );
 }
 

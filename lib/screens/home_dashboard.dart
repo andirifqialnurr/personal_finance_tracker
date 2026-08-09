@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../components/flow_components.dart';
 import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
+import '../utils/flow_format.dart';
 
 class HomeDashboard extends StatefulWidget {
   const HomeDashboard({
@@ -95,7 +96,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 ],
               ),
               FlowAmountText(
-                amount: _hideBalance ? '••••••' : 'Rp ${_format(totalBalance)}',
+                amount: _hideBalance
+                    ? '••••••'
+                    : formatCurrency(totalBalance, widget.currency),
               ),
             ],
           ),
@@ -106,7 +109,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             Expanded(
               child: _SummaryCard(
                 label: 'Income',
-                amount: 'Rp ${_format(income)}',
+                amount: formatCurrency(income, widget.currency),
                 variant: FlowAmountVariant.income,
                 icon: Icons.arrow_downward,
               ),
@@ -115,7 +118,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             Expanded(
               child: _SummaryCard(
                 label: 'Expense',
-                amount: 'Rp ${_format(expense)}',
+                amount: formatCurrency(expense, widget.currency),
                 variant: FlowAmountVariant.expense,
                 icon: Icons.arrow_upward,
               ),
@@ -129,12 +132,22 @@ class _HomeDashboardState extends State<HomeDashboard> {
           onPressed: widget.onAddTransaction,
         ),
         const SizedBox(height: FlowSpacing.lg),
-        const _CashFlowCard(),
+        _CashFlowCard(
+          transactions: monthTransactions.toList(growable: false),
+          currency: widget.currency,
+        ),
         const SizedBox(height: FlowSpacing.md),
-        const _SpendingByCategoryCard(),
+        _SpendingByCategoryCard(
+          transactions: monthTransactions.toList(growable: false),
+          categories: widget.categories,
+          currency: widget.currency,
+        ),
         const SizedBox(height: FlowSpacing.lg),
         _RecentTransactionsCard(
           transactions: widget.transactions,
+          accounts: widget.accounts,
+          categories: widget.categories,
+          currency: widget.currency,
           onAddTransaction: widget.onAddTransaction,
         ),
       ],
@@ -156,11 +169,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
     'November',
     'December',
   ][month];
-  static String _format(int value) => value.toString().replaceAllMapped(
-    RegExp(r'(?<!^)(?=(\d{3})+$)'),
-    (_) => '.',
-  );
-
   int _balanceFor(Account account) {
     return account.openingBalance +
         widget.transactions.fold<int>(0, (sum, transaction) {
@@ -218,11 +226,32 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _CashFlowCard extends StatelessWidget {
-  const _CashFlowCard();
+  const _CashFlowCard({required this.transactions, required this.currency});
+
+  final List<Transaction> transactions;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+    final incomeByWeek = List<int>.filled(5, 0);
+    final expenseByWeek = List<int>.filled(5, 0);
+    for (final transaction in transactions) {
+      final week = ((transaction.occurredAt.day - 1) ~/ 7).clamp(0, 4);
+      switch (transaction.type) {
+        case TransactionType.income:
+          incomeByWeek[week] += transaction.amount;
+        case TransactionType.expense:
+          expenseByWeek[week] += transaction.amount;
+        case TransactionType.transfer:
+          break;
+      }
+    }
+    final maxAmount = List<int>.generate(
+      incomeByWeek.length,
+      (index) => incomeByWeek[index] + expenseByWeek[index],
+    ).fold<int>(0, (max, value) => value > max ? value : max);
+    final income = incomeByWeek.fold<int>(0, (sum, value) => sum + value);
+    final expense = expenseByWeek.fold<int>(0, (sum, value) => sum + value);
     return FlowCard(
       variant: FlowCardVariant.chart,
       child: Column(
@@ -236,28 +265,32 @@ class _CashFlowCard extends StatelessWidget {
           ),
           const SizedBox(height: FlowSpacing.md),
           SizedBox(
-            height: 112,
+            height: 132,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                for (final label in labels)
+                for (var index = 0; index < 5; index++)
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Container(
-                          height: 8,
+                          height: maxAmount == 0
+                              ? 8
+                              : 72 *
+                                  ((incomeByWeek[index] + expenseByWeek[index]) /
+                                      maxAmount),
                           width: 28,
                           decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest,
+                            color: incomeByWeek[index] >= expenseByWeek[index]
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.error,
                             borderRadius: BorderRadius.circular(FlowRadii.pill),
                           ),
                         ),
                         const SizedBox(height: FlowSpacing.xs),
                         Text(
-                          label,
+                          'W${index + 1}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.labelSmall,
@@ -269,9 +302,19 @@ class _CashFlowCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: FlowSpacing.xs),
-          Text(
-            'No cash flow recorded yet',
-            style: Theme.of(context).textTheme.bodySmall,
+          Wrap(
+            spacing: FlowSpacing.md,
+            runSpacing: FlowSpacing.xs,
+            children: [
+              Text(
+                'Income ${formatCurrency(income, currency)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              Text(
+                'Expense ${formatCurrency(expense, currency)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ),
         ],
       ),
@@ -280,56 +323,133 @@ class _CashFlowCard extends StatelessWidget {
 }
 
 class _SpendingByCategoryCard extends StatelessWidget {
-  const _SpendingByCategoryCard();
+  const _SpendingByCategoryCard({
+    required this.transactions,
+    required this.categories,
+    required this.currency,
+  });
+
+  final List<Transaction> transactions;
+  final List<Category> categories;
+  final String currency;
 
   @override
-  Widget build(BuildContext context) => FlowCard(
-    variant: FlowCardVariant.chart,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Spending by category',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: FlowSpacing.xs),
-        Text(
-          'Top 4 categories plus Others',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: FlowSpacing.md),
-        Row(
-          children: [
-            Icon(
-              Icons.pie_chart_outline,
-              size: FlowIconSize.pageEmptyState,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(width: FlowSpacing.md),
-            Expanded(
-              child: Text(
-                'No spending data yet. Add an expense to see category insights.',
-                style: Theme.of(context).textTheme.bodyMedium,
+  Widget build(BuildContext context) {
+    final categoryNames = {
+      for (final category in categories)
+        if (category.id != null) category.id!: category.name,
+    };
+    final totals = <int?, int>{};
+    for (final transaction in transactions) {
+      if (transaction.type != TransactionType.expense) continue;
+      totals.update(
+        transaction.categoryId,
+        (value) => value + transaction.amount,
+        ifAbsent: () => transaction.amount,
+      );
+    }
+    final sorted = totals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final total = sorted.fold<int>(0, (sum, entry) => sum + entry.value);
+    final visible = sorted.take(4).toList();
+    final others = sorted.skip(4).fold<int>(0, (sum, entry) => sum + entry.value);
+    if (others > 0) visible.add(const MapEntry(null, 0));
+    if (others > 0) visible[visible.length - 1] = MapEntry(null, others);
+
+    return FlowCard(
+      variant: FlowCardVariant.chart,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Spending by category',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: FlowSpacing.xs),
+          Text(
+            'Top 4 categories plus Others',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: FlowSpacing.md),
+          if (visible.isEmpty)
+            Row(
+              children: [
+                Icon(
+                  Icons.pie_chart_outline,
+                  size: FlowIconSize.pageEmptyState,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: FlowSpacing.md),
+                Expanded(
+                  child: Text(
+                    'No spending data yet. Add an expense to see category insights.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            )
+          else
+            for (final entry in visible) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      entry.key == null
+                          ? (entry.value == others ? 'Others' : 'Uncategorized')
+                          : categoryNames[entry.key] ?? 'Category ${entry.key}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  const SizedBox(width: FlowSpacing.sm),
+                  Text(
+                    formatCurrency(entry.value, currency),
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
+              const SizedBox(height: FlowSpacing.xs),
+              LinearProgressIndicator(
+                value: total == 0 ? 0 : entry.value / total,
+                minHeight: 6,
+                borderRadius: BorderRadius.circular(FlowRadii.pill),
+              ),
+              if (entry != visible.last)
+                const SizedBox(height: FlowSpacing.sm),
+            ],
+        ],
+      ),
+    );
+  }
 }
 
 class _RecentTransactionsCard extends StatelessWidget {
   const _RecentTransactionsCard({
     required this.transactions,
+    required this.accounts,
+    required this.categories,
+    required this.currency,
     required this.onAddTransaction,
   });
   final List<Transaction> transactions;
+  final List<Account> accounts;
+  final List<Category> categories;
+  final String currency;
   final VoidCallback onAddTransaction;
 
   @override
   Widget build(BuildContext context) {
-    final recent = transactions.take(5).toList(growable: false);
+    final accountNames = {
+      for (final account in accounts) account.id: account.name,
+    };
+    final categoryNames = {
+      for (final category in categories)
+        if (category.id != null) category.id!: category.name,
+    };
+    final recent = transactions.toList()
+      ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    final visible = recent.take(5).toList(growable: false);
     return FlowCard(
       variant: FlowCardVariant.transaction,
       child: Column(
@@ -338,19 +458,23 @@ class _RecentTransactionsCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Recent transactions',
-                style: Theme.of(context).textTheme.titleMedium,
+              Expanded(
+                child: Text(
+                  'Recent transactions',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ),
               if (recent.isNotEmpty)
                 Text(
-                  '${recent.length} of 5',
+                  '${visible.length} of 5',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
             ],
           ),
           const SizedBox(height: FlowSpacing.xs),
-          if (recent.isEmpty)
+          if (visible.isEmpty)
             FlowEmptyState(
               icon: Icons.receipt_long_outlined,
               title: 'No transactions yet',
@@ -361,13 +485,19 @@ class _RecentTransactionsCard extends StatelessWidget {
               ),
             )
           else
-            for (final transaction in recent)
+            for (final transaction in visible)
               FlowTransactionTile(
                 title: _title(transaction.type),
-                subtitle:
-                    transaction.note ?? 'Account ${transaction.accountId}',
+                subtitle: [
+                  accountNames[transaction.accountId] ??
+                      'Account ${transaction.accountId}',
+                  if (transaction.categoryId != null)
+                    categoryNames[transaction.categoryId] ??
+                        'Category ${transaction.categoryId}',
+                  if (transaction.note?.isNotEmpty == true) transaction.note!,
+                ].join(' · '),
                 amount:
-                    '${transaction.type == TransactionType.expense ? '-' : '+'} Rp ${_format(transaction.amount)}',
+                    '${transaction.type == TransactionType.expense ? '-' : '+'} ${formatCurrency(transaction.amount, currency)}',
                 icon: _icon(transaction.type),
                 amountVariant: _amountVariant(transaction.type),
               ),
@@ -392,8 +522,4 @@ class _RecentTransactionsCard extends StatelessWidget {
         TransactionType.expense => FlowAmountVariant.expense,
         TransactionType.transfer => FlowAmountVariant.transfer,
       };
-  static String _format(int value) => value.toString().replaceAllMapped(
-    RegExp(r'(?<!^)(?=(\d{3})+$)'),
-    (_) => '.',
-  );
 }

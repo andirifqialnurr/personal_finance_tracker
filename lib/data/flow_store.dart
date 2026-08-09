@@ -38,6 +38,8 @@ abstract interface class FlowStore {
 /// A small store used by widget tests and unsupported desktop targets.
 /// Production mobile builds use [SqliteFlowStore] from main.dart.
 class MemoryFlowStore implements FlowStore {
+  static List<Category> defaultCategories() => _defaultCategories();
+
   MemoryFlowStore({
     List<Account>? accounts,
     List<Category>? categories,
@@ -99,7 +101,9 @@ class MemoryFlowStore implements FlowStore {
   @override
   Future<void> deleteAll() async {
     _accounts.clear();
-    _categories.clear();
+    _categories
+      ..clear()
+      ..addAll(_defaultCategories());
     _transactions.clear();
     _settings = const AppSettings();
   }
@@ -206,6 +210,9 @@ class SqliteFlowStore implements FlowStore {
         'theme_mode': 'system',
         'hide_balance': 0,
       });
+      for (final category in DefaultCategorySeeder.defaults) {
+        await transaction.insert('categories', category.toMap());
+      }
     });
   }
 

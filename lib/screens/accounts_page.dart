@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../components/flow_components.dart';
 import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
+import '../utils/flow_format.dart';
 
 class AccountsPage extends StatelessWidget {
   const AccountsPage({
@@ -13,6 +14,7 @@ class AccountsPage extends StatelessWidget {
     required this.onArchive,
     required this.transactions,
     required this.onOpenDetail,
+    this.currency = 'IDR',
   });
 
   final List<Account> accounts;
@@ -21,6 +23,7 @@ class AccountsPage extends StatelessWidget {
   final ValueChanged<Account> onArchive;
   final List<Transaction> transactions;
   final ValueChanged<Account> onOpenDetail;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +32,7 @@ class AccountsPage extends StatelessWidget {
         .toList(growable: false);
     final total = activeAccounts.fold<int>(
       0,
-      (sum, account) => sum + account.openingBalance,
+      (sum, account) => sum + _balanceFor(account),
     );
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.lg),
@@ -44,7 +47,7 @@ class AccountsPage extends StatelessWidget {
                 style: Theme.of(context).textTheme.labelMedium,
               ),
               const SizedBox(height: FlowSpacing.xs),
-              FlowAmountText(amount: 'Rp ${_format(total)}'),
+              FlowAmountText(amount: formatCurrency(total, currency)),
             ],
           ),
         ),
@@ -103,7 +106,7 @@ class AccountsPage extends StatelessWidget {
                       ),
                     ),
                     FlowAmountText(
-                      amount: 'Rp ${_format(account.openingBalance)}',
+                      amount: formatCurrency(_balanceFor(account), currency),
                       style: const TextStyle(fontSize: 14),
                     ),
                     IconButton(
@@ -132,10 +135,19 @@ class AccountsPage extends StatelessWidget {
     if (confirmed == true) onArchive(account);
   }
 
-  static String _format(int value) => value.toString().replaceAllMapped(
-    RegExp(r'(?<!^)(?=(\d{3})+$)'),
-    (_) => '.',
-  );
+  int _balanceFor(Account account) => account.openingBalance +
+      transactions.fold<int>(0, (sum, transaction) {
+        if (transaction.type == TransactionType.transfer &&
+            transaction.destinationAccountId == account.id) {
+          return sum + transaction.amount;
+        }
+        if (transaction.accountId != account.id) return sum;
+        return switch (transaction.type) {
+          TransactionType.income => sum + transaction.amount,
+          TransactionType.expense => sum - transaction.amount,
+          TransactionType.transfer => sum - transaction.amount,
+        };
+      });
   static String _typeLabel(AccountType type) => switch (type) {
     AccountType.cash => 'Cash',
     AccountType.bank => 'Bank',

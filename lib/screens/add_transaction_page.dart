@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../components/flow_components.dart';
+import '../data/default_category_seeder.dart';
 import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
+import '../utils/flow_format.dart';
 
 class AddTransactionPage extends StatefulWidget {
   const AddTransactionPage({
     super.key,
     this.accounts = const [],
+    this.categories = const [],
+    this.currency = 'IDR',
     this.onSaved,
     this.initialTransaction,
   });
 
   final List<Account> accounts;
+  final List<Category> categories;
+  final String currency;
   final ValueChanged<Transaction>? onSaved;
   final Transaction? initialTransaction;
 
@@ -28,27 +34,6 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   Account? _destinationAccount;
   Category? _selectedCategory;
   DateTime _occurredAt = DateTime.now();
-
-  static const _categories = <Category>[
-    Category(
-      name: 'Food',
-      transactionType: TransactionType.expense,
-      icon: 'restaurant',
-      color: '#C96B6B',
-    ),
-    Category(
-      name: 'Transport',
-      transactionType: TransactionType.expense,
-      icon: 'directions_car',
-      color: '#C96B6B',
-    ),
-    Category(
-      name: 'Salary',
-      transactionType: TransactionType.income,
-      icon: 'payments',
-      color: '#168C78',
-    ),
-  ];
 
   @override
   void initState() {
@@ -67,13 +52,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
         : _findAccount(transaction.destinationAccountId!);
     _selectedCategory = transaction.categoryId == null
         ? null
-        : Category(
-            id: transaction.categoryId,
-            name: 'Category ${transaction.categoryId}',
-            transactionType: transaction.type,
-            icon: 'category',
-            color: '#C96B6B',
-          );
+        : _findCategory(transaction.categoryId!);
     _noteController.text = transaction.note ?? '';
     _occurredAt = transaction.occurredAt;
   }
@@ -84,6 +63,30 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     }
     return null;
   }
+
+  Category? _findCategory(int id) {
+    for (final category in _availableCategories) {
+      if (category.id == id) return category;
+    }
+    return null;
+  }
+
+  List<Category> get _availableCategories => widget.categories.isNotEmpty
+      ? widget.categories
+      : [
+          for (var index = 0;
+              index < DefaultCategorySeeder.defaults.length;
+              index++)
+            Category(
+              id: index + 1,
+              name: DefaultCategorySeeder.defaults[index].name,
+              transactionType:
+                  DefaultCategorySeeder.defaults[index].transactionType,
+              icon: DefaultCategorySeeder.defaults[index].icon,
+              color: DefaultCategorySeeder.defaults[index].color,
+              isDefault: true,
+            ),
+        ];
 
   @override
   void dispose() {
@@ -125,7 +128,10 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
             keyboardType: const TextInputType.numberWithOptions(decimal: false),
             textInputAction: TextInputAction.next,
             style: Theme.of(context).textTheme.displaySmall,
-            decoration: const InputDecoration(hintText: '0', prefixText: 'Rp '),
+            decoration: InputDecoration(
+              hintText: '0',
+              prefixText: '${currencySymbol(widget.currency)} ',
+            ),
           ),
           const SizedBox(height: FlowSpacing.md),
           FlowSelector(
@@ -197,8 +203,11 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       showDragHandle: true,
       builder: (context) => _SelectionSheet<Category>(
         title: 'Select category',
-        items: _categories
-            .where((category) => category.transactionType == type)
+        items: _availableCategories
+            .where(
+              (category) =>
+                  category.transactionType == type && !category.isArchived,
+            )
             .toList(),
         titleOf: (category) => category.name,
         subtitleOf: (_) =>

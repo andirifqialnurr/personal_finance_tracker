@@ -14,6 +14,7 @@ class FlowSettingsPage extends StatefulWidget {
     required this.onCurrencyChanged,
     required this.categories,
     required this.onCategoriesChanged,
+    required this.onExportCsv,
     required this.onDeleteAll,
   });
   final ThemeMode initialThemeMode;
@@ -22,6 +23,7 @@ class FlowSettingsPage extends StatefulWidget {
   final ValueChanged<String> onCurrencyChanged;
   final List<Category> categories;
   final ValueChanged<List<Category>> onCategoriesChanged;
+  final Future<String> Function() onExportCsv;
   final VoidCallback onDeleteAll;
 
   @override
@@ -30,6 +32,7 @@ class FlowSettingsPage extends StatefulWidget {
 
 class _FlowSettingsPageState extends State<FlowSettingsPage> {
   late ThemeMode _themeMode = widget.initialThemeMode;
+  bool _isExporting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +90,15 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
             ),
           ),
           const SizedBox(height: FlowSpacing.xl),
+          Text('Data management', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: FlowSpacing.sm),
+          FlowButton(
+            label: _isExporting ? 'Exporting CSV...' : 'Export CSV',
+            variant: FlowButtonVariant.secondary,
+            icon: Icons.file_download_outlined,
+            onPressed: _isExporting ? null : _exportCsv,
+          ),
+          const SizedBox(height: FlowSpacing.xl),
           Text('Danger zone', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: FlowSpacing.sm),
           FlowButton(
@@ -124,7 +136,7 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete all data?'),
-        content: const Text('This permanently removes every account, transaction, and category from this device.'),
+        content: const Text('This removes every account and transaction, then restores the default categories on this device.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(
@@ -138,6 +150,24 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
     if (confirmed == true && mounted) {
       widget.onDeleteAll();
       Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _exportCsv() async {
+    setState(() => _isExporting = true);
+    try {
+      final path = await widget.onExportCsv();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CSV exported to $path')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CSV export failed: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
     }
   }
 }

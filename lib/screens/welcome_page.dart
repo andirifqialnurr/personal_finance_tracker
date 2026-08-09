@@ -4,9 +4,16 @@ import '../components/flow_components.dart';
 import '../theme/flow_tokens.dart';
 
 class FlowWelcomePage extends StatelessWidget {
-  const FlowWelcomePage({super.key, required this.onCreateFirstAccount});
+  const FlowWelcomePage({
+    super.key,
+    required this.onCreateFirstAccount,
+    this.currency = 'IDR',
+    this.onCurrencyChanged,
+  });
 
   final VoidCallback onCreateFirstAccount;
+  final String currency;
+  final ValueChanged<String>? onCurrencyChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +42,33 @@ class FlowWelcomePage extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: FlowSpacing.lg),
-              const FlowSelector(
+              FlowSelector(
                 label: 'Currency',
-                value: 'IDR',
+                value: currency,
                 icon: Icons.payments_outlined,
+                onTap: onCurrencyChanged == null
+                    ? null
+                    : () async {
+                        final selected = await showModalBottomSheet<String>(
+                          context: context,
+                          builder: (context) => SafeArea(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final option in ['IDR', 'USD', 'SGD'])
+                                  ListTile(
+                                    title: Text(option),
+                                    trailing: option == currency
+                                        ? const Icon(Icons.check)
+                                        : null,
+                                    onTap: () => Navigator.pop(context, option),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                        if (selected != null) onCurrencyChanged!(selected);
+                      },
               ),
               const SizedBox(height: FlowSpacing.md),
               FlowButton(

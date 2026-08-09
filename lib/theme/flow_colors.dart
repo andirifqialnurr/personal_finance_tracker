@@ -16,4 +16,7 @@ abstract final class FlowColors {
   static const income = Color(0xFF168C78);
   static const expense = Color(0xFFC96B6B);
   static const destructive = Color(0xFFB84444);
+  static const chartAmber = Color(0xFFE0A458);
+  static const chartBlue = Color(0xFF6D8FC7);
+  static const chartPurple = Color(0xFF9B7EBD);
 }

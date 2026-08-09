@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../components/flow_components.dart';
 import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
+import '../utils/flow_format.dart';
 
 class TransactionDetailPage extends StatelessWidget {
   const TransactionDetailPage({
@@ -11,9 +12,15 @@ class TransactionDetailPage extends StatelessWidget {
     required this.accountName,
     required this.onEdit,
     required this.onDelete,
+    this.destinationAccountName,
+    this.categoryName,
+    this.currency = 'IDR',
   });
   final Transaction transaction;
   final String accountName;
+  final String? destinationAccountName;
+  final String? categoryName;
+  final String currency;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -42,7 +49,7 @@ class TransactionDetailPage extends StatelessWidget {
                 Text(type, style: Theme.of(context).textTheme.labelMedium),
                 const SizedBox(height: FlowSpacing.xs),
                 FlowAmountText(
-                  amount: 'Rp ${transaction.amount}',
+                  amount: formatCurrency(transaction.amount, currency),
                   variant: variant,
                 ),
               ],
@@ -54,6 +61,14 @@ class TransactionDetailPage extends StatelessWidget {
             value: accountName,
             icon: Icons.wallet_outlined,
           ),
+          if (destinationAccountName != null) ...[
+            const SizedBox(height: FlowSpacing.md),
+            FlowSelector(
+              label: 'To account',
+              value: destinationAccountName!,
+              icon: Icons.account_balance_wallet_outlined,
+            ),
+          ],
           const SizedBox(height: FlowSpacing.md),
           FlowSelector(
             label: 'Date',
@@ -65,7 +80,7 @@ class TransactionDetailPage extends StatelessWidget {
             const SizedBox(height: FlowSpacing.md),
             FlowSelector(
               label: 'Category',
-              value: 'Category ${transaction.categoryId}',
+              value: categoryName ?? 'Category ${transaction.categoryId}',
               icon: Icons.category_outlined,
             ),
           ],
