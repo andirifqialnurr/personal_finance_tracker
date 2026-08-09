@@ -9,10 +9,18 @@ class HomeDashboard extends StatefulWidget {
     super.key,
     required this.accounts,
     this.transactions = const [],
+    this.categories = const [],
+    this.currency = 'IDR',
+    this.hideBalance = false,
+    this.onHideBalanceChanged,
     required this.onAddTransaction,
   });
   final List<Account> accounts;
   final List<Transaction> transactions;
+  final List<Category> categories;
+  final String currency;
+  final bool hideBalance;
+  final ValueChanged<bool>? onHideBalanceChanged;
   final VoidCallback onAddTransaction;
 
   @override
@@ -20,7 +28,7 @@ class HomeDashboard extends StatefulWidget {
 }
 
 class _HomeDashboardState extends State<HomeDashboard> {
-  bool _hideBalance = false;
+  late bool _hideBalance = widget.hideBalance;
 
   @override
   Widget build(BuildContext context) {
@@ -72,8 +80,11 @@ class _HomeDashboardState extends State<HomeDashboard> {
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
                   IconButton(
-                    onPressed: () =>
-                        setState(() => _hideBalance = !_hideBalance),
+                    onPressed: () {
+                      final next = !_hideBalance;
+                      setState(() => _hideBalance = next);
+                      widget.onHideBalanceChanged?.call(next);
+                    },
                     tooltip: _hideBalance ? 'Show balance' : 'Hide balance',
                     icon: Icon(
                       _hideBalance

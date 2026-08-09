@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import 'data/flow_store.dart';
 import 'data/models/models.dart';
-import 'data/default_category_seeder.dart';
 import 'screens/account_form_page.dart';
 import 'screens/account_detail_page.dart';
 import 'screens/accounts_page.dart';
@@ -15,7 +17,9 @@ import 'screens/home_dashboard.dart';
 import 'theme/flow_theme.dart';
 
 class FlowApp extends StatefulWidget {
-  const FlowApp({super.key});
+  const FlowApp({super.key, this.store});
+
+  final FlowStore? store;
 
   @override
   State<FlowApp> createState() => _FlowAppState();
@@ -23,22 +27,48 @@ class FlowApp extends StatefulWidget {
 
 class _FlowAppState extends State<FlowApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
+  late final FlowStore _store = widget.store ?? MemoryFlowStore();
   ThemeMode _themeMode = ThemeMode.system;
   final List<Account> _accounts = [];
   final List<Transaction> _transactions = [];
-  List<Category> _categories = [
-    for (var index = 0; index < DefaultCategorySeeder.defaults.length; index++)
-      Category(
-        id: index + 1,
-        name: DefaultCategorySeeder.defaults[index].name,
-        transactionType: DefaultCategorySeeder.defaults[index].transactionType,
-        icon: DefaultCategorySeeder.defaults[index].icon,
-        color: DefaultCategorySeeder.defaults[index].color,
-        isDefault: true,
-      ),
-  ];
+  List<Category> _categories = [];
   String _currency = 'IDR';
+  bool _hideBalance = false;
   bool _hasCompletedWelcome = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restoreState());
+  }
+
+  @override
+  void dispose() {
+    _persist(_store.close());
+    super.dispose();
+  }
+
+  Future<void> _restoreState() async {
+    try {
+      final snapshot = await _store.load();
+      if (!mounted) return;
+      setState(() {
+        _accounts
+          ..clear()
+          ..addAll(snapshot.accounts);
+        _categories = List.of(snapshot.categories);
+        _transactions
+          ..clear()
+          ..addAll(snapshot.transactions);
+        _currency = snapshot.settings.currency;
+        _themeMode = _themeModeFromSetting(snapshot.settings.themeMode);
+        _hideBalance = snapshot.settings.hideBalance;
+        _hasCompletedWelcome = _accounts.isNotEmpty;
+      });
+    } catch (error, stackTrace) {
+      debugPrint('Unable to restore Flow data: $error\n$stackTrace');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +83,10 @@ class _FlowAppState extends State<FlowApp> {
           ? FlowShell(
               accounts: _accounts,
               transactions: _transactions,
+              categories: _categories,
+              currency: _currency,
+              hideBalance: _hideBalance,
+              onHideBalanceChanged: _changeHideBalance,
               onOpenSettings: _openSettings,
               onAddAccount: () => _openAccountForm(context),
               onEditAccount: (account) => _openAccountForm(context, account),
@@ -74,17 +108,12 @@ class _FlowAppState extends State<FlowApp> {
       MaterialPageRoute<void>(
         builder: (_) => FlowSettingsPage(
           initialThemeMode: _themeMode,
-          onThemeModeChanged: (mode) => setState(() => _themeMode = mode),
+          onThemeModeChanged: _changeTheme,
           currency: _currency,
-          onCurrencyChanged: (currency) => setState(() => _currency = currency),
+          onCurrencyChanged: _changeCurrency,
           categories: _categories,
           onCategoriesChanged: (categories) => setState(() => _categories = categories),
-          onDeleteAll: () => setState(() {
-            _accounts.clear();
-            _transactions.clear();
-            _categories = [];
-            _hasCompletedWelcome = false;
-          }),
+          onDeleteAll: _deleteAllData,
         ),
       ),
     );
@@ -107,16 +136,20 @@ class _FlowAppState extends State<FlowApp> {
   }
 
   void _saveTransaction(Transaction transaction, Transaction? editing) {
+    final transactionWithId = editing == null
+        ? transaction.copyWith(id: _nextId(_transactions.map((item) => item.id)))
+        : transaction.copyWith(id: editing.id);
     setState(() {
       if (editing == null) {
-        _transactions.add(transaction.copyWith(id: _transactions.length + 1));
+        _transactions.add(transactionWithId);
       } else {
         final index = _transactions.indexOf(editing);
         if (index != -1) {
-          _transactions[index] = transaction.copyWith(id: editing.id);
+          _transactions[index] = transactionWithId;
         }
       }
     });
+    _persist(_store.saveTransaction(transactionWithId));
   }
 
   Future<void> _openTransactionDetail(
@@ -131,12 +164,13 @@ class _FlowAppState extends State<FlowApp> {
               .firstWhere((account) => account.id == transaction.accountId)
               .name,
           onEdit: () {
-            Navigator.of(context).pop();
-            _openAddTransaction(context, transaction);
+            _navigatorKey.currentState!.pop();
+            unawaited(_openAddTransaction(context, transaction));
           },
           onDelete: () {
-            setState(() => _transactions.remove(transaction));
-            Navigator.of(context).pop();
+            setState(() => _transactions.removeWhere((item) => item.id == transaction.id));
+            _persist(_store.deleteTransaction(transaction.id!));
+            _navigatorKey.currentState!.pop();
           },
         ),
       ),
@@ -150,8 +184,8 @@ class _FlowAppState extends State<FlowApp> {
           account: account,
           transactions: _transactions,
           onEdit: () {
-            Navigator.of(context).pop();
-            _openAccountForm(context, account);
+            _navigatorKey.currentState!.pop();
+            unawaited(_openAccountForm(context, account));
           },
           onOpenTransaction: (transaction) =>
               _openTransactionDetail(context, transaction),
@@ -170,22 +204,7 @@ class _FlowAppState extends State<FlowApp> {
           account: account,
           onSaved: (savedAccount) {
             final accountWithId = savedAccount.id == null
-                ? Account(
-                    id: _accounts.isEmpty
-                        ? 1
-                        : _accounts
-                                  .map((item) => item.id ?? 0)
-                                  .reduce((a, b) => a > b ? a : b) +
-                              1,
-                    name: savedAccount.name,
-                    type: savedAccount.type,
-                    openingBalance: savedAccount.openingBalance,
-                    icon: savedAccount.icon,
-                    color: savedAccount.color,
-                    isArchived: savedAccount.isArchived,
-                    createdAt: savedAccount.createdAt,
-                    updatedAt: savedAccount.updatedAt,
-                  )
+                ? _copyAccount(savedAccount, _nextId(_accounts.map((item) => item.id)))
                 : savedAccount;
             setState(() {
               final index = _accounts.indexWhere(
@@ -198,6 +217,7 @@ class _FlowAppState extends State<FlowApp> {
               }
               _hasCompletedWelcome = true;
             });
+            _persist(_store.saveAccount(accountWithId));
           },
         ),
       ),
@@ -205,29 +225,118 @@ class _FlowAppState extends State<FlowApp> {
   }
 
   void _archiveAccount(Account account) {
+    final archived = _copyAccount(
+      account,
+      account.id!,
+      isArchived: true,
+      updatedAt: DateTime.now().toUtc(),
+    );
     setState(() {
       final index = _accounts.indexWhere((item) => item.id == account.id);
       if (index == -1) return;
-      _accounts[index] = Account(
-        id: account.id,
-        name: account.name,
-        type: account.type,
-        openingBalance: account.openingBalance,
-        icon: account.icon,
-        color: account.color,
-        isArchived: true,
-        createdAt: account.createdAt,
-        updatedAt: DateTime.now().toUtc(),
-      );
+      _accounts[index] = archived;
     });
+    _persist(_store.saveAccount(archived));
+  }
+
+  void _changeHideBalance(bool value) {
+    setState(() => _hideBalance = value);
+    _saveSettings();
+  }
+
+  void _changeTheme(ThemeMode mode) {
+    setState(() => _themeMode = mode);
+    _saveSettings();
+  }
+
+  void _changeCurrency(String currency) {
+    setState(() => _currency = currency);
+    _saveSettings();
+  }
+
+  void _saveSettings() {
+    _persist(
+      _store.saveSettings(
+        AppSettings(
+          currency: _currency,
+          themeMode: _themeModeSetting(_themeMode),
+          hideBalance: _hideBalance,
+        ),
+      ),
+    );
+  }
+
+  void _deleteAllData() {
+    setState(() {
+      _accounts.clear();
+      _transactions.clear();
+      _categories = [];
+      _currency = 'IDR';
+      _themeMode = ThemeMode.system;
+      _hideBalance = false;
+      _hasCompletedWelcome = false;
+    });
+    _persist(_store.deleteAll());
+  }
+
+  void _persist(Future<dynamic> operation) {
+    unawaited(
+      operation.then<void>(
+        (_) {},
+        onError: (Object error, StackTrace stackTrace) {
+          debugPrint('Unable to save Flow data: $error\n$stackTrace');
+        },
+      ),
+    );
   }
 }
+
+ThemeMode _themeModeFromSetting(ThemeModeSetting mode) => switch (mode) {
+  ThemeModeSetting.light => ThemeMode.light,
+  ThemeModeSetting.dark => ThemeMode.dark,
+  ThemeModeSetting.system => ThemeMode.system,
+};
+
+ThemeModeSetting _themeModeSetting(ThemeMode mode) => switch (mode) {
+  ThemeMode.light => ThemeModeSetting.light,
+  ThemeMode.dark => ThemeModeSetting.dark,
+  ThemeMode.system => ThemeModeSetting.system,
+};
+
+int _nextId(Iterable<int?> ids) {
+  var maxId = 0;
+  for (final id in ids) {
+    if (id != null && id > maxId) maxId = id;
+  }
+  return maxId + 1;
+}
+
+Account _copyAccount(
+  Account account,
+  int id, {
+  bool? isArchived,
+  DateTime? updatedAt,
+}) => Account(
+  id: id,
+  name: account.name,
+  type: account.type,
+  openingBalance: account.openingBalance,
+  icon: account.icon,
+  color: account.color,
+  isArchived: isArchived ?? account.isArchived,
+  createdAt: account.createdAt,
+  updatedAt: updatedAt ?? account.updatedAt,
+);
 
 class FlowShell extends StatefulWidget {
   const FlowShell({
     super.key,
     required this.accounts,
     required this.transactions,
+    this.categories = const [],
+    this.currency = 'IDR',
+    this.hideBalance = false,
+    this.onHideBalanceChanged,
     required this.onOpenSettings,
     required this.onAddAccount,
     required this.onEditAccount,
@@ -239,6 +348,10 @@ class FlowShell extends StatefulWidget {
 
   final List<Account> accounts;
   final List<Transaction> transactions;
+  final List<Category> categories;
+  final String currency;
+  final bool hideBalance;
+  final ValueChanged<bool>? onHideBalanceChanged;
   final Future<void> Function(BuildContext context) onOpenSettings;
   final VoidCallback onAddAccount;
   final ValueChanged<Account> onEditAccount;
@@ -284,6 +397,10 @@ class _FlowShellState extends State<FlowShell> {
             HomeDashboard(
               accounts: widget.accounts,
               transactions: widget.transactions,
+              categories: widget.categories,
+              currency: widget.currency,
+              hideBalance: widget.hideBalance,
+              onHideBalanceChanged: widget.onHideBalanceChanged,
               onAddTransaction: widget.onAddTransaction,
             ),
             TransactionsPage(
