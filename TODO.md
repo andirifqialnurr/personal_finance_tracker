@@ -121,6 +121,53 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 - [x] Cek touch target, safe area, keyboard, overflow, dan scrolling pada small/medium/large phone.
 - [x] Lakukan final visual pass pada konsistensi Montserrat, rounded card, shadow/glow, spacing, dan warna.
 
+## 12. UI refinement dan interaction polish (request baru)
+
+### 12.1 Theme, background, dan floating shell
+
+- [ ] Ubah pilihan mode tema yang terlihat di Settings menjadi tepat dua opsi: **Light** dan **Dark**; tangani nilai `System` lama dengan fallback yang aman tanpa menampilkannya sebagai opsi baru.
+- [ ] Revisi token background Light menjadi neutral warm/gray yang sedikit lebih gelap agar card putih terlihat jelas terpisah dari halaman.
+- [ ] Audit ulang token Dark untuk background, surface/card, text, muted text, border, shadow, accent, income, expense, dan state agar kontras serta hierarki tetap nyaman dibaca.
+- [ ] Jadikan header/AppBar floating dengan inset dari tepi layar, radius, surface, shadow/elevation, dan safe area yang konsisten.
+- [ ] Jadikan bottom navigation floating dengan kontrak visual yang sama, tanpa menutup konten, tetap aman terhadap safe area/keyboard, dan tetap mempertahankan state tab aktif.
+- [ ] Verifikasi floating header, floating bottom bar, spacing, scrolling, dan overflow pada lebar small/medium/large dalam Light dan Dark.
+
+### 12.2 Statistics line chart dan periode waktu
+
+- [ ] Ganti chart trend pengeluaran yang saat ini berupa bar chart menjadi line chart yang reusable; chart kategori/donut tetap dipertahankan kecuali ada kebutuhan lanjutan.
+- [ ] Pisahkan model agregasi data dari painter/widget chart agar pergantian periode tidak mengubah aturan kalkulasi transaksi.
+- [ ] Tambahkan selector periode **Tahunan**, **Bulanan**, dan **Tanggal** pada area chart.
+- [ ] Agregasikan periode Tahunan per bulan, periode Bulanan per hari pada bulan terpilih, dan periode Tanggal melalui date picker untuk fokus pada tanggal yang dipilih.
+- [ ] Tampilkan label sumbu, titik/marker, nilai atau tooltip yang mudah dibaca, serta state aman untuk data kosong, satu titik, nilai nol, 28/29/30/31 hari, dan 12 bulan.
+- [ ] Pastikan line chart tetap terbaca pada Light/Dark, lebar layar kecil, serta nilai nominal besar; tambahkan test untuk agregasi setiap periode.
+
+### 12.3 Input nominal mata uang
+
+- [ ] Buat reusable numeric/currency input formatter yang otomatis memakai pemisah ribuan titik saat mengetik, contoh `1.000.000`, hanya menerima digit, dan menjaga posisi cursor saat insert/delete.
+- [ ] Terapkan formatter pada amount Add/Edit Transaction dan Opening balance Add/Edit Account, termasuk saat nilai awal form dimuat.
+- [ ] Normalisasi teks terformat kembali menjadi integer sebelum validasi dan penyimpanan SQLite; simbol `Rp` tetap menjadi prefix/presentasi dan tidak ikut disimpan sebagai nilai.
+- [ ] Uji nilai kosong, nol, angka kecil, `1.000`, `1.000.000`, penghapusan digit, edit di tengah teks, validasi, dan nilai nominal besar.
+
+### 12.4 Transactions search dan filter modal
+
+- [ ] Susun search field dan tombol filter kecil dalam satu baris; tombol filter membuka satu modal filter.
+- [ ] Pindahkan seluruh filter **Type**, **Account**, **Category**, dan **Date** dari chip inline ke dalam modal tersebut.
+- [ ] Sediakan apply/close dan Clear all di modal tanpa mengubah aturan filter yang sudah berjalan; tampilkan indikator/count ketika filter aktif.
+- [ ] Pertahankan hasil filter, total Income/Expense, grouping tanggal, no-result state, dan pencarian setelah layout dipindahkan.
+- [ ] Pastikan modal filter responsif, dapat discroll, dan konsisten pada Light/Dark serta layar kecil.
+
+### 12.5 Total balance visibility
+
+- [ ] Pada section Total Balance, sembunyikan hanya angka nominal menjadi titik-titik/masking; prefix `Rp` tetap terlihat, termasuk penanganan sign bila saldo negatif.
+- [ ] Jangan ikut menyamarkan label atau nominal Income/Expense yang bukan bagian dari Total Balance kecuali diminta pada batch berikutnya.
+- [ ] Pertahankan toggle show/hide dan persistensinya; tambahkan test untuk state visible, hidden, perubahan state, dan reload snapshot.
+
+### 12.6 Validasi UI refinement
+
+- [ ] Smoke test Light/Dark, floating shell, line chart Tahunan/Bulanan/Tanggal, input nominal terformat, filter modal, dan masking Total Balance pada emulator Android.
+- [ ] Jalankan `flutter analyze`, `flutter test`, dan `flutter build apk --debug`; perbaiki blocker pertama yang ditemukan.
+- [ ] Lakukan final visual pass untuk kontras, radius, shadow, safe area, keyboard, cursor input, overflow, dan keterbacaan chart.
+
 ## Di luar scope prototype awal
 
 - Budget, recurring transactions, saving goals, receipt attachment, backup/restore, biometric lock, multi-currency conversion, dan cloud sync.
