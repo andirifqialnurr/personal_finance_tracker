@@ -424,7 +424,7 @@ class _FlowShellState extends State<FlowShell> {
   static const _pages = <_FlowPageData>[
     _FlowPageData('Home', Icons.home_outlined),
     _FlowPageData('Transactions', Icons.receipt_long_outlined),
-    _FlowPageData('Statistics', Icons.bar_chart_outlined),
+    _FlowPageData('Statistics', Icons.show_chart_outlined),
     _FlowPageData('Accounts', Icons.account_balance_wallet_outlined),
   ];
 

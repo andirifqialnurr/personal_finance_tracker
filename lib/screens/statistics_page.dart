@@ -74,7 +74,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
           const SizedBox(height: FlowSpacing.sm),
           FlowCard(
             variant: FlowCardVariant.chart,
-            child: _SpendingTrendChart(points: data.trend),
+            child: _SpendingTrendChart(
+              points: data.trend,
+              currency: widget.currency,
+            ),
           ),
           const SizedBox(height: FlowSpacing.md),
           const _SectionHeading(title: 'Top categories'),
@@ -91,7 +94,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             icon: Icons.insights_outlined,
             title: 'No statistics yet',
             message:
-                'Add income or expense transactions to see your monthly insights.',
+                'Add income or expense transactions to see insights for the selected period.',
           ),
       ],
     );
@@ -417,50 +420,213 @@ class _LegendRow extends StatelessWidget {
   }
 }
 
-class _SpendingTrendChart extends StatelessWidget {
-  const _SpendingTrendChart({required this.points});
+class _SpendingTrendChart extends StatefulWidget {
+  const _SpendingTrendChart({required this.points, required this.currency});
+
+  final List<TrendPoint> points;
+  final String currency;
+
+  @override
+  State<_SpendingTrendChart> createState() => _SpendingTrendChartState();
+}
+
+class _SpendingTrendChartState extends State<_SpendingTrendChart> {
+  int? _selectedIndex;
+
+  @override
+  void didUpdateWidget(covariant _SpendingTrendChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.points != widget.points) _selectedIndex = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedIndex =
+        _selectedIndex != null && _selectedIndex! < widget.points.length
+        ? _selectedIndex
+        : null;
+    final selectedPoint = selectedIndex == null
+        ? null
+        : widget.points[selectedIndex];
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: LayoutBuilder(
+            builder: (context, constraints) => GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapUp: widget.points.isEmpty
+                  ? null
+                  : (details) => _selectPoint(
+                      details.localPosition.dx,
+                      constraints.maxWidth,
+                    ),
+              child: CustomPaint(
+                key: const Key('statistics-line-chart'),
+                painter: _LineChartPainter(
+                  points: widget.points,
+                  color: Theme.of(context).colorScheme.primary,
+                  mutedColor: Theme.of(context).colorScheme.outline,
+                  surfaceColor: Theme.of(context).colorScheme.surface,
+                  selectedIndex: selectedIndex,
+                ),
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ),
+        ),
+        _TrendAxisLabels(points: widget.points),
+        if (selectedPoint != null) ...[
+          const SizedBox(height: FlowSpacing.xs),
+          Text(
+            '${selectedPoint.label}: ${formatCurrency(selectedPoint.amount, widget.currency)}',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+        ],
+        const SizedBox(height: FlowSpacing.xs),
+        Text(
+          'Line shows expense totals. Tap a point to see its value.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+
+  void _selectPoint(double x, double width) {
+    if (widget.points.isEmpty) return;
+    final plotWidth = width - (_chartHorizontalPadding * 2);
+    if (plotWidth <= 0) return;
+    final normalizedX = ((x - _chartHorizontalPadding) / plotWidth).clamp(
+      0.0,
+      1.0,
+    );
+    final index = widget.points.length == 1
+        ? 0
+        : (normalizedX * (widget.points.length - 1)).round();
+    setState(() => _selectedIndex = index);
+  }
+}
+
+class _TrendAxisLabels extends StatelessWidget {
+  const _TrendAxisLabels({required this.points});
 
   final List<TrendPoint> points;
 
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceAround,
     children: [
-      SizedBox(
-        height: 180,
-        child: CustomPaint(
-          painter: _BarChartPainter(
-            points: points,
-            color: Theme.of(context).colorScheme.primary,
-            mutedColor: Theme.of(context).colorScheme.outline,
-          ),
-          child: const SizedBox.expand(),
+      for (final index in _visibleTrendIndexes(points.length))
+        Text(
+          points[index].label,
+          style: Theme.of(context).textTheme.labelSmall,
         ),
-      ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          for (final point in _visibleTrendLabels(points))
-            Text(point.label, style: Theme.of(context).textTheme.labelSmall),
-        ],
-      ),
-      const SizedBox(height: FlowSpacing.xs),
-      Text(
-        'Bars show expense totals for the selected period.',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
     ],
   );
+}
 
-  static List<TrendPoint> _visibleTrendLabels(List<TrendPoint> points) {
-    if (points.length <= 12) return points;
-    final step = (points.length / 6).ceil();
-    final visible = <TrendPoint>[];
-    for (var index = 0; index < points.length; index += step) {
-      visible.add(points[index]);
-    }
-    if (visible.last != points.last) visible.add(points.last);
-    return visible;
+List<int> _visibleTrendIndexes(int length) {
+  if (length <= 12) return [for (var index = 0; index < length; index++) index];
+  final step = (length / 6).ceil();
+  final visible = <int>[];
+  for (var index = 0; index < length; index += step) {
+    visible.add(index);
   }
+  if (visible.last != length - 1) visible.add(length - 1);
+  return visible;
+}
+
+const _chartHorizontalPadding = 12.0;
+
+class _LineChartPainter extends CustomPainter {
+  const _LineChartPainter({
+    required this.points,
+    required this.color,
+    required this.mutedColor,
+    required this.surfaceColor,
+    required this.selectedIndex,
+  });
+
+  final List<TrendPoint> points;
+  final Color color;
+  final Color mutedColor;
+  final Color surfaceColor;
+  final int? selectedIndex;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.isEmpty) return;
+    final chartTop = 12.0;
+    final chartBottom = size.height - 12.0;
+    final chartWidth = size.width - (_chartHorizontalPadding * 2);
+    final chartHeight = chartBottom - chartTop;
+    final maxAmount = points.fold<int>(
+      0,
+      (max, point) => point.amount > max ? point.amount : max,
+    );
+
+    final gridPaint = Paint()
+      ..color = mutedColor.withValues(alpha: 0.28)
+      ..strokeWidth = 1;
+    for (var index = 0; index <= 3; index++) {
+      final y = chartTop + chartHeight * index / 3;
+      canvas.drawLine(
+        Offset(_chartHorizontalPadding, y),
+        Offset(size.width - _chartHorizontalPadding, y),
+        gridPaint,
+      );
+    }
+
+    final path = Path();
+    final coordinates = <Offset>[];
+    for (var index = 0; index < points.length; index++) {
+      final x = points.length == 1
+          ? size.width / 2
+          : _chartHorizontalPadding + chartWidth * index / (points.length - 1);
+      final ratio = maxAmount == 0 ? 0.0 : points[index].amount / maxAmount;
+      final y = chartBottom - chartHeight * ratio;
+      final point = Offset(x, y);
+      coordinates.add(point);
+      if (index == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+
+    for (var index = 0; index < coordinates.length; index++) {
+      final isSelected = index == selectedIndex;
+      canvas.drawCircle(
+        coordinates[index],
+        isSelected ? 6 : 4,
+        Paint()..color = color,
+      );
+      canvas.drawCircle(
+        coordinates[index],
+        isSelected ? 3 : 2,
+        Paint()..color = surfaceColor,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
+      oldDelegate.points != points ||
+      oldDelegate.color != color ||
+      oldDelegate.mutedColor != mutedColor ||
+      oldDelegate.surfaceColor != surfaceColor ||
+      oldDelegate.selectedIndex != selectedIndex;
 }
 
 class _TopCategories extends StatelessWidget {
@@ -474,7 +640,7 @@ class _TopCategories extends StatelessWidget {
     final total = categories.fold<int>(0, (sum, item) => sum + item.amount);
     if (categories.isEmpty) {
       return Text(
-        'No categorized expenses this month.',
+        'No categorized expenses for the selected period.',
         style: Theme.of(context).textTheme.bodyMedium,
       );
     }
@@ -558,54 +724,6 @@ class _DonutPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DonutPainter oldDelegate) =>
       oldDelegate.categories != categories || oldDelegate.total != total;
-}
-
-class _BarChartPainter extends CustomPainter {
-  const _BarChartPainter({
-    required this.points,
-    required this.color,
-    required this.mutedColor,
-  });
-
-  final List<TrendPoint> points;
-  final Color color;
-  final Color mutedColor;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (points.isEmpty) return;
-    final maxAmount = points.fold<int>(
-      0,
-      (max, point) => point.amount > max ? point.amount : max,
-    );
-    final baseline = size.height - 8;
-    final chartHeight = size.height - 24;
-    final width = size.width / points.length;
-    canvas.drawLine(
-      Offset(0, baseline),
-      Offset(size.width, baseline),
-      Paint()..color = mutedColor,
-    );
-    for (var index = 0; index < points.length; index++) {
-      final height = maxAmount == 0
-          ? 0.0
-          : chartHeight * points[index].amount / maxAmount;
-      final bar = RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          width * index + width * .25,
-          baseline - height,
-          width * .5,
-          height,
-        ),
-        const Radius.circular(8),
-      );
-      canvas.drawRRect(bar, Paint()..color = color);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BarChartPainter oldDelegate) =>
-      oldDelegate.points != points;
 }
 
 class _PeriodSelector extends StatelessWidget {
