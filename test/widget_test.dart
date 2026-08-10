@@ -64,6 +64,7 @@ void main() {
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
     expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('System'), findsNothing);
 
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();

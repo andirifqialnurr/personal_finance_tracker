@@ -29,7 +29,7 @@ class FlowApp extends StatefulWidget {
 class _FlowAppState extends State<FlowApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   late final FlowStore _store = widget.store ?? MemoryFlowStore();
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   final List<Account> _accounts = [];
   final List<Transaction> _transactions = [];
   List<Category> _categories = [];
@@ -148,7 +148,9 @@ class _FlowAppState extends State<FlowApp> {
 
   void _saveTransaction(Transaction transaction, Transaction? editing) {
     final transactionWithId = editing == null
-        ? transaction.copyWith(id: _nextId(_transactions.map((item) => item.id)))
+        ? transaction.copyWith(
+            id: _nextId(_transactions.map((item) => item.id)),
+          )
         : transaction.copyWith(id: editing.id);
     setState(() {
       if (editing == null) {
@@ -202,7 +204,11 @@ class _FlowAppState extends State<FlowApp> {
             unawaited(_openAddTransaction(context, transaction));
           },
           onDelete: () {
-            setState(() => _transactions.removeWhere((item) => item.id == transaction.id));
+            setState(
+              () => _transactions.removeWhere(
+                (item) => item.id == transaction.id,
+              ),
+            );
             _persist(_store.deleteTransaction(transaction.id!));
             _navigatorKey.currentState!.pop();
           },
@@ -239,7 +245,10 @@ class _FlowAppState extends State<FlowApp> {
           account: account,
           onSaved: (savedAccount) {
             final accountWithId = savedAccount.id == null
-                ? _copyAccount(savedAccount, _nextId(_accounts.map((item) => item.id)))
+                ? _copyAccount(
+                    savedAccount,
+                    _nextId(_accounts.map((item) => item.id)),
+                  )
                 : savedAccount;
             setState(() {
               final index = _accounts.indexWhere(
@@ -307,7 +316,7 @@ class _FlowAppState extends State<FlowApp> {
       _transactions.clear();
       _categories = MemoryFlowStore.defaultCategories();
       _currency = 'IDR';
-      _themeMode = ThemeMode.system;
+      _themeMode = ThemeMode.light;
       _hideBalance = false;
       _hasCompletedWelcome = false;
     });
@@ -338,13 +347,13 @@ class _FlowAppState extends State<FlowApp> {
 ThemeMode _themeModeFromSetting(ThemeModeSetting mode) => switch (mode) {
   ThemeModeSetting.light => ThemeMode.light,
   ThemeModeSetting.dark => ThemeMode.dark,
-  ThemeModeSetting.system => ThemeMode.system,
+  ThemeModeSetting.system => ThemeMode.light,
 };
 
 ThemeModeSetting _themeModeSetting(ThemeMode mode) => switch (mode) {
   ThemeMode.light => ThemeModeSetting.light,
   ThemeMode.dark => ThemeModeSetting.dark,
-  ThemeMode.system => ThemeModeSetting.system,
+  ThemeMode.system => ThemeModeSetting.light,
 };
 
 int _nextId(Iterable<int?> ids) {

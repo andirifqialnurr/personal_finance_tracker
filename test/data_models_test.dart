@@ -40,10 +40,19 @@ void main() {
     expect(Transaction.fromMap(map).note, 'Lunch');
   });
 
-  test('settings defaults to IDR and system theme', () {
+  test('settings defaults to IDR and light theme', () {
     final settings = AppSettings.fromMap(const AppSettings().toMap());
     expect(settings.currency, 'IDR');
-    expect(settings.themeMode, ThemeModeSetting.system);
+    expect(settings.themeMode, ThemeModeSetting.light);
     expect(settings.hideBalance, isFalse);
+  });
+
+  test('settings can still read the legacy system theme value', () {
+    final settings = AppSettings.fromMap(const {
+      'currency': 'IDR',
+      'theme_mode': 'system',
+      'hide_balance': 0,
+    });
+    expect(settings.themeMode, ThemeModeSetting.system);
   });
 }

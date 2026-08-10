@@ -31,16 +31,12 @@ class FlowSettingsPage extends StatefulWidget {
 }
 
 class _FlowSettingsPageState extends State<FlowSettingsPage> {
-  late ThemeMode _themeMode = widget.initialThemeMode;
+  late ThemeMode _themeMode = _normalizeThemeMode(widget.initialThemeMode);
   bool _isExporting = false;
 
   @override
   Widget build(BuildContext context) {
-    final selectedIndex = switch (_themeMode) {
-      ThemeMode.light => 0,
-      ThemeMode.dark => 1,
-      ThemeMode.system => 2,
-    };
+    final selectedIndex = _themeMode == ThemeMode.dark ? 1 : 0;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -56,14 +52,10 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
           Text('Appearance', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: FlowSpacing.sm),
           FlowSegmentedControl(
-            labels: const ['Light', 'Dark', 'System'],
+            labels: const ['Light', 'Dark'],
             selectedIndex: selectedIndex,
             onChanged: (index) {
-              final mode = switch (index) {
-                0 => ThemeMode.light,
-                1 => ThemeMode.dark,
-                _ => ThemeMode.system,
-              };
+              final mode = index == 1 ? ThemeMode.dark : ThemeMode.light;
               setState(() => _themeMode = mode);
               widget.onThemeModeChanged(mode);
             },
@@ -78,7 +70,8 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
           const SizedBox(height: FlowSpacing.md),
           FlowSelector(
             label: 'Categories',
-            value: '${widget.categories.where((category) => !category.isArchived).length} active',
+            value:
+                '${widget.categories.where((category) => !category.isArchived).length} active',
             icon: Icons.category_outlined,
             onTap: () => Navigator.of(context).push<void>(
               MaterialPageRoute<void>(
@@ -90,7 +83,10 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
             ),
           ),
           const SizedBox(height: FlowSpacing.xl),
-          Text('Data management', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Data management',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: FlowSpacing.sm),
           FlowButton(
             label: _isExporting ? 'Exporting CSV...' : 'Export CSV',
@@ -111,6 +107,9 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
     );
   }
 
+  static ThemeMode _normalizeThemeMode(ThemeMode mode) =>
+      mode == ThemeMode.dark ? ThemeMode.dark : ThemeMode.light;
+
   Future<void> _selectCurrency() async {
     final currency = await showModalBottomSheet<String>(
       context: context,
@@ -121,7 +120,9 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
             for (final option in ['IDR', 'USD', 'SGD'])
               ListTile(
                 title: Text(option),
-                trailing: option == widget.currency ? const Icon(Icons.check) : null,
+                trailing: option == widget.currency
+                    ? const Icon(Icons.check)
+                    : null,
                 onTap: () => Navigator.pop(context, option),
               ),
           ],
@@ -136,11 +137,18 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete all data?'),
-        content: const Text('This removes every account and transaction, then restores the default categories on this device.'),
+        content: const Text(
+          'This removes every account and transaction, then restores the default categories on this device.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Delete everything'),
           ),
@@ -158,14 +166,14 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
     try {
       final path = await widget.onExportCsv();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('CSV exported to $path')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('CSV exported to $path')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('CSV export failed: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('CSV export failed: $error')));
     } finally {
       if (mounted) setState(() => _isExporting = false);
     }

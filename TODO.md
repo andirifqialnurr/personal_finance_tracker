@@ -125,9 +125,9 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 
 ### 12.1 Theme, background, dan floating shell
 
-- [ ] Ubah pilihan mode tema yang terlihat di Settings menjadi tepat dua opsi: **Light** dan **Dark**; tangani nilai `System` lama dengan fallback yang aman tanpa menampilkannya sebagai opsi baru.
-- [ ] Revisi token background Light menjadi neutral warm/gray yang sedikit lebih gelap agar card putih terlihat jelas terpisah dari halaman.
-- [ ] Audit ulang token Dark untuk background, surface/card, text, muted text, border, shadow, accent, income, expense, dan state agar kontras serta hierarki tetap nyaman dibaca.
+- [x] Ubah pilihan mode tema yang terlihat di Settings menjadi tepat dua opsi: **Light** dan **Dark**; tangani nilai `System` lama dengan fallback yang aman tanpa menampilkannya sebagai opsi baru.
+- [x] Revisi token background Light menjadi neutral warm/gray yang sedikit lebih gelap agar card putih terlihat jelas terpisah dari halaman.
+- [x] Audit ulang token Dark untuk background, surface/card, text, muted text, border, shadow, accent, income, expense, dan state agar kontras serta hierarki tetap nyaman dibaca.
 - [ ] Jadikan header/AppBar floating dengan inset dari tepi layar, radius, surface, shadow/elevation, dan safe area yang konsisten.
 - [ ] Jadikan bottom navigation floating dengan kontrak visual yang sama, tanpa menutup konten, tetap aman terhadap safe area/keyboard, dan tetap mempertahankan state tab aktif.
 - [ ] Verifikasi floating header, floating bottom bar, spacing, scrolling, dan overflow pada lebar small/medium/large dalam Light dan Dark.

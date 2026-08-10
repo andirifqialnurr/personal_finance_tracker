@@ -92,7 +92,7 @@ class FlowDatabase {
       await transaction.insert('app_settings', const {
         'id': 1,
         'currency': 'IDR',
-        'theme_mode': 'system',
+        'theme_mode': 'light',
         'hide_balance': 0,
       });
       await transaction.execute(

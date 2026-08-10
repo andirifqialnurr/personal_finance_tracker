@@ -29,10 +29,10 @@ abstract final class FlowTheme {
       onError: Colors.white,
       surface: surface,
       onSurface: text,
-      outline: isDark ? const Color(0xFF3D4A46) : const Color(0xFFD9DFDC),
+      outline: isDark ? FlowColors.darkOutline : FlowColors.lightOutline,
       surfaceContainerHighest: isDark
-          ? const Color(0xFF2C3532)
-          : const Color(0xFFEFF1EE),
+          ? FlowColors.darkSurfaceContainer
+          : FlowColors.lightSurfaceContainer,
     );
     final textTheme = _textTheme(text, mutedText);
 
