@@ -16,6 +16,7 @@ import 'screens/transaction_detail_page.dart';
 import 'screens/welcome_page.dart';
 import 'screens/home_dashboard.dart';
 import 'theme/flow_theme.dart';
+import 'theme/flow_tokens.dart';
 
 class FlowApp extends StatefulWidget {
   const FlowApp({super.key, this.store});
@@ -430,52 +431,84 @@ class _FlowShellState extends State<FlowShell> {
   @override
   Widget build(BuildContext context) {
     final page = _pages[_selectedIndex];
+    final theme = Theme.of(context);
+    final floatingDecoration = _floatingSurfaceDecoration(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(page.title),
-        actions: [
-          if (_selectedIndex == 0)
-            IconButton(
-              onPressed: () => widget.onOpenSettings(context),
-              tooltip: 'Settings',
-              icon: const Icon(Icons.person_outline),
-            ),
-        ],
-      ),
       body: SafeArea(
-        child: IndexedStack(
-          index: _selectedIndex,
+        bottom: false,
+        child: Column(
           children: [
-            HomeDashboard(
-              accounts: widget.accounts,
-              transactions: widget.transactions,
-              categories: widget.categories,
-              currency: widget.currency,
-              hideBalance: widget.hideBalance,
-              onHideBalanceChanged: widget.onHideBalanceChanged,
-              onAddTransaction: widget.onAddTransaction,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                FlowSpacing.md,
+                FlowSpacing.sm,
+                FlowSpacing.md,
+                FlowSpacing.xs,
+              ),
+              child: DecoratedBox(
+                key: const Key('flow-floating-header'),
+                decoration: floatingDecoration,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: FlowSpacing.sm,
+                    vertical: FlowSpacing.xxs,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          page.title,
+                          style: theme.textTheme.titleLarge,
+                        ),
+                      ),
+                      if (_selectedIndex == 0)
+                        IconButton(
+                          onPressed: () => widget.onOpenSettings(context),
+                          tooltip: 'Settings',
+                          icon: const Icon(Icons.person_outline),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            TransactionsPage(
-              transactions: widget.transactions,
-              accounts: widget.accounts,
-              categories: widget.categories,
-              currency: widget.currency,
-              onOpenDetail: widget.onOpenTransactionDetail,
-            ),
-            StatisticsPage(
-              transactions: widget.transactions,
-              categories: widget.categories,
-              currency: widget.currency,
-            ),
-            AccountsPage(
-              accounts: widget.accounts,
-              onAdd: widget.onAddAccount,
-              onEdit: widget.onEditAccount,
-              onArchive: widget.onArchiveAccount,
-              transactions: widget.transactions,
-              currency: widget.currency,
-              onOpenDetail: widget.onOpenAccountDetail,
+            Expanded(
+              child: IndexedStack(
+                index: _selectedIndex,
+                children: [
+                  HomeDashboard(
+                    accounts: widget.accounts,
+                    transactions: widget.transactions,
+                    categories: widget.categories,
+                    currency: widget.currency,
+                    hideBalance: widget.hideBalance,
+                    onHideBalanceChanged: widget.onHideBalanceChanged,
+                    onAddTransaction: widget.onAddTransaction,
+                  ),
+                  TransactionsPage(
+                    transactions: widget.transactions,
+                    accounts: widget.accounts,
+                    categories: widget.categories,
+                    currency: widget.currency,
+                    onOpenDetail: widget.onOpenTransactionDetail,
+                  ),
+                  StatisticsPage(
+                    transactions: widget.transactions,
+                    categories: widget.categories,
+                    currency: widget.currency,
+                  ),
+                  AccountsPage(
+                    accounts: widget.accounts,
+                    onAdd: widget.onAddAccount,
+                    onEdit: widget.onEditAccount,
+                    onArchive: widget.onArchiveAccount,
+                    transactions: widget.transactions,
+                    currency: widget.currency,
+                    onOpenDetail: widget.onOpenAccountDetail,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -485,19 +518,58 @@ class _FlowShellState extends State<FlowShell> {
         tooltip: 'Add transaction',
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        onDestinationSelected: (index) {
-          setState(() => _selectedIndex = index);
-        },
-        destinations: [
-          for (final item in _pages)
-            NavigationDestination(icon: Icon(item.icon), label: item.title),
-        ],
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            FlowSpacing.md,
+            FlowSpacing.xs,
+            FlowSpacing.md,
+            FlowSpacing.sm,
+          ),
+          child: DecoratedBox(
+            key: const Key('flow-floating-navigation'),
+            decoration: floatingDecoration,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(FlowRadii.card),
+              child: NavigationBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                shadowColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                selectedIndex: _selectedIndex,
+                labelBehavior:
+                    NavigationDestinationLabelBehavior.onlyShowSelected,
+                onDestinationSelected: (index) {
+                  setState(() => _selectedIndex = index);
+                },
+                destinations: [
+                  for (final item in _pages)
+                    NavigationDestination(
+                      icon: Icon(item.icon),
+                      label: item.title,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
+}
+
+BoxDecoration _floatingSurfaceDecoration(BuildContext context) {
+  final theme = Theme.of(context);
+  return BoxDecoration(
+    color: theme.colorScheme.surface,
+    borderRadius: BorderRadius.circular(FlowRadii.card),
+    border: Border.all(
+      color: theme.colorScheme.outline.withValues(alpha: 0.72),
+    ),
+    boxShadow:
+        theme.extension<FlowThemeExtension>()?.shadows ?? FlowShadows.card,
+  );
 }
 
 class _FlowPageData {

@@ -38,6 +38,9 @@ void main() {
   ) async {
     await pumpWithFirstAccount(tester);
 
+    expect(find.byKey(const Key('flow-floating-header')), findsOneWidget);
+    expect(find.byKey(const Key('flow-floating-navigation')), findsOneWidget);
+
     await tester.tap(find.text('Transactions'));
     await tester.pumpAndSettle();
 
