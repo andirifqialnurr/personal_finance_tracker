@@ -135,9 +135,9 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 ### 12.2 Statistics line chart dan periode waktu
 
 - [ ] Ganti chart trend pengeluaran yang saat ini berupa bar chart menjadi line chart yang reusable; chart kategori/donut tetap dipertahankan kecuali ada kebutuhan lanjutan.
-- [ ] Pisahkan model agregasi data dari painter/widget chart agar pergantian periode tidak mengubah aturan kalkulasi transaksi.
-- [ ] Tambahkan selector periode **Tahunan**, **Bulanan**, dan **Tanggal** pada area chart.
-- [ ] Agregasikan periode Tahunan per bulan, periode Bulanan per hari pada bulan terpilih, dan periode Tanggal melalui date picker untuk fokus pada tanggal yang dipilih.
+- [x] Pisahkan model agregasi data dari painter/widget chart agar pergantian periode tidak mengubah aturan kalkulasi transaksi.
+- [x] Tambahkan selector periode **Tahunan**, **Bulanan**, dan **Tanggal** pada area chart.
+- [x] Agregasikan periode Tahunan per bulan, periode Bulanan per hari pada bulan terpilih, dan periode Tanggal melalui date picker untuk fokus pada tanggal yang dipilih.
 - [ ] Tampilkan label sumbu, titik/marker, nilai atau tooltip yang mudah dibaca, serta state aman untuk data kosong, satu titik, nilai nol, 28/29/30/31 hari, dan 12 bulan.
 - [ ] Pastikan line chart tetap terbaca pada Light/Dark, lebar layar kecil, serta nilai nominal besar; tambahkan test untuk agregasi setiap periode.
 

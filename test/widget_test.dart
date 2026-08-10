@@ -47,6 +47,23 @@ void main() {
     expect(find.text('No transactions yet'), findsOneWidget);
   });
 
+  testWidgets('Statistics exposes yearly, monthly, and date periods', (
+    WidgetTester tester,
+  ) async {
+    await pumpWithFirstAccount(tester);
+
+    await tester.tap(find.text('Statistics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tahunan'), findsOneWidget);
+    expect(find.text('Bulanan'), findsOneWidget);
+    expect(find.text('Tanggal'), findsOneWidget);
+    await tester.tap(find.text('Tanggal'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Previous period'), findsOneWidget);
+    expect(find.byTooltip('Next period'), findsOneWidget);
+  });
+
   testWidgets('primary action opens the add transaction flow', (
     WidgetTester tester,
   ) async {
