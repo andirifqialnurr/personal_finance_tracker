@@ -60,13 +60,46 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.lg),
       children: [
-        Text(greeting, style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: FlowSpacing.xxs),
-        Text('Your Flow', style: Theme.of(context).textTheme.headlineSmall),
-        Text(
-          '${_monthName(now.month)} ${now.year}',
-          style: Theme.of(context).textTheme.bodySmall,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    greeting,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: FlowSpacing.xxs),
+                  Text(
+                    'Your Flow',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: FlowSpacing.sm),
+            Flexible(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${_monthName(now.month)} ${now.year}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ),
+          ],
         ),
+
         const SizedBox(height: FlowSpacing.lg),
         FlowCard(
           variant: FlowCardVariant.balance,
@@ -104,6 +137,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
           ),
         ),
         const SizedBox(height: FlowSpacing.md),
+
         Row(
           children: [
             Expanded(
@@ -125,21 +159,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ),
           ],
         ),
-        const SizedBox(height: FlowSpacing.md),
-        FlowButton(
-          label: 'Add transaction',
-          icon: Icons.add,
-          onPressed: widget.onAddTransaction,
-        ),
         const SizedBox(height: FlowSpacing.lg),
         _CashFlowCard(
           transactions: monthTransactions.toList(growable: false),
-          currency: widget.currency,
-        ),
-        const SizedBox(height: FlowSpacing.md),
-        _SpendingByCategoryCard(
-          transactions: monthTransactions.toList(growable: false),
-          categories: widget.categories,
           currency: widget.currency,
         ),
         const SizedBox(height: FlowSpacing.lg),
@@ -250,8 +272,6 @@ class _CashFlowCard extends StatelessWidget {
       incomeByWeek.length,
       (index) => incomeByWeek[index] + expenseByWeek[index],
     ).fold<int>(0, (max, value) => value > max ? value : max);
-    final income = incomeByWeek.fold<int>(0, (sum, value) => sum + value);
-    final expense = expenseByWeek.fold<int>(0, (sum, value) => sum + value);
     return FlowCard(
       variant: FlowCardVariant.chart,
       child: Column(
@@ -278,8 +298,9 @@ class _CashFlowCard extends StatelessWidget {
                           height: maxAmount == 0
                               ? 8
                               : 72 *
-                                  ((incomeByWeek[index] + expenseByWeek[index]) /
-                                      maxAmount),
+                                    ((incomeByWeek[index] +
+                                            expenseByWeek[index]) /
+                                        maxAmount),
                           width: 28,
                           decoration: BoxDecoration(
                             color: incomeByWeek[index] >= expenseByWeek[index]
@@ -302,122 +323,6 @@ class _CashFlowCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: FlowSpacing.xs),
-          Wrap(
-            spacing: FlowSpacing.md,
-            runSpacing: FlowSpacing.xs,
-            children: [
-              Text(
-                'Income ${formatCurrency(income, currency)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              Text(
-                'Expense ${formatCurrency(expense, currency)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SpendingByCategoryCard extends StatelessWidget {
-  const _SpendingByCategoryCard({
-    required this.transactions,
-    required this.categories,
-    required this.currency,
-  });
-
-  final List<Transaction> transactions;
-  final List<Category> categories;
-  final String currency;
-
-  @override
-  Widget build(BuildContext context) {
-    final categoryNames = {
-      for (final category in categories)
-        if (category.id != null) category.id!: category.name,
-    };
-    final totals = <int?, int>{};
-    for (final transaction in transactions) {
-      if (transaction.type != TransactionType.expense) continue;
-      totals.update(
-        transaction.categoryId,
-        (value) => value + transaction.amount,
-        ifAbsent: () => transaction.amount,
-      );
-    }
-    final sorted = totals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final total = sorted.fold<int>(0, (sum, entry) => sum + entry.value);
-    final visible = sorted.take(4).toList();
-    final others = sorted.skip(4).fold<int>(0, (sum, entry) => sum + entry.value);
-    if (others > 0) visible.add(const MapEntry(null, 0));
-    if (others > 0) visible[visible.length - 1] = MapEntry(null, others);
-
-    return FlowCard(
-      variant: FlowCardVariant.chart,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Spending by category',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: FlowSpacing.xs),
-          Text(
-            'Top 4 categories plus Others',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: FlowSpacing.md),
-          if (visible.isEmpty)
-            Row(
-              children: [
-                Icon(
-                  Icons.pie_chart_outline,
-                  size: FlowIconSize.pageEmptyState,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: FlowSpacing.md),
-                Expanded(
-                  child: Text(
-                    'No spending data yet. Add an expense to see category insights.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            )
-          else
-            for (final entry in visible) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      entry.key == null
-                          ? (entry.value == others ? 'Others' : 'Uncategorized')
-                          : categoryNames[entry.key] ?? 'Category ${entry.key}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                  const SizedBox(width: FlowSpacing.sm),
-                  Text(
-                    formatCurrency(entry.value, currency),
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                ],
-              ),
-              const SizedBox(height: FlowSpacing.xs),
-              LinearProgressIndicator(
-                value: total == 0 ? 0 : entry.value / total,
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(FlowRadii.pill),
-              ),
-              if (entry != visible.last)
-                const SizedBox(height: FlowSpacing.sm),
-            ],
         ],
       ),
     );

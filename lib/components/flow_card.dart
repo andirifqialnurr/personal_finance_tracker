@@ -18,7 +18,7 @@ class FlowCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final extension = Theme.of(context).extension<FlowThemeExtension>();
     final padding = variant == FlowCardVariant.balance
-        ? FlowSpacing.lg
+        ? FlowSpacing.sm
         : FlowSpacing.md;
     return Card(
       child: Container(

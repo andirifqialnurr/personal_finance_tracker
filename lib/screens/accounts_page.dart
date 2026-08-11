@@ -135,7 +135,8 @@ class AccountsPage extends StatelessWidget {
     if (confirmed == true) onArchive(account);
   }
 
-  int _balanceFor(Account account) => account.openingBalance +
+  int _balanceFor(Account account) =>
+      account.openingBalance +
       transactions.fold<int>(0, (sum, transaction) {
         if (transaction.type == TransactionType.transfer &&
             transaction.destinationAccountId == account.id) {

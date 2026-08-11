@@ -62,14 +62,16 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.text('Spending by category'),
-        400,
-        scrollable: find.byType(Scrollable).first,
-      );
+      final homeList = find.byType(ListView);
+      expect(homeList, findsOneWidget);
+      for (var attempt = 0; attempt < 5; attempt += 1) {
+        if (find.text('Recent transactions').evaluate().isNotEmpty) break;
+        await tester.drag(homeList, const Offset(0, -400));
+        await tester.pumpAndSettle();
+      }
 
-      expect(find.text('Spending by category'), findsOneWidget);
-      expect(find.text('Food'), findsOneWidget);
+      expect(find.text('Recent transactions'), findsOneWidget);
+      expect(find.textContaining('Food'), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
     addTearDown(() => tester.binding.setSurfaceSize(null));

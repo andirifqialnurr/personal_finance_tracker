@@ -361,10 +361,6 @@ class _CategoryChart extends StatelessWidget {
             ],
           ),
         ),
-        Text(
-          'Each segment shows its category share of expense.',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
       ],
     );
   }
@@ -485,11 +481,6 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
             style: Theme.of(context).textTheme.labelLarge,
           ),
         ],
-        const SizedBox(height: FlowSpacing.xs),
-        Text(
-          'Line shows expense totals. Tap a point to see its value.',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
       ],
     );
   }

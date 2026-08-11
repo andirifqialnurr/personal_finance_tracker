@@ -508,8 +508,7 @@ class _FlowShellState extends State<FlowShell> {
                 shadowColor: Colors.transparent,
                 surfaceTintColor: Colors.transparent,
                 selectedIndex: _selectedIndex,
-                labelBehavior:
-                    NavigationDestinationLabelBehavior.alwaysHide,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
                 onDestinationSelected: (index) {
                   setState(() => _selectedIndex = index);
                 },
