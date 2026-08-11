@@ -37,20 +37,6 @@ class AccountsPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.lg),
       children: [
-        FlowCard(
-          variant: FlowCardVariant.balance,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Total balance',
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-              const SizedBox(height: FlowSpacing.xs),
-              FlowAmountText(amount: formatCurrency(total, currency)),
-            ],
-          ),
-        ),
         const SizedBox(height: FlowSpacing.lg),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

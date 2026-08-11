@@ -430,6 +430,11 @@ class _FlowShellState extends State<FlowShell> {
   @override
   Widget build(BuildContext context) {
     final floatingDecoration = _floatingSurfaceDecoration(context);
+    final theme = Theme.of(context);
+    final selectedNavColor = theme.colorScheme.primary;
+    final selectedNavBackground = selectedNavColor.withValues(
+      alpha: theme.brightness == Brightness.dark ? 0.24 : 0.30,
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -516,6 +521,21 @@ class _FlowShellState extends State<FlowShell> {
                   for (final item in _pages)
                     NavigationDestination(
                       icon: Icon(item.icon),
+                      selectedIcon: SizedBox.square(
+                        key: Key(
+                          'flow-nav-selected-${item.title.toLowerCase()}',
+                        ),
+                        dimension: FlowControlSize.iconContainer,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: selectedNavBackground,
+                            borderRadius: BorderRadius.circular(
+                              FlowRadii.input,
+                            ),
+                          ),
+                          child: Icon(item.icon, color: selectedNavColor),
+                        ),
+                      ),
                       label: item.title,
                     ),
                 ],

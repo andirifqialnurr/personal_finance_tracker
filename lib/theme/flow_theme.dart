@@ -52,9 +52,7 @@ abstract final class FlowTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
-        indicatorColor: FlowColors.accent.withValues(
-          alpha: isDark ? 0.24 : 0.30,
-        ),
+        indicatorColor: Colors.transparent,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
           return IconThemeData(
