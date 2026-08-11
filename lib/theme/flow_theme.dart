@@ -53,9 +53,22 @@ abstract final class FlowTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
         indicatorColor: FlowColors.accent.withValues(
-          alpha: isDark ? 0.24 : 0.14,
+          alpha: isDark ? 0.24 : 0.30,
         ),
-        labelTextStyle: WidgetStatePropertyAll(textTheme.labelMedium),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: isSelected
+                ? FlowColors.accent
+                : textTheme.labelMedium?.color,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return textTheme.labelMedium?.copyWith(
+            color: isSelected ? FlowColors.accent : textTheme.labelMedium?.color,
+          );
+        }),
         height: FlowControlSize.minTouchTarget + FlowSpacing.md,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(

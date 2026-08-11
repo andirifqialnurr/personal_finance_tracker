@@ -76,68 +76,82 @@ class _TransactionsPageState extends State<TransactionsPage> {
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.lg),
       children: [
-        TextField(
-          controller: _searchController,
-          onChanged: (value) =>
-              setState(() => _query = value.trim().toLowerCase()),
-          decoration: InputDecoration(
-            hintText: 'Search note or category',
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: _query.isEmpty
-                ? null
-                : IconButton(
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() => _query = '');
-                    },
-                    icon: const Icon(Icons.clear),
-                    tooltip: 'Clear search',
-                  ),
-          ),
-        ),
-        const SizedBox(height: FlowSpacing.md),
-        Wrap(
-          spacing: FlowSpacing.xs,
-          runSpacing: FlowSpacing.xs,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FilterChip(
-              label: Text(
-                _typeFilter == null
-                    ? 'Type: All'
-                    : 'Type: ${_typeLabel(_typeFilter!)}',
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) =>
+                    setState(() => _query = value.trim().toLowerCase()),
+                decoration: InputDecoration(
+                  hintText: 'Search note or category',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _query.isEmpty
+                      ? null
+                      : IconButton(
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _query = '');
+                          },
+                          icon: const Icon(Icons.clear),
+                          tooltip: 'Clear search',
+                        ),
+                ),
               ),
-              selected: _typeFilter != null,
-              onSelected: (_) => _selectType(),
             ),
-            FilterChip(
-              label: Text(
-                _accountFilter == null
-                    ? 'Account: All'
-                    : 'Account: ${_accountName(_accountFilter!, accountNames)}',
+            const SizedBox(width: FlowSpacing.xs),
+            SizedBox(
+              width: FlowControlSize.minTouchTarget,
+              height: FlowControlSize.minTouchTarget,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    key: const Key('transaction-filter-button'),
+                    onPressed: _openFilterModal,
+                    tooltip: _activeFilterCount == 0
+                        ? 'Open filters'
+                        : 'Open filters ($_activeFilterCount active)',
+                    icon: const Icon(Icons.tune_outlined),
+                  ),
+                  if (_activeFilterCount > 0)
+                    Positioned(
+                      key: const Key('transaction-filter-active-count'),
+                      top: -2,
+                      right: -2,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(FlowSpacing.xxs),
+                          child: Text(
+                            '$_activeFilterCount',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              selected: _accountFilter != null,
-              onSelected: (_) => _selectAccount(accountNames),
-            ),
-            FilterChip(
-              label: Text(
-                _categoryFilter == null
-                    ? 'Category: All'
-                    : 'Category: $_categoryFilter',
-              ),
-              selected: _categoryFilter != null,
-              onSelected: (_) => _selectCategory(),
-            ),
-            FilterChip(
-              label: Text(
-                _dateRange == null
-                    ? 'Date: All'
-                    : '${_dateLabel(_dateRange!.start)} - ${_dateLabel(_dateRange!.end)}',
-              ),
-              selected: _dateRange != null,
-              onSelected: (_) => _selectDateRange(),
             ),
           ],
         ),
+        if (_activeFilterCount > 0) ...[
+          const SizedBox(height: FlowSpacing.xs),
+          Text(
+            '$_activeFilterCount filters active',
+            key: const Key('transaction-filter-active-label'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
         const SizedBox(height: FlowSpacing.md),
         Row(
           children: [
@@ -207,97 +221,36 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
-  Future<void> _selectType() async {
-    final selected = await _showFilterSheet<String>('Filter type', [
-      'All types',
-      'Income',
-      'Expense',
-      'Transfer',
-    ]);
-    if (selected != null) {
-      setState(
-        () => _typeFilter = selected == 'All types'
-            ? null
-            : TransactionType.values.byName(selected.toLowerCase()),
-      );
-    }
-  }
+  int get _activeFilterCount => [
+    _typeFilter != null,
+    _accountFilter != null,
+    _categoryFilter != null,
+    _dateRange != null,
+  ].where((active) => active).length;
 
-  Future<void> _selectAccount(Map<int?, String> names) async {
-    final options = <int>[
-      0,
-      ...widget.accounts.map((account) => account.id ?? 0),
-    ];
-    final selected = await _showFilterSheet<int>(
-      'Filter account',
-      options,
-      labelOf: (id) => id == 0 ? 'All accounts' : _accountName(id, names),
-    );
-    if (selected != null) {
-      setState(() => _accountFilter = selected == 0 ? null : selected);
-    }
-  }
-
-  Future<void> _selectCategory() async {
-    final options = <int>[
-      0,
-      ...widget.transactions
-          .map((transaction) => transaction.categoryId)
-          .whereType<int>()
-          .toSet(),
-    ];
-    final categoryNames = {
-      for (final category in widget.categories)
-        if (category.id != null) category.id!: category.name,
-    };
-    final selected = await _showFilterSheet<int>(
-      'Filter category',
-      options,
-      labelOf: (id) => id == 0
-          ? 'All categories'
-          : categoryNames[id] ?? 'Category $id',
-    );
-    if (selected != null) {
-      setState(() => _categoryFilter = selected == 0 ? null : selected);
-    }
-  }
-
-  Future<void> _selectDateRange() async {
-    final selected = await showDateRangePicker(
+  Future<void> _openFilterModal() async {
+    final selected = await showModalBottomSheet<_TransactionFilterValues>(
       context: context,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      currentDate: DateTime.now(),
-      initialDateRange: _dateRange,
-    );
-    if (selected != null) setState(() => _dateRange = selected);
-  }
-
-  Future<T?> _showFilterSheet<T>(
-    String title,
-    List<T> options, {
-    String Function(T value)? labelOf,
-  }) {
-    return showModalBottomSheet<T>(
-      context: context,
+      isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(FlowSpacing.md),
-              child: Text(title, style: Theme.of(context).textTheme.titleLarge),
-            ),
-            for (final option in options)
-              ListTile(
-                title: Text(labelOf?.call(option) ?? '$option'),
-                onTap: () => Navigator.of(context).pop(option),
-              ),
-          ],
-        ),
+      useSafeArea: true,
+      builder: (context) => _TransactionFilterSheet(
+        accounts: widget.accounts,
+        categories: widget.categories,
+        transactions: widget.transactions,
+        initialType: _typeFilter,
+        initialAccountId: _accountFilter,
+        initialCategoryId: _categoryFilter,
+        initialDateRange: _dateRange,
       ),
     );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _typeFilter = selected.type;
+      _accountFilter = selected.accountId;
+      _categoryFilter = selected.categoryId;
+      _dateRange = selected.dateRange;
+    });
   }
 
   static String _subtitle(
@@ -319,8 +272,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
     ].join(' • ');
   }
 
-  static String _dateLabel(DateTime date) =>
-      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   static String _typeLabel(TransactionType type) => switch (type) {
     TransactionType.income => 'Income',
     TransactionType.expense => 'Expense',
@@ -337,8 +288,258 @@ class _TransactionsPageState extends State<TransactionsPage> {
         TransactionType.expense => FlowAmountVariant.expense,
         TransactionType.transfer => FlowAmountVariant.transfer,
       };
-  static String _accountName(int id, Map<int?, String> names) =>
-      names[id] ?? 'Account $id';
+}
+
+String _dateLabel(DateTime date) =>
+    '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+class _TransactionFilterValues {
+  const _TransactionFilterValues({
+    this.type,
+    this.accountId,
+    this.categoryId,
+    this.dateRange,
+  });
+
+  final TransactionType? type;
+  final int? accountId;
+  final int? categoryId;
+  final DateTimeRange? dateRange;
+}
+
+class _TransactionFilterSheet extends StatefulWidget {
+  const _TransactionFilterSheet({
+    required this.accounts,
+    required this.categories,
+    required this.transactions,
+    required this.initialType,
+    required this.initialAccountId,
+    required this.initialCategoryId,
+    required this.initialDateRange,
+  });
+
+  final List<Account> accounts;
+  final List<Category> categories;
+  final List<Transaction> transactions;
+  final TransactionType? initialType;
+  final int? initialAccountId;
+  final int? initialCategoryId;
+  final DateTimeRange? initialDateRange;
+
+  @override
+  State<_TransactionFilterSheet> createState() =>
+      _TransactionFilterSheetState();
+}
+
+class _TransactionFilterSheetState extends State<_TransactionFilterSheet> {
+  late TransactionType? _type = widget.initialType;
+  late int? _accountId = widget.initialAccountId;
+  late int? _categoryId = widget.initialCategoryId;
+  late DateTimeRange? _dateRange = widget.initialDateRange;
+
+  @override
+  Widget build(BuildContext context) {
+    final categoryNames = {
+      for (final category in widget.categories)
+        if (category.id != null) category.id!: category.name,
+    };
+    final categoryIds = widget.transactions
+        .map((transaction) => transaction.categoryId)
+        .whereType<int>()
+        .toSet()
+      ..addAll(categoryNames.keys);
+    final modalHeight =
+        (MediaQuery.sizeOf(context).height * .82).clamp(320.0, 620.0);
+
+    return SizedBox(
+      height: modalHeight.toDouble(),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            FlowSpacing.lg,
+            FlowSpacing.xs,
+            FlowSpacing.lg,
+            FlowSpacing.md,
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Filter transactions',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close',
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: FlowSpacing.xs),
+              Expanded(
+                child: ListView(
+                  children: [
+                    DropdownButtonFormField<TransactionType?>(
+                      isExpanded: true,
+                      initialValue: _type,
+                      decoration: const InputDecoration(labelText: 'Type'),
+                      items: [
+                        const DropdownMenuItem<TransactionType?>(
+                          child: Text('All types'),
+                        ),
+                        for (final type in TransactionType.values)
+                          DropdownMenuItem<TransactionType?>(
+                            value: type,
+                            child: Text(_typeLabel(type)),
+                          ),
+                      ],
+                      onChanged: (value) => setState(() => _type = value),
+                    ),
+                    const SizedBox(height: FlowSpacing.md),
+                    DropdownButtonFormField<int?>(
+                      isExpanded: true,
+                      initialValue: _accountId,
+                      decoration: const InputDecoration(labelText: 'Account'),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          child: Text('All accounts'),
+                        ),
+                        for (final account in widget.accounts)
+                          if (account.id != null)
+                            DropdownMenuItem<int?>(
+                              value: account.id,
+                              child: Text(
+                                account.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                      ],
+                      onChanged: (value) => setState(() => _accountId = value),
+                    ),
+                    const SizedBox(height: FlowSpacing.md),
+                    DropdownButtonFormField<int?>(
+                      isExpanded: true,
+                      initialValue: _categoryId,
+                      decoration: const InputDecoration(labelText: 'Category'),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          child: Text('All categories'),
+                        ),
+                        for (final id in categoryIds.toList()..sort())
+                          DropdownMenuItem<int?>(
+                            value: id,
+                            child: Text(
+                              categoryNames[id] ?? 'Category $id',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _categoryId = value),
+                    ),
+                    const SizedBox(height: FlowSpacing.md),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(FlowRadii.input),
+                      onTap: _pickDateRange,
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Date',
+                          suffixIcon: Icon(Icons.calendar_today_outlined),
+                        ),
+                        child: Text(
+                          _dateRange == null
+                              ? 'All dates'
+                              : '${_dateLabel(_dateRange!.start)} - ${_dateLabel(_dateRange!.end)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: FlowSpacing.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: _clearAll,
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(
+                          0,
+                          FlowControlSize.minTouchTarget,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: FlowSpacing.sm,
+                        ),
+                      ),
+                      child: const Text('Clear all'),
+                    ),
+                  ),
+                  const SizedBox(width: FlowSpacing.xs),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _apply,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(
+                          0,
+                          FlowControlSize.minTouchTarget,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: FlowSpacing.sm,
+                        ),
+                      ),
+                      child: const Text('Apply'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickDateRange() async {
+    final selected = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      currentDate: DateTime.now(),
+      initialDateRange: _dateRange,
+    );
+    if (selected != null && mounted) setState(() => _dateRange = selected);
+  }
+
+  void _clearAll() {
+    setState(() {
+      _type = null;
+      _accountId = null;
+      _categoryId = null;
+      _dateRange = null;
+    });
+  }
+
+  void _apply() {
+    Navigator.of(context).pop(
+      _TransactionFilterValues(
+        type: _type,
+        accountId: _accountId,
+        categoryId: _categoryId,
+        dateRange: _dateRange,
+      ),
+    );
+  }
+
+  static String _typeLabel(TransactionType type) => switch (type) {
+    TransactionType.income => 'Income',
+    TransactionType.expense => 'Expense',
+    TransactionType.transfer => 'Transfer',
+  };
 }
 
 class _TotalCard extends StatelessWidget {

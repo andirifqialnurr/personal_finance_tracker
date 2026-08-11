@@ -12,6 +12,16 @@ Future<void> pumpWithFirstAccount(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> tapShellTab(WidgetTester tester, int index) async {
+  final navRect = tester.getRect(
+    find.byKey(const Key('flow-floating-navigation')),
+  );
+  await tester.tapAt(
+    Offset(navRect.left + navRect.width * ((index + .5) / 5), navRect.center.dy),
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('Flow starts in Welcome and creates the first account', (
     WidgetTester tester,
@@ -25,7 +35,7 @@ void main() {
     await tester.enterText(find.byType(TextFormField).first, 'Cash');
     await tester.tap(find.text('Create account'));
     await tester.pumpAndSettle();
-    expect(find.text('Home'), findsWidgets);
+    expect(find.text('Your Flow'), findsOneWidget);
     expect(find.text('Total balance'), findsOneWidget);
     expect(
       find.text('You have pushed the button this many times:'),
@@ -38,11 +48,11 @@ void main() {
   ) async {
     await pumpWithFirstAccount(tester);
 
-    expect(find.byKey(const Key('flow-floating-header')), findsOneWidget);
+    expect(find.byKey(const Key('flow-floating-header')), findsNothing);
     expect(find.byKey(const Key('flow-floating-navigation')), findsOneWidget);
+    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
 
-    await tester.tap(find.text('Transactions'));
-    await tester.pumpAndSettle();
+    await tapShellTab(tester, 1);
 
     expect(find.text('No transactions yet'), findsOneWidget);
   });
@@ -52,8 +62,7 @@ void main() {
   ) async {
     await pumpWithFirstAccount(tester);
 
-    await tester.tap(find.text('Statistics'));
-    await tester.pumpAndSettle();
+    await tapShellTab(tester, 2);
 
     expect(find.text('Tahunan'), findsOneWidget);
     expect(find.text('Bulanan'), findsOneWidget);
@@ -76,28 +85,26 @@ void main() {
     expect(find.text('Save transaction'), findsOneWidget);
   });
 
-  testWidgets('Home avatar opens settings and theme selection persists', (
+  testWidgets('Settings tab changes theme and persists', (
     WidgetTester tester,
   ) async {
     await pumpWithFirstAccount(tester);
 
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
-    expect(find.text('Settings'), findsOneWidget);
+    await tapShellTab(tester, 4);
+    expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('System'), findsNothing);
 
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
     expect(
-      Theme.of(tester.element(find.text('Settings'))).brightness,
+      Theme.of(tester.element(find.text('Appearance'))).brightness,
       Brightness.dark,
     );
 
-    await tester.tap(find.byTooltip('Close'));
-    await tester.pumpAndSettle();
-    expect(find.text('Home'), findsWidgets);
+    await tapShellTab(tester, 0);
+    expect(find.text('Your Flow'), findsOneWidget);
     expect(
-      Theme.of(tester.element(find.text('Home').first)).brightness,
+      Theme.of(tester.element(find.text('Your Flow'))).brightness,
       Brightness.dark,
     );
   });
@@ -107,8 +114,7 @@ void main() {
   ) async {
     await pumpWithFirstAccount(tester);
 
-    await tester.tap(find.text('Accounts'));
-    await tester.pumpAndSettle();
+    await tapShellTab(tester, 3);
 
     expect(find.text('Total balance'), findsOneWidget);
     expect(find.text('Your accounts'), findsOneWidget);
@@ -119,8 +125,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await pumpWithFirstAccount(tester);
-    await tester.tap(find.text('Accounts'));
-    await tester.pumpAndSettle();
+    await tapShellTab(tester, 3);
 
     await tester.tap(find.byTooltip('Archive account'));
     await tester.pumpAndSettle();

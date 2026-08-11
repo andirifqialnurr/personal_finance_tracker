@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../components/flow_components.dart';
 import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
+import '../utils/flow_currency_input_formatter.dart';
 
 class AccountFormPage extends StatefulWidget {
   const AccountFormPage({super.key, this.account, required this.onSaved});
@@ -19,7 +20,9 @@ class _AccountFormPageState extends State<AccountFormPage> {
     text: widget.account?.name,
   );
   late final TextEditingController _balanceController = TextEditingController(
-    text: widget.account?.openingBalance.toString() ?? '0',
+    text: formatCurrencyInput(
+      widget.account?.openingBalance.toString() ?? '0',
+    ),
   );
   late AccountType _type = widget.account?.type ?? AccountType.cash;
 
@@ -67,6 +70,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
             const SizedBox(height: FlowSpacing.md),
             TextFormField(
               controller: _balanceController,
+              inputFormatters: const [FlowCurrencyInputFormatter()],
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: false,
               ),
@@ -88,9 +92,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
 
   void _save() {
     final name = _nameController.text.trim();
-    final balance = int.tryParse(
-      _balanceController.text.replaceAll(RegExp(r'[^0-9-]'), ''),
-    );
+    final balance = parseCurrencyInput(_balanceController.text);
     if (name.isEmpty || balance == null || balance < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter a name and valid opening balance')),

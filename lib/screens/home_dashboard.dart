@@ -97,7 +97,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
               ),
               FlowAmountText(
                 amount: _hideBalance
-                    ? '••••••'
+                    ? formatMaskedCurrency(totalBalance, widget.currency)
                     : formatCurrency(totalBalance, widget.currency),
               ),
             ],

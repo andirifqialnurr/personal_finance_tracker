@@ -16,6 +16,7 @@ class FlowSettingsPage extends StatefulWidget {
     required this.onCategoriesChanged,
     required this.onExportCsv,
     required this.onDeleteAll,
+    this.showAppBar = true,
   });
   final ThemeMode initialThemeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
@@ -25,6 +26,7 @@ class FlowSettingsPage extends StatefulWidget {
   final ValueChanged<List<Category>> onCategoriesChanged;
   final Future<String> Function() onExportCsv;
   final VoidCallback onDeleteAll;
+  final bool showAppBar;
 
   @override
   State<FlowSettingsPage> createState() => _FlowSettingsPageState();
@@ -38,14 +40,16 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
   Widget build(BuildContext context) {
     final selectedIndex = _themeMode == ThemeMode.dark ? 1 : 0;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Close',
-          icon: const Icon(Icons.close),
-        ),
-      ),
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: const Text('Settings'),
+              leading: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                tooltip: 'Close',
+                icon: const Icon(Icons.close),
+              ),
+            )
+          : null,
       body: ListView(
         padding: const EdgeInsets.all(FlowSpacing.lg),
         children: [
@@ -157,7 +161,7 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
     );
     if (confirmed == true && mounted) {
       widget.onDeleteAll();
-      Navigator.of(context).pop();
+      if (widget.showAppBar) Navigator.of(context).pop();
     }
   }
 

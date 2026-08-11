@@ -11,3 +11,8 @@ String formatInteger(int value) => value.toString().replaceAllMapped(
 
 String formatCurrency(int value, String currency) =>
     '${currencySymbol(currency)} ${formatInteger(value)}';
+
+String formatMaskedCurrency(int value, String currency) {
+  final sign = value < 0 ? '-' : '';
+  return '${currencySymbol(currency)} $sign••••••';
+}

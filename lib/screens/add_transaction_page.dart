@@ -4,6 +4,7 @@ import '../components/flow_components.dart';
 import '../data/default_category_seeder.dart';
 import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
+import '../utils/flow_currency_input_formatter.dart';
 import '../utils/flow_format.dart';
 
 class AddTransactionPage extends StatefulWidget {
@@ -45,7 +46,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       TransactionType.income => 1,
       TransactionType.transfer => 2,
     };
-    _amountController.text = transaction.amount.toString();
+    _amountController.text = formatCurrencyInput(transaction.amount.toString());
     _selectedAccount = _findAccount(transaction.accountId);
     _destinationAccount = transaction.destinationAccountId == null
         ? null
@@ -124,6 +125,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           TextField(
             autofocus: true,
             controller: _amountController,
+            inputFormatters: const [FlowCurrencyInputFormatter()],
             onChanged: (_) => setState(() {}),
             keyboardType: const TextInputType.numberWithOptions(decimal: false),
             textInputAction: TextInputAction.next,
@@ -248,11 +250,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   }
 
   bool get _canSave {
-    final amount =
-        int.tryParse(
-          _amountController.text.replaceAll(RegExp(r'[^0-9]'), ''),
-        ) ??
-        0;
+    final amount = parseCurrencyInput(_amountController.text) ?? 0;
     final hasAccount = _selectedAccount != null;
     final hasTypeSpecificField = _selectedType == 2
         ? _destinationAccount != null && _destinationAccount != _selectedAccount
@@ -261,9 +259,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   }
 
   void _save() {
-    final amount = int.parse(
-      _amountController.text.replaceAll(RegExp(r'[^0-9]'), ''),
-    );
+    final amount = parseCurrencyInput(_amountController.text)!;
     final now = DateTime.now().toUtc();
     widget.onSaved?.call(
       Transaction(

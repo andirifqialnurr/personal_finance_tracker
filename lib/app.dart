@@ -89,7 +89,17 @@ class _FlowAppState extends State<FlowApp> {
               currency: _currency,
               hideBalance: _hideBalance,
               onHideBalanceChanged: _changeHideBalance,
-              onOpenSettings: _openSettings,
+              themeMode: _themeMode,
+              onThemeModeChanged: _changeTheme,
+              onCurrencyChanged: _changeCurrency,
+              onCategoriesChanged: (categories) {
+                setState(() => _categories = categories);
+                for (final category in categories) {
+                  _persist(_store.saveCategory(category));
+                }
+              },
+              onExportCsv: _exportCsv,
+              onDeleteAll: _deleteAllData,
               onAddAccount: () => _openAccountForm(context),
               onEditAccount: (account) => _openAccountForm(context, account),
               onArchiveAccount: _archiveAccount,
@@ -104,28 +114,6 @@ class _FlowAppState extends State<FlowApp> {
               onCurrencyChanged: _changeCurrency,
               onCreateFirstAccount: () => _openAccountForm(context),
             ),
-    );
-  }
-
-  Future<void> _openSettings(BuildContext context) async {
-    await _navigatorKey.currentState!.push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => FlowSettingsPage(
-          initialThemeMode: _themeMode,
-          onThemeModeChanged: _changeTheme,
-          currency: _currency,
-          onCurrencyChanged: _changeCurrency,
-          categories: _categories,
-          onCategoriesChanged: (categories) {
-            setState(() => _categories = categories);
-            for (final category in categories) {
-              _persist(_store.saveCategory(category));
-            }
-          },
-          onExportCsv: _exportCsv,
-          onDeleteAll: _deleteAllData,
-        ),
-      ),
     );
   }
 
@@ -391,7 +379,12 @@ class FlowShell extends StatefulWidget {
     this.currency = 'IDR',
     this.hideBalance = false,
     this.onHideBalanceChanged,
-    required this.onOpenSettings,
+    required this.themeMode,
+    required this.onThemeModeChanged,
+    required this.onCurrencyChanged,
+    required this.onCategoriesChanged,
+    required this.onExportCsv,
+    required this.onDeleteAll,
     required this.onAddAccount,
     required this.onEditAccount,
     required this.onArchiveAccount,
@@ -406,7 +399,12 @@ class FlowShell extends StatefulWidget {
   final String currency;
   final bool hideBalance;
   final ValueChanged<bool>? onHideBalanceChanged;
-  final Future<void> Function(BuildContext context) onOpenSettings;
+  final ThemeMode themeMode;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
+  final ValueChanged<String> onCurrencyChanged;
+  final ValueChanged<List<Category>> onCategoriesChanged;
+  final Future<String> Function() onExportCsv;
+  final VoidCallback onDeleteAll;
   final VoidCallback onAddAccount;
   final ValueChanged<Account> onEditAccount;
   final ValueChanged<Account> onArchiveAccount;
@@ -426,98 +424,70 @@ class _FlowShellState extends State<FlowShell> {
     _FlowPageData('Transactions', Icons.receipt_long_outlined),
     _FlowPageData('Statistics', Icons.show_chart_outlined),
     _FlowPageData('Accounts', Icons.account_balance_wallet_outlined),
+    _FlowPageData('Settings', Icons.settings_outlined),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final page = _pages[_selectedIndex];
-    final theme = Theme.of(context);
     final floatingDecoration = _floatingSurfaceDecoration(context);
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Column(
+        child: IndexedStack(
+          index: _selectedIndex,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                FlowSpacing.md,
-                FlowSpacing.sm,
-                FlowSpacing.md,
-                FlowSpacing.xs,
-              ),
-              child: DecoratedBox(
-                key: const Key('flow-floating-header'),
-                decoration: floatingDecoration,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: FlowSpacing.sm,
-                    vertical: FlowSpacing.xxs,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          page.title,
-                          style: theme.textTheme.titleLarge,
-                        ),
-                      ),
-                      if (_selectedIndex == 0)
-                        IconButton(
-                          onPressed: () => widget.onOpenSettings(context),
-                          tooltip: 'Settings',
-                          icon: const Icon(Icons.person_outline),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
+            HomeDashboard(
+              accounts: widget.accounts,
+              transactions: widget.transactions,
+              categories: widget.categories,
+              currency: widget.currency,
+              hideBalance: widget.hideBalance,
+              onHideBalanceChanged: widget.onHideBalanceChanged,
+              onAddTransaction: widget.onAddTransaction,
             ),
-            Expanded(
-              child: IndexedStack(
-                index: _selectedIndex,
-                children: [
-                  HomeDashboard(
-                    accounts: widget.accounts,
-                    transactions: widget.transactions,
-                    categories: widget.categories,
-                    currency: widget.currency,
-                    hideBalance: widget.hideBalance,
-                    onHideBalanceChanged: widget.onHideBalanceChanged,
-                    onAddTransaction: widget.onAddTransaction,
-                  ),
-                  TransactionsPage(
-                    transactions: widget.transactions,
-                    accounts: widget.accounts,
-                    categories: widget.categories,
-                    currency: widget.currency,
-                    onOpenDetail: widget.onOpenTransactionDetail,
-                  ),
-                  StatisticsPage(
-                    transactions: widget.transactions,
-                    categories: widget.categories,
-                    currency: widget.currency,
-                  ),
-                  AccountsPage(
-                    accounts: widget.accounts,
-                    onAdd: widget.onAddAccount,
-                    onEdit: widget.onEditAccount,
-                    onArchive: widget.onArchiveAccount,
-                    transactions: widget.transactions,
-                    currency: widget.currency,
-                    onOpenDetail: widget.onOpenAccountDetail,
-                  ),
-                ],
-              ),
+            TransactionsPage(
+              transactions: widget.transactions,
+              accounts: widget.accounts,
+              categories: widget.categories,
+              currency: widget.currency,
+              onOpenDetail: widget.onOpenTransactionDetail,
+            ),
+            StatisticsPage(
+              transactions: widget.transactions,
+              categories: widget.categories,
+              currency: widget.currency,
+            ),
+            AccountsPage(
+              accounts: widget.accounts,
+              onAdd: widget.onAddAccount,
+              onEdit: widget.onEditAccount,
+              onArchive: widget.onArchiveAccount,
+              transactions: widget.transactions,
+              currency: widget.currency,
+              onOpenDetail: widget.onOpenAccountDetail,
+            ),
+            FlowSettingsPage(
+              initialThemeMode: widget.themeMode,
+              onThemeModeChanged: widget.onThemeModeChanged,
+              currency: widget.currency,
+              onCurrencyChanged: widget.onCurrencyChanged,
+              categories: widget.categories,
+              onCategoriesChanged: widget.onCategoriesChanged,
+              onExportCsv: widget.onExportCsv,
+              onDeleteAll: widget.onDeleteAll,
+              showAppBar: false,
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: widget.onAddTransaction,
-        tooltip: 'Add transaction',
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _selectedIndex == 2 || _selectedIndex == 4
+          ? null
+          : FloatingActionButton(
+              onPressed: widget.onAddTransaction,
+              tooltip: 'Add transaction',
+              child: const Icon(Icons.add),
+            ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
@@ -539,7 +509,7 @@ class _FlowShellState extends State<FlowShell> {
                 surfaceTintColor: Colors.transparent,
                 selectedIndex: _selectedIndex,
                 labelBehavior:
-                    NavigationDestinationLabelBehavior.onlyShowSelected,
+                    NavigationDestinationLabelBehavior.alwaysHide,
                 onDestinationSelected: (index) {
                   setState(() => _selectedIndex = index);
                 },

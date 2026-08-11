@@ -333,8 +333,9 @@ class _CategoryChart extends StatelessWidget {
                 child: CustomPaint(
                   painter: _DonutPainter(categories: categories, total: total),
                   child: Center(
-                    child: Text(
-                      formatCurrency(total, currency),
+                    child: _ResponsiveCurrencyText(
+                      amount: total,
+                      currency: currency,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.labelMedium,
                     ),
@@ -661,9 +662,15 @@ class _TopCategories extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
-                Text(
-                  formatCurrency(categories[index].amount, currency),
-                  style: Theme.of(context).textTheme.labelLarge,
+                Flexible(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _ResponsiveCurrencyText(
+                      amount: categories[index].amount,
+                      currency: currency,
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: FlowSpacing.sm),
                 SizedBox(
@@ -863,11 +870,41 @@ class _SummaryValue extends StatelessWidget {
     children: [
       Text(label, style: Theme.of(context).textTheme.labelMedium),
       const SizedBox(height: FlowSpacing.xs),
-      Text(
-        formatCurrency(value, currency),
+      _ResponsiveCurrencyText(
+        amount: value,
+        currency: currency,
         style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color),
       ),
     ],
+  );
+}
+
+class _ResponsiveCurrencyText extends StatelessWidget {
+  const _ResponsiveCurrencyText({
+    required this.amount,
+    required this.currency,
+    this.style,
+    this.textAlign,
+  });
+
+  final int amount;
+  final String currency;
+  final TextStyle? style;
+  final TextAlign? textAlign;
+
+  @override
+  Widget build(BuildContext context) => FittedBox(
+    fit: BoxFit.scaleDown,
+    alignment: textAlign == TextAlign.center
+        ? Alignment.center
+        : Alignment.centerLeft,
+    child: Text(
+      formatCurrency(amount, currency),
+      maxLines: 1,
+      softWrap: false,
+      textAlign: textAlign,
+      style: style,
+    ),
   );
 }
 
