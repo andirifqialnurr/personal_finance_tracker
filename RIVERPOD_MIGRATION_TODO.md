@@ -107,15 +107,15 @@ flutter pub add flutter_riverpod
 
 ### `lib/main.dart`
 
-- [ ] Import Riverpod.
-- [ ] Bungkus app dengan `ProviderScope`.
-- [ ] Override `flowStoreProvider` dengan store hasil `SqliteFlowStore.open()`.
-- [ ] Pertahankan fallback ke `MemoryFlowStore` jika SQLite tidak tersedia.
-- [ ] Pastikan startup tetap:
-  - [ ] `WidgetsFlutterBinding.ensureInitialized()`
-  - [ ] open SQLite
-  - [ ] run app
-- [ ] Jangan mengubah package name atau native entrypoint.
+- [x] Import Riverpod.
+- [x] Bungkus app dengan `ProviderScope`.
+- [x] Override `flowStoreProvider` dengan store hasil `SqliteFlowStore.open()`.
+- [x] Pertahankan fallback ke `MemoryFlowStore` jika SQLite tidak tersedia.
+- [x] Pastikan startup tetap:
+  - [x] `WidgetsFlutterBinding.ensureInitialized()`
+  - [x] open SQLite
+  - [x] run app
+- [x] Jangan mengubah package name atau native entrypoint.
 
 Target bentuk akhir kira-kira:
 
@@ -132,36 +132,36 @@ runApp(
 
 ### `lib/app.dart`
 
-- [ ] Ubah `FlowApp` dari `StatefulWidget` menjadi `ConsumerWidget` atau `ConsumerStatefulWidget` hanya bila masih perlu lifecycle.
-- [ ] Hapus state global dari `_FlowAppState`:
-  - [ ] `_store`
-  - [ ] `_themeMode`
-  - [ ] `_accounts`
-  - [ ] `_transactions`
-  - [ ] `_categories`
-  - [ ] `_currency`
-  - [ ] `_hideBalance`
-  - [ ] `_hasCompletedWelcome`
-- [ ] Pindahkan restore state ke controller/provider.
-- [ ] Pindahkan mutation method ke `FlowController`:
-  - [ ] `_saveTransaction`
-  - [ ] `_archiveAccount`
-  - [ ] `_changeHideBalance`
-  - [ ] `_changeTheme`
-  - [ ] `_changeCurrency`
-  - [ ] `_saveSettings`
-  - [ ] `_deleteAllData`
-  - [ ] `_exportCsv`
-  - [ ] `_persist`
-- [ ] Pertahankan navigasi route push di `FlowApp` bila belum dibuat routing service.
-- [ ] `FlowApp` membaca `AsyncValue<FlowState>` dan menampilkan:
-  - [ ] loading sederhana saat restore berlangsung
-  - [ ] error sederhana saat restore gagal
-  - [ ] `FlowWelcomePage` jika belum ada akun
-  - [ ] `FlowShell` jika akun sudah ada
+- [x] Ubah `FlowApp` dari `StatefulWidget` menjadi `ConsumerWidget` atau `ConsumerStatefulWidget` hanya bila masih perlu lifecycle.
+- [x] Hapus state global dari `_FlowAppState`:
+  - [x] `_store`
+  - [x] `_themeMode`
+  - [x] `_accounts`
+  - [x] `_transactions`
+  - [x] `_categories`
+  - [x] `_currency`
+  - [x] `_hideBalance`
+  - [x] `_hasCompletedWelcome`
+- [x] Pindahkan restore state ke controller/provider.
+- [x] Pindahkan mutation method ke `FlowController`:
+  - [x] `_saveTransaction`
+  - [x] `_archiveAccount`
+  - [x] `_changeHideBalance`
+  - [x] `_changeTheme`
+  - [x] `_changeCurrency`
+  - [x] `_saveSettings`
+  - [x] `_deleteAllData`
+  - [x] `_exportCsv`
+  - [x] `_persist`
+- [x] Pertahankan navigasi route push di `FlowApp` bila belum dibuat routing service.
+- [x] `FlowApp` membaca `AsyncValue<FlowState>` dan menampilkan:
+  - [x] loading sederhana saat restore berlangsung
+  - [x] error sederhana saat restore gagal
+  - [x] `FlowWelcomePage` jika belum ada akun
+  - [x] `FlowShell` jika akun sudah ada
 - [ ] Kurangi parameter `FlowShell` jika data bisa dibaca langsung lewat provider.
-- [ ] Pertahankan selected tab di `FlowShell` sebagai local state.
-- [ ] Pastikan bottom navigation selected state tidak reset saat data berubah.
+- [x] Pertahankan selected tab di `FlowShell` sebagai local state.
+- [x] Pastikan bottom navigation selected state tidak reset saat data berubah.
 
 ### `lib/screens/welcome_page.dart`
 
@@ -353,11 +353,11 @@ runApp(
 
 ### Batch 3 - App Shell Migration
 
-- [ ] Bungkus app dengan `ProviderScope` di `main.dart`.
-- [ ] Refactor `FlowApp` membaca `flowControllerProvider`.
-- [ ] Hapus global `setState` dari `FlowApp`.
-- [ ] Pertahankan navigasi page push dari app shell.
-- [ ] Pastikan welcome/home routing sama seperti sebelumnya.
+- [x] Bungkus app dengan `ProviderScope` di `main.dart`.
+- [x] Refactor `FlowApp` membaca `flowControllerProvider`.
+- [x] Hapus global `setState` dari `FlowApp`.
+- [x] Pertahankan navigasi page push dari app shell.
+- [x] Pastikan welcome/home routing sama seperti sebelumnya.
 
 ### Batch 4 - Screen Cleanup Bertahap
 

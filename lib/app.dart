@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/flow_store.dart';
-import 'data/flow_csv_exporter.dart';
 import 'data/models/models.dart';
 import 'screens/account_form_page.dart';
 import 'screens/account_detail_page.dart';
@@ -15,105 +15,91 @@ import 'screens/transactions_page.dart';
 import 'screens/transaction_detail_page.dart';
 import 'screens/welcome_page.dart';
 import 'screens/home_dashboard.dart';
+import 'state/state.dart';
 import 'theme/flow_theme.dart';
 import 'theme/flow_tokens.dart';
 
-class FlowApp extends StatefulWidget {
+class FlowApp extends StatelessWidget {
   const FlowApp({super.key, this.store});
 
   final FlowStore? store;
 
   @override
-  State<FlowApp> createState() => _FlowAppState();
+  Widget build(BuildContext context) {
+    final overrideStore = store;
+    if (overrideStore == null) return const _FlowAppView();
+    return ProviderScope(
+      overrides: [flowStoreProvider.overrideWithValue(overrideStore)],
+      child: const _FlowAppView(),
+    );
+  }
 }
 
-class _FlowAppState extends State<FlowApp> {
+class _FlowAppView extends ConsumerStatefulWidget {
+  const _FlowAppView();
+
+  @override
+  ConsumerState<_FlowAppView> createState() => _FlowAppViewState();
+}
+
+class _FlowAppViewState extends ConsumerState<_FlowAppView> {
   final _navigatorKey = GlobalKey<NavigatorState>();
-  late final FlowStore _store = widget.store ?? MemoryFlowStore();
-  ThemeMode _themeMode = ThemeMode.light;
-  final List<Account> _accounts = [];
-  final List<Transaction> _transactions = [];
-  List<Category> _categories = [];
-  String _currency = 'IDR';
-  bool _hideBalance = false;
-  bool _hasCompletedWelcome = false;
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_restoreState());
-  }
-
-  @override
-  void dispose() {
-    _persist(_store.close());
-    super.dispose();
-  }
-
-  Future<void> _restoreState() async {
-    try {
-      final snapshot = await _store.load();
-      if (!mounted) return;
-      setState(() {
-        _accounts
-          ..clear()
-          ..addAll(snapshot.accounts);
-        _categories = List.of(snapshot.categories);
-        _transactions
-          ..clear()
-          ..addAll(snapshot.transactions);
-        _currency = snapshot.settings.currency;
-        _themeMode = _themeModeFromSetting(snapshot.settings.themeMode);
-        _hideBalance = snapshot.settings.hideBalance;
-        _hasCompletedWelcome = _accounts.isNotEmpty;
-      });
-    } catch (error, stackTrace) {
-      debugPrint('Unable to restore Flow data: $error\n$stackTrace');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
+    final flow = ref.watch(flowControllerProvider);
+    final themeMode = flow.value?.themeMode ?? ThemeMode.light;
     return MaterialApp(
       title: 'Flow',
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigatorKey,
       theme: FlowTheme.light(),
       darkTheme: FlowTheme.dark(),
-      themeMode: _themeMode,
-      home: _hasCompletedWelcome
-          ? FlowShell(
-              accounts: _accounts,
-              transactions: _transactions,
-              categories: _categories,
-              currency: _currency,
-              hideBalance: _hideBalance,
-              onHideBalanceChanged: _changeHideBalance,
-              themeMode: _themeMode,
-              onThemeModeChanged: _changeTheme,
-              onCurrencyChanged: _changeCurrency,
-              onCategoriesChanged: (categories) {
-                setState(() => _categories = categories);
-                for (final category in categories) {
-                  _persist(_store.saveCategory(category));
-                }
-              },
-              onExportCsv: _exportCsv,
-              onDeleteAll: _deleteAllData,
-              onAddAccount: () => _openAccountForm(context),
-              onEditAccount: (account) => _openAccountForm(context, account),
-              onArchiveAccount: _archiveAccount,
-              onOpenAccountDetail: (account) =>
-                  _openAccountDetail(context, account),
-              onAddTransaction: () => _openAddTransaction(context),
-              onOpenTransactionDetail: (transaction) =>
-                  _openTransactionDetail(context, transaction),
-            )
-          : FlowWelcomePage(
-              currency: _currency,
-              onCurrencyChanged: _changeCurrency,
-              onCreateFirstAccount: () => _openAccountForm(context),
-            ),
+      themeMode: themeMode,
+      home: flow.when(
+        loading: () => const _FlowLoadingPage(),
+        error: (error, stackTrace) => _FlowErrorPage(
+          onRetry: () => ref.read(flowControllerProvider.notifier).restore(),
+        ),
+        data: _buildHome,
+      ),
+    );
+  }
+
+  Widget _buildHome(FlowState state) {
+    final controller = ref.read(flowControllerProvider.notifier);
+    if (!state.hasCompletedWelcome) {
+      return FlowWelcomePage(
+        currency: state.currency,
+        onCurrencyChanged: (currency) =>
+            unawaited(controller.changeCurrency(currency)),
+        onCreateFirstAccount: () => _openAccountForm(context),
+      );
+    }
+    return FlowShell(
+      accounts: state.accounts,
+      transactions: state.transactions,
+      categories: state.categories,
+      currency: state.currency,
+      hideBalance: state.hideBalance,
+      onHideBalanceChanged: (value) =>
+          unawaited(controller.changeHideBalance(value)),
+      themeMode: state.themeMode,
+      onThemeModeChanged: (mode) => unawaited(controller.changeThemeMode(mode)),
+      onCurrencyChanged: (currency) =>
+          unawaited(controller.changeCurrency(currency)),
+      onCategoriesChanged: (categories) =>
+          unawaited(controller.saveCategories(categories)),
+      onExportCsv: controller.exportCsv,
+      onDeleteAll: () => unawaited(controller.deleteAllData()),
+      onAddAccount: () => _openAccountForm(context),
+      onEditAccount: (account) => _openAccountForm(context, account),
+      onArchiveAccount: (account) =>
+          unawaited(controller.archiveAccount(account)),
+      onOpenAccountDetail: (account) => _openAccountDetail(context, account),
+      onAddTransaction: () => _openAddTransaction(context),
+      onOpenTransactionDetail: (transaction) =>
+          _openTransactionDetail(context, transaction),
     );
   }
 
@@ -121,53 +107,39 @@ class _FlowAppState extends State<FlowApp> {
     BuildContext context, [
     Transaction? initialTransaction,
   ]) async {
+    final state = _currentFlowState();
     await _navigatorKey.currentState!.push<void>(
       MaterialPageRoute<void>(
         builder: (_) => AddTransactionPage(
-          accounts: _accounts,
-          categories: _categories,
-          currency: _currency,
+          accounts: state.accounts,
+          categories: state.categories,
+          currency: state.currency,
           initialTransaction: initialTransaction,
-          onSaved: (transaction) =>
-              _saveTransaction(transaction, initialTransaction),
+          onSaved: (transaction) => unawaited(
+            ref
+                .read(flowControllerProvider.notifier)
+                .saveTransaction(transaction, editing: initialTransaction),
+          ),
         ),
       ),
     );
-  }
-
-  void _saveTransaction(Transaction transaction, Transaction? editing) {
-    final transactionWithId = editing == null
-        ? transaction.copyWith(
-            id: _nextId(_transactions.map((item) => item.id)),
-          )
-        : transaction.copyWith(id: editing.id);
-    setState(() {
-      if (editing == null) {
-        _transactions.add(transactionWithId);
-      } else {
-        final index = _transactions.indexOf(editing);
-        if (index != -1) {
-          _transactions[index] = transactionWithId;
-        }
-      }
-    });
-    _persist(_store.saveTransaction(transactionWithId));
   }
 
   Future<void> _openTransactionDetail(
     BuildContext context,
     Transaction transaction,
   ) async {
+    final state = _currentFlowState();
     await _navigatorKey.currentState!.push<void>(
       MaterialPageRoute<void>(
         builder: (_) => TransactionDetailPage(
           transaction: transaction,
-          accountName: _accounts
+          accountName: state.accounts
               .firstWhere((account) => account.id == transaction.accountId)
               .name,
           destinationAccountName: transaction.destinationAccountId == null
               ? null
-              : _accounts
+              : state.accounts
                     .firstWhere(
                       (account) =>
                           account.id == transaction.destinationAccountId,
@@ -175,7 +147,7 @@ class _FlowAppState extends State<FlowApp> {
                     .name,
           categoryName: transaction.categoryId == null
               ? null
-              : _categories
+              : state.categories
                     .firstWhere(
                       (category) => category.id == transaction.categoryId,
                       orElse: () => Category(
@@ -187,18 +159,17 @@ class _FlowAppState extends State<FlowApp> {
                       ),
                     )
                     .name,
-          currency: _currency,
+          currency: state.currency,
           onEdit: () {
             _navigatorKey.currentState!.pop();
             unawaited(_openAddTransaction(context, transaction));
           },
           onDelete: () {
-            setState(
-              () => _transactions.removeWhere(
-                (item) => item.id == transaction.id,
-              ),
+            unawaited(
+              ref
+                  .read(flowControllerProvider.notifier)
+                  .deleteTransaction(transaction.id!),
             );
-            _persist(_store.deleteTransaction(transaction.id!));
             _navigatorKey.currentState!.pop();
           },
         ),
@@ -207,12 +178,13 @@ class _FlowAppState extends State<FlowApp> {
   }
 
   Future<void> _openAccountDetail(BuildContext context, Account account) async {
+    final state = _currentFlowState();
     await _navigatorKey.currentState!.push<void>(
       MaterialPageRoute<void>(
         builder: (_) => AccountDetailPage(
           account: account,
-          transactions: _transactions,
-          currency: _currency,
+          transactions: state.transactions,
+          currency: state.currency,
           onEdit: () {
             _navigatorKey.currentState!.pop();
             unawaited(_openAccountForm(context, account));
@@ -233,142 +205,70 @@ class _FlowAppState extends State<FlowApp> {
         builder: (_) => AccountFormPage(
           account: account,
           onSaved: (savedAccount) {
-            final accountWithId = savedAccount.id == null
-                ? _copyAccount(
-                    savedAccount,
-                    _nextId(_accounts.map((item) => item.id)),
-                  )
-                : savedAccount;
-            setState(() {
-              final index = _accounts.indexWhere(
-                (item) => item.id == accountWithId.id,
-              );
-              if (index == -1) {
-                _accounts.add(accountWithId);
-              } else {
-                _accounts[index] = accountWithId;
-              }
-              _hasCompletedWelcome = true;
-            });
-            _persist(_store.saveAccount(accountWithId));
+            unawaited(
+              ref
+                  .read(flowControllerProvider.notifier)
+                  .saveAccount(savedAccount),
+            );
           },
         ),
       ),
     );
   }
 
-  void _archiveAccount(Account account) {
-    final archived = _copyAccount(
-      account,
-      account.id!,
-      isArchived: true,
-      updatedAt: DateTime.now().toUtc(),
-    );
-    setState(() {
-      final index = _accounts.indexWhere((item) => item.id == account.id);
-      if (index == -1) return;
-      _accounts[index] = archived;
-    });
-    _persist(_store.saveAccount(archived));
-  }
+  FlowState _currentFlowState() =>
+      ref.read(flowControllerProvider).value ?? FlowState.initial();
+}
 
-  void _changeHideBalance(bool value) {
-    setState(() => _hideBalance = value);
-    _saveSettings();
-  }
+class _FlowLoadingPage extends StatelessWidget {
+  const _FlowLoadingPage();
 
-  void _changeTheme(ThemeMode mode) {
-    setState(() => _themeMode = mode);
-    _saveSettings();
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
+}
 
-  void _changeCurrency(String currency) {
-    setState(() => _currency = currency);
-    _saveSettings();
-  }
+class _FlowErrorPage extends StatelessWidget {
+  const _FlowErrorPage({required this.onRetry});
 
-  void _saveSettings() {
-    _persist(
-      _store.saveSettings(
-        AppSettings(
-          currency: _currency,
-          themeMode: _themeModeSetting(_themeMode),
-          hideBalance: _hideBalance,
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(FlowSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Unable to load Flow data',
+                style: Theme.of(context).textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: FlowSpacing.md),
+              FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  void _deleteAllData() {
-    setState(() {
-      _accounts.clear();
-      _transactions.clear();
-      _categories = MemoryFlowStore.defaultCategories();
-      _currency = 'IDR';
-      _themeMode = ThemeMode.light;
-      _hideBalance = false;
-      _hasCompletedWelcome = false;
-    });
-    _persist(_store.deleteAll());
-  }
-
-  Future<String> _exportCsv() async {
-    final file = await FlowCsvExporter.write(
-      transactions: _transactions,
-      accounts: _accounts,
-      categories: _categories,
-    );
-    return file.path;
-  }
-
-  void _persist(Future<dynamic> operation) {
-    unawaited(
-      operation.then<void>(
-        (_) {},
-        onError: (Object error, StackTrace stackTrace) {
-          debugPrint('Unable to save Flow data: $error\n$stackTrace');
-        },
       ),
     );
   }
 }
 
-ThemeMode _themeModeFromSetting(ThemeModeSetting mode) => switch (mode) {
+ThemeMode legacyThemeModeFromSetting(ThemeModeSetting mode) => switch (mode) {
   ThemeModeSetting.light => ThemeMode.light,
   ThemeModeSetting.dark => ThemeMode.dark,
   ThemeModeSetting.system => ThemeMode.light,
 };
 
-ThemeModeSetting _themeModeSetting(ThemeMode mode) => switch (mode) {
+ThemeModeSetting legacyThemeModeSetting(ThemeMode mode) => switch (mode) {
   ThemeMode.light => ThemeModeSetting.light,
   ThemeMode.dark => ThemeModeSetting.dark,
   ThemeMode.system => ThemeModeSetting.light,
 };
-
-int _nextId(Iterable<int?> ids) {
-  var maxId = 0;
-  for (final id in ids) {
-    if (id != null && id > maxId) maxId = id;
-  }
-  return maxId + 1;
-}
-
-Account _copyAccount(
-  Account account,
-  int id, {
-  bool? isArchived,
-  DateTime? updatedAt,
-}) => Account(
-  id: id,
-  name: account.name,
-  type: account.type,
-  openingBalance: account.openingBalance,
-  icon: account.icon,
-  color: account.color,
-  isArchived: isArchived ?? account.isArchived,
-  createdAt: account.createdAt,
-  updatedAt: updatedAt ?? account.updatedAt,
-);
 
 class FlowShell extends StatefulWidget {
   const FlowShell({
