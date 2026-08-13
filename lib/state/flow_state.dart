@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/flow_store.dart';
 import '../data/models/models.dart';
 
 class FlowState {
@@ -19,7 +20,7 @@ class FlowState {
     hasCompletedWelcome: false,
   );
 
-  factory FlowState.fromSnapshot(FlowSnapshotData snapshot) => FlowState(
+  factory FlowState.fromSnapshot(FlowSnapshot snapshot) => FlowState(
     accounts: List.unmodifiable(snapshot.accounts),
     categories: List.unmodifiable(snapshot.categories),
     transactions: List.unmodifiable(snapshot.transactions),
@@ -62,18 +63,4 @@ class FlowState {
       hasCompletedWelcome: hasCompletedWelcome ?? this.hasCompletedWelcome,
     );
   }
-}
-
-class FlowSnapshotData {
-  const FlowSnapshotData({
-    required this.accounts,
-    required this.categories,
-    required this.transactions,
-    required this.settings,
-  });
-
-  final List<Account> accounts;
-  final List<Category> categories;
-  final List<Transaction> transactions;
-  final AppSettings settings;
 }

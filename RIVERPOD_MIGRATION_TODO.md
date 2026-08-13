@@ -16,7 +16,7 @@ Dokumen ini membreakdown perubahan yang akan terjadi saat aplikasi Flow dipindah
 
 - [x] Tambah Riverpod sebagai dependency.
 - [x] Buat state global immutable untuk data aplikasi.
-- [ ] Buat controller Riverpod untuk load/save/delete/export/reset data.
+- [x] Buat controller Riverpod untuk load/save/delete/export/reset data.
 - [ ] Refactor `FlowApp` agar membaca state dari provider.
 - [ ] Refactor screen yang saat ini bergantung pada callback panjang dari `FlowApp`.
 - [ ] Update test agar bisa override `FlowStore` dengan `MemoryFlowStore`.
@@ -49,25 +49,25 @@ Dokumen ini membreakdown perubahan yang akan terjadi saat aplikasi Flow dipindah
 - [x] Controller membaca `FlowStore` dari provider.
 - [ ] Method yang perlu dibuat:
   - [x] `Future<void> restore()`
-  - [ ] `Future<void> saveAccount(Account account)`
-  - [ ] `Future<void> archiveAccount(Account account)`
-  - [ ] `Future<void> saveTransaction(Transaction transaction, {Transaction? editing})`
-  - [ ] `Future<void> deleteTransaction(int id)`
-  - [ ] `Future<void> saveCategory(Category category)`
-  - [ ] `Future<void> saveCategories(List<Category> categories)`
+  - [x] `Future<void> saveAccount(Account account)`
+  - [x] `Future<void> archiveAccount(Account account)`
+  - [x] `Future<void> saveTransaction(Transaction transaction, {Transaction? editing})`
+  - [x] `Future<void> deleteTransaction(int id)`
+  - [x] `Future<void> saveCategory(Category category)`
+  - [x] `Future<void> saveCategories(List<Category> categories)`
   - [x] `Future<void> changeHideBalance(bool value)`
   - [x] `Future<void> changeThemeMode(ThemeMode mode)`
   - [x] `Future<void> changeCurrency(String currency)`
-  - [ ] `Future<void> deleteAllData()`
-  - [ ] `Future<String> exportCsv()`
-  - [ ] `Future<void> closeStore()`
-- [ ] Pindahkan helper dari `lib/app.dart` bila masih dibutuhkan:
-  - [ ] `_themeModeFromSetting`
-  - [ ] `_themeModeSetting`
-  - [ ] `_copyAccount`
+  - [x] `Future<void> deleteAllData()`
+  - [x] `Future<String> exportCsv()`
+  - [x] `Future<void> closeStore()`
+- [x] Pindahkan helper dari `lib/app.dart` bila masih dibutuhkan:
+  - [x] `_themeModeFromSetting`
+  - [x] `_themeModeSetting`
+  - [x] `_copyAccount`
 - [x] Hindari update UI-only state di controller.
-- [ ] Pastikan hasil save dari `FlowStore` dipakai kembali untuk state, terutama entity dengan `id` baru.
-- [ ] Tangani error persistence dengan state error atau debug log yang jelas.
+- [x] Pastikan hasil save dari `FlowStore` dipakai kembali untuk state, terutama entity dengan `id` baru.
+- [x] Tangani error persistence dengan state error atau debug log yang jelas.
 
 ### `lib/state/flow_providers.dart`
 
@@ -343,13 +343,13 @@ runApp(
 
 ### Batch 2 - Controller Actions
 
-- [ ] Pindahkan logic save settings dari `FlowApp` ke controller.
-- [ ] Pindahkan save account/archive account.
-- [ ] Pindahkan save/edit/delete transaction.
-- [ ] Pindahkan save categories.
-- [ ] Pindahkan delete all data.
-- [ ] Pindahkan export CSV.
-- [ ] Tambah/ubah test controller untuk semua action.
+- [x] Pindahkan logic save settings dari `FlowApp` ke controller.
+- [x] Pindahkan save account/archive account.
+- [x] Pindahkan save/edit/delete transaction.
+- [x] Pindahkan save categories.
+- [x] Pindahkan delete all data.
+- [x] Pindahkan export CSV.
+- [x] Tambah/ubah test controller untuk semua action.
 
 ### Batch 3 - App Shell Migration
 

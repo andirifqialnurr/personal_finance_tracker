@@ -5,8 +5,9 @@ import 'package:personal_finance_tracker/data/data.dart';
 import 'package:personal_finance_tracker/state/state.dart';
 
 void main() {
+  final timestamp = DateTime.utc(2026, 8, 13, 10);
+
   test('FlowController restores state from the configured store', () async {
-    final timestamp = DateTime.utc(2026, 8, 13, 10);
     final store = MemoryFlowStore(
       accounts: [
         Account(
@@ -51,6 +52,142 @@ void main() {
     expect(snapshot.settings.currency, 'SGD');
     expect(snapshot.settings.themeMode, ThemeModeSetting.dark);
     expect(snapshot.settings.hideBalance, isTrue);
+  });
+
+  test('FlowController saves and archives accounts', () async {
+    final store = MemoryFlowStore();
+    final container = ProviderContainer(
+      overrides: [flowStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    await _readLoaded(container);
+
+    final controller = container.read(flowControllerProvider.notifier);
+    await controller.saveAccount(
+      Account(
+        name: 'Bank',
+        type: AccountType.bank,
+        openingBalance: 250000,
+        icon: 'account_balance',
+        color: '#168C78',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      ),
+    );
+
+    var state = container.read(flowControllerProvider).requireValue;
+    expect(state.accounts.single.id, 1);
+    expect(state.hasCompletedWelcome, isTrue);
+
+    await controller.archiveAccount(state.accounts.single);
+
+    state = container.read(flowControllerProvider).requireValue;
+    expect(state.accounts.single.isArchived, isTrue);
+    expect((await store.load()).accounts.single.isArchived, isTrue);
+  });
+
+  test('FlowController saves, edits, and deletes transactions', () async {
+    final store = MemoryFlowStore(
+      accounts: [
+        Account(
+          id: 1,
+          name: 'Cash',
+          type: AccountType.cash,
+          openingBalance: 0,
+          icon: 'wallet',
+          color: '#168C78',
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        ),
+      ],
+    );
+    final container = ProviderContainer(
+      overrides: [flowStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    await _readLoaded(container);
+
+    final controller = container.read(flowControllerProvider.notifier);
+    final transaction = Transaction(
+      type: TransactionType.income,
+      amount: 100000,
+      accountId: 1,
+      categoryId: 1,
+      note: 'Salary',
+      occurredAt: timestamp,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    );
+    await controller.saveTransaction(transaction);
+
+    var state = container.read(flowControllerProvider).requireValue;
+    expect(state.transactions.single.id, 1);
+    expect(state.transactions.single.amount, 100000);
+
+    await controller.saveTransaction(
+      transaction.copyWith(amount: 150000),
+      editing: state.transactions.single,
+    );
+
+    state = container.read(flowControllerProvider).requireValue;
+    expect(state.transactions.single.amount, 150000);
+
+    await controller.deleteTransaction(state.transactions.single.id!);
+
+    state = container.read(flowControllerProvider).requireValue;
+    expect(state.transactions, isEmpty);
+    expect((await store.load()).transactions, isEmpty);
+  });
+
+  test('FlowController saves categories and deletes all data', () async {
+    final store = MemoryFlowStore(
+      accounts: [
+        Account(
+          id: 1,
+          name: 'Cash',
+          type: AccountType.cash,
+          openingBalance: 0,
+          icon: 'wallet',
+          color: '#168C78',
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        ),
+      ],
+      settings: const AppSettings(currency: 'USD'),
+    );
+    final container = ProviderContainer(
+      overrides: [flowStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    await _readLoaded(container);
+
+    final controller = container.read(flowControllerProvider.notifier);
+    await controller.saveCategory(
+      const Category(
+        name: 'Gift',
+        transactionType: TransactionType.income,
+        icon: 'card_giftcard',
+        color: '#168C78',
+      ),
+    );
+
+    var state = container.read(flowControllerProvider).requireValue;
+    expect(
+      state.categories.where((category) => category.name == 'Gift'),
+      hasLength(1),
+    );
+
+    await controller.deleteAllData();
+
+    state = container.read(flowControllerProvider).requireValue;
+    expect(state.accounts, isEmpty);
+    expect(state.transactions, isEmpty);
+    expect(state.settings.currency, 'IDR');
+    expect(state.hasCompletedWelcome, isFalse);
+    expect(
+      state.categories.map((category) => category.name),
+      contains('Salary'),
+    );
   });
 }
 
