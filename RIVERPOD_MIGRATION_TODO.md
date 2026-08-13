@@ -370,11 +370,19 @@ runApp(
 ### Batch 5 - Test dan Stabilization
 
 - [ ] Update semua test harness Riverpod.
-- [ ] Jalankan `dart format`.
+- [x] Jalankan `dart format`.
 - [ ] Jalankan `flutter analyze`.
 - [ ] Jalankan `flutter test --concurrency=1`.
 - [ ] Jalankan `flutter build apk --debug`.
-- [ ] Jika Flutter CLI timeout/lock, catat proses dan lockfile secara eksplisit sebelum retry.
+- [x] Jika Flutter CLI timeout/lock, catat proses dan lockfile secara eksplisit sebelum retry.
+
+Catatan validasi 2026-08-13:
+
+- [x] `dart analyze` full melaporkan `No issues found!` setelah cleanup unused local variable di `lib/screens/accounts_page.dart`.
+- [ ] `flutter test --concurrency=1` belum berhasil selesai; command timeout setelah 180 detik.
+- [ ] `flutter build apk --debug` belum berhasil selesai; command timeout setelah 240 detik.
+- [x] Emulator aktif terdeteksi sebagai `emulator-5554` dengan model `sdk_gphone64_x86_64`.
+- [x] Setelah timeout Flutter CLI, proses `dart.exe` dari `C:\Users\HP\develop\flutter\bin\cache\dart-sdk\bin\dart.exe` dan `C:\Users\HP\develop\flutter\bin\cache\lockfile` terdeteksi aktif.
 
 ## Risiko dan Guardrail
 
@@ -395,5 +403,5 @@ runApp(
 - [ ] `MemoryFlowStore` tetap bisa dipakai untuk tests.
 - [ ] Welcome flow, add account, add income, add expense, transfer, edit/delete transaction, archive account, settings, export CSV, dan delete all tetap berjalan.
 - [ ] Existing regression tests diperbarui dan lulus.
-- [ ] Analyzer bersih, atau blocker environment dicatat spesifik.
-- [ ] Debug APK berhasil dibuat, atau blocker environment dicatat spesifik.
+- [x] Analyzer bersih, atau blocker environment dicatat spesifik.
+- [x] Debug APK berhasil dibuat, atau blocker environment dicatat spesifik.

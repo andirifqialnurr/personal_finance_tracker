@@ -30,10 +30,6 @@ class AccountsPage extends StatelessWidget {
     final activeAccounts = accounts
         .where((account) => !account.isArchived)
         .toList(growable: false);
-    final total = activeAccounts.fold<int>(
-      0,
-      (sum, account) => sum + _balanceFor(account),
-    );
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.lg),
       children: [
