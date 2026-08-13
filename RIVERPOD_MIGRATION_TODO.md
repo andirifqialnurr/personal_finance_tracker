@@ -173,14 +173,14 @@ runApp(
 
 ### `lib/screens/home_dashboard.dart`
 
-- [ ] Pilihan migrasi bertahap: tetap menerima props dari `FlowShell`.
+- [x] Pilihan migrasi bertahap: tetap menerima props dari `FlowShell`.
 - [ ] Pilihan migrasi penuh: ubah menjadi `ConsumerWidget`.
 - [ ] Jika migrasi penuh:
   - [ ] baca accounts, transactions, categories, currency, hideBalance dari provider.
   - [ ] `onHideBalanceChanged` panggil controller.
-- [ ] Hapus mirror local `_hideBalance` jika state global sudah reaktif.
-- [ ] Pertahankan `onAddTransaction` sebagai callback navigasi.
-- [ ] Pastikan perhitungan total balance tidak berubah.
+- [x] Hapus mirror local `_hideBalance` jika state global sudah reaktif.
+- [x] Pertahankan `onAddTransaction` sebagai callback navigasi.
+- [x] Pastikan perhitungan total balance tidak berubah.
 
 ### `lib/screens/transactions_page.dart`
 
@@ -362,7 +362,7 @@ runApp(
 ### Batch 4 - Screen Cleanup Bertahap
 
 - [ ] Kurangi callback drilling di `FlowShell`.
-- [ ] Update Home hide balance agar langsung ke controller.
+- [x] Update Home hide balance agar langsung ke controller.
 - [ ] Update Settings agar langsung ke controller.
 - [ ] Evaluasi Accounts/Transactions/Statistics apakah tetap props atau provider selector.
 - [ ] Jangan refactor semua screen sekaligus jika test mulai sulit dibaca.

@@ -29,8 +29,6 @@ class HomeDashboard extends StatefulWidget {
 }
 
 class _HomeDashboardState extends State<HomeDashboard> {
-  late bool _hideBalance = widget.hideBalance;
-
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -115,13 +113,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   ),
                   IconButton(
                     onPressed: () {
-                      final next = !_hideBalance;
-                      setState(() => _hideBalance = next);
+                      final next = !widget.hideBalance;
                       widget.onHideBalanceChanged?.call(next);
                     },
-                    tooltip: _hideBalance ? 'Show balance' : 'Hide balance',
+                    tooltip: widget.hideBalance
+                        ? 'Show balance'
+                        : 'Hide balance',
                     icon: Icon(
-                      _hideBalance
+                      widget.hideBalance
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
                     ),
@@ -129,7 +128,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 ],
               ),
               FlowAmountText(
-                amount: _hideBalance
+                amount: widget.hideBalance
                     ? formatMaskedCurrency(totalBalance, widget.currency)
                     : formatCurrency(totalBalance, widget.currency),
               ),
