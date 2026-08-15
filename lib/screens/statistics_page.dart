@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../components/flow_apex_chart.dart';
 import '../components/flow_card.dart';
 import '../components/flow_empty_state.dart';
 import '../components/flow_segmented_control.dart';
@@ -323,6 +324,12 @@ class _CategoryChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = categories.fold<int>(0, (sum, item) => sum + item.amount);
+    if (categories.isEmpty || total == 0) {
+      return Text(
+        'No categorized expenses for the selected period.',
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
+    }
     return Column(
       children: [
         SizedBox(
@@ -330,16 +337,9 @@ class _CategoryChart extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: CustomPaint(
-                  painter: _DonutPainter(categories: categories, total: total),
-                  child: Center(
-                    child: _ResponsiveCurrencyText(
-                      amount: total,
-                      currency: currency,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                  ),
+                child: FlowApexChart(
+                  height: 176,
+                  options: _donutOptions(context, total),
                 ),
               ),
               const SizedBox(width: FlowSpacing.md),
@@ -363,6 +363,33 @@ class _CategoryChart extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Map<String, dynamic> _donutOptions(BuildContext context, int total) {
+    final colors = [
+      for (var index = 0; index < categories.length; index++)
+        _colorHex(_chartColor(index, context)),
+    ];
+    return {
+      'chart': {
+        'type': 'donut',
+        'fontFamily': 'Montserrat',
+        'animations': {'enabled': true, 'speed': 420},
+      },
+      'series': [for (final category in categories) category.amount],
+      'labels': [for (final category in categories) category.label],
+      'colors': colors,
+      'legend': {'show': false},
+      'dataLabels': {'enabled': false},
+      'plotOptions': {
+        'pie': {
+          'donut': {'size': '62%'},
+        },
+      },
+      'tooltip': {
+        'y': {'prefix': '${currencySymbol(currency)} ', 'decimals': 0},
+      },
+    };
   }
 
   static Color _chartColor(int index, BuildContext context) {
@@ -442,34 +469,24 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
         _selectedIndex != null && _selectedIndex! < widget.points.length
         ? _selectedIndex
         : null;
-    final selectedPoint = selectedIndex == null
-        ? null
-        : widget.points[selectedIndex];
+    final selectedPoint =
+        selectedIndex == null ? null : widget.points[selectedIndex];
 
     return Column(
       children: [
-        SizedBox(
-          height: 180,
-          child: LayoutBuilder(
-            builder: (context, constraints) => GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapUp: widget.points.isEmpty
-                  ? null
-                  : (details) => _selectPoint(
-                      details.localPosition.dx,
-                      constraints.maxWidth,
-                    ),
-              child: CustomPaint(
-                key: const Key('statistics-line-chart'),
-                painter: _LineChartPainter(
-                  points: widget.points,
-                  color: Theme.of(context).colorScheme.primary,
-                  mutedColor: Theme.of(context).colorScheme.outline,
-                  surfaceColor: Theme.of(context).colorScheme.surface,
-                  selectedIndex: selectedIndex,
-                ),
-                child: const SizedBox.expand(),
-              ),
+        LayoutBuilder(
+          builder: (context, constraints) => GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapUp: widget.points.isEmpty
+                ? null
+                : (details) => _selectPoint(
+                    details.localPosition.dx,
+                    constraints.maxWidth,
+                  ),
+            child: FlowApexChart(
+              key: const Key('statistics-line-chart'),
+              height: 188,
+              options: _trendOptions(context),
             ),
           ),
         ),
@@ -497,6 +514,52 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
         ? 0
         : (normalizedX * (widget.points.length - 1)).round();
     setState(() => _selectedIndex = index);
+  }
+
+  Map<String, dynamic> _trendOptions(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final outline = Theme.of(context).colorScheme.outline;
+    final symbol = currencySymbol(widget.currency);
+    return {
+      'chart': {
+        'type': 'area',
+        'fontFamily': 'Montserrat',
+        'toolbar': {'show': false},
+        'zoom': {'enabled': false},
+        'animations': {'enabled': true, 'speed': 420},
+      },
+      'series': [
+        {
+          'name': 'Expense',
+          'data': [for (final point in widget.points) point.amount],
+        },
+      ],
+      'colors': [_colorHex(primary)],
+      'stroke': {'curve': 'smooth', 'width': 3},
+      'markers': {'size': 4},
+      'dataLabels': {'enabled': false},
+      'legend': {'show': false},
+      'fill': {
+        'type': 'gradient',
+        'gradient': {
+          'opacityFrom': 0.28,
+          'opacityTo': 0.02,
+        },
+      },
+      'xaxis': {
+        'categories': [for (final point in widget.points) point.label],
+        'tickAmount': widget.points.length <= 12 ? widget.points.length : 6,
+      },
+      'yaxis': {
+        'labels': {'prefix': '$symbol ', 'decimals': 0},
+      },
+      'tooltip': {
+        'y': {'prefix': '$symbol ', 'decimals': 0},
+      },
+      'grid': {
+        'borderColor': _colorHex(outline),
+      },
+    };
   }
 }
 
@@ -530,96 +593,6 @@ List<int> _visibleTrendIndexes(int length) {
 }
 
 const _chartHorizontalPadding = 12.0;
-
-class _LineChartPainter extends CustomPainter {
-  const _LineChartPainter({
-    required this.points,
-    required this.color,
-    required this.mutedColor,
-    required this.surfaceColor,
-    required this.selectedIndex,
-  });
-
-  final List<TrendPoint> points;
-  final Color color;
-  final Color mutedColor;
-  final Color surfaceColor;
-  final int? selectedIndex;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (points.isEmpty) return;
-    final chartTop = 12.0;
-    final chartBottom = size.height - 12.0;
-    final chartWidth = size.width - (_chartHorizontalPadding * 2);
-    final chartHeight = chartBottom - chartTop;
-    final maxAmount = points.fold<int>(
-      0,
-      (max, point) => point.amount > max ? point.amount : max,
-    );
-
-    final gridPaint = Paint()
-      ..color = mutedColor.withValues(alpha: 0.28)
-      ..strokeWidth = 1;
-    for (var index = 0; index <= 3; index++) {
-      final y = chartTop + chartHeight * index / 3;
-      canvas.drawLine(
-        Offset(_chartHorizontalPadding, y),
-        Offset(size.width - _chartHorizontalPadding, y),
-        gridPaint,
-      );
-    }
-
-    final path = Path();
-    final coordinates = <Offset>[];
-    for (var index = 0; index < points.length; index++) {
-      final x = points.length == 1
-          ? size.width / 2
-          : _chartHorizontalPadding + chartWidth * index / (points.length - 1);
-      final ratio = maxAmount == 0 ? 0.0 : points[index].amount / maxAmount;
-      final y = chartBottom - chartHeight * ratio;
-      final point = Offset(x, y);
-      coordinates.add(point);
-      if (index == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-
-    for (var index = 0; index < coordinates.length; index++) {
-      final isSelected = index == selectedIndex;
-      canvas.drawCircle(
-        coordinates[index],
-        isSelected ? 6 : 4,
-        Paint()..color = color,
-      );
-      canvas.drawCircle(
-        coordinates[index],
-        isSelected ? 3 : 2,
-        Paint()..color = surfaceColor,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
-      oldDelegate.points != points ||
-      oldDelegate.color != color ||
-      oldDelegate.mutedColor != mutedColor ||
-      oldDelegate.surfaceColor != surfaceColor ||
-      oldDelegate.selectedIndex != selectedIndex;
-}
 
 class _TopCategories extends StatelessWidget {
   const _TopCategories({required this.categories, required this.currency});
@@ -678,50 +651,6 @@ class _TopCategories extends StatelessWidget {
       ],
     );
   }
-}
-
-class _DonutPainter extends CustomPainter {
-  const _DonutPainter({required this.categories, required this.total});
-
-  final List<CategoryStat> categories;
-  final int total;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.shortestSide / 2 - 10;
-    final stroke = radius * 0.32;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    var start = -3.14159 / 2;
-    for (var index = 0; index < categories.length; index++) {
-      final sweep = total == 0
-          ? 0.0
-          : categories[index].amount / total * 6.28318;
-      canvas.drawArc(
-        rect,
-        start,
-        sweep,
-        false,
-        Paint()
-          ..color = _colors[index % _colors.length]
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke,
-      );
-      start += sweep;
-    }
-  }
-
-  static const _colors = [
-    FlowColors.expense,
-    FlowColors.accent,
-    FlowColors.chartAmber,
-    FlowColors.chartBlue,
-    FlowColors.chartPurple,
-  ];
-
-  @override
-  bool shouldRepaint(covariant _DonutPainter oldDelegate) =>
-      oldDelegate.categories != categories || oldDelegate.total != total;
 }
 
 class _PeriodSelector extends StatelessWidget {
@@ -857,17 +786,19 @@ class _SummaryValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: Theme.of(context).textTheme.labelMedium),
-      const SizedBox(height: FlowSpacing.xs),
-      _ResponsiveCurrencyText(
-        amount: value,
-        currency: currency,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color),
-      ),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: FlowSpacing.xs),
+          _ResponsiveCurrencyText(
+            amount: value,
+            currency: currency,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: color),
+          ),
+        ],
+      );
 }
 
 class _ResponsiveCurrencyText extends StatelessWidget {
@@ -875,28 +806,23 @@ class _ResponsiveCurrencyText extends StatelessWidget {
     required this.amount,
     required this.currency,
     this.style,
-    this.textAlign,
   });
 
   final int amount;
   final String currency;
   final TextStyle? style;
-  final TextAlign? textAlign;
 
   @override
   Widget build(BuildContext context) => FittedBox(
-    fit: BoxFit.scaleDown,
-    alignment: textAlign == TextAlign.center
-        ? Alignment.center
-        : Alignment.centerLeft,
-    child: Text(
-      formatCurrency(amount, currency),
-      maxLines: 1,
-      softWrap: false,
-      textAlign: textAlign,
-      style: style,
-    ),
-  );
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          formatCurrency(amount, currency),
+          maxLines: 1,
+          softWrap: false,
+          style: style,
+        ),
+      );
 }
 
 class _SectionHeading extends StatelessWidget {
@@ -907,4 +833,9 @@ class _SectionHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Text(title, style: Theme.of(context).textTheme.titleMedium);
+}
+
+String _colorHex(Color color) {
+  final value = color.toARGB32() & 0xFFFFFF;
+  return '#${value.toRadixString(16).padLeft(6, '0').toUpperCase()}';
 }

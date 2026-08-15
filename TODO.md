@@ -177,11 +177,11 @@ Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hi
 - [x] Audit package chart Flutter yang paling cocok untuk request ApexChart, terutama `apexcharts_flutter`; cek status versi terbaru, lisensi, API, platform support Android/iOS, dan risiko karena package masih early preview/unofficial.
 - [x] Tambahkan dependency chart hanya setelah audit singkat selesai; pin versi agar API preview tidak berubah diam-diam.
 - [x] Buat wrapper chart reusable, misalnya `FlowApexChartCard` atau `FlowStatisticsChart`, agar konfigurasi Apex tidak tersebar di screen.
-- [ ] Ganti `Statistics` spending trend dari custom `CustomPainter` (`_LineChartPainter`) ke Apex line/area chart.
-- [ ] Ganti `Statistics` spending by category dari custom donut painter ke Apex donut/pie chart dengan legend dan label yang lebih rapi.
+- [x] Ganti `Statistics` spending trend dari custom `CustomPainter` (`_LineChartPainter`) ke Apex line/area chart.
+- [x] Ganti `Statistics` spending by category dari custom donut painter ke Apex donut/pie chart dengan legend dan label yang lebih rapi.
 - [ ] Evaluasi `Home` cash-flow chart agar ikut memakai chart reusable; Home tetap ringkas dan tidak berubah menjadi dashboard ramai.
 - [ ] Pertahankan aturan domain: transfer tidak masuk income/expense, amount tetap positif, dan chart hanya memakai data dari transaksi lokal.
-- [ ] Pertahankan fallback/empty state ketika data kosong, satu titik, semua nilai nol, atau kategori kosong.
+- [x] Pertahankan fallback/empty state ketika data kosong, satu titik, semua nilai nol, atau kategori kosong.
 
 ### 13.2 Filter periode chart
 
