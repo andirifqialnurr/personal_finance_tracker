@@ -196,15 +196,15 @@ Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hi
 
 ### 13.3 Design density contract
 
-- [ ] Revisi design token spacing agar card tidak terlalu tinggi dan konten tidak terasa terhimpit.
-- [ ] Tetapkan tiga density variant untuk `FlowCard`:
-  - [ ] `compact`: padding 12-14dp untuk summary kecil, list compact, dan filter/action item.
-  - [ ] `standard`: padding 16dp untuk transaksi, account item, settings row, dan card umum.
-  - [ ] `featured`: padding 18-20dp maksimal untuk Total Balance dan chart utama.
-- [ ] Hindari padding 24dp ke atas pada mobile kecuali empty state atau form section yang benar-benar membutuhkan ruang.
-- [ ] Tetapkan gap internal card: 4dp untuk label-detail dekat, 8dp untuk item satu grup, 12dp untuk blok berbeda, 16dp hanya untuk pemisah antar section penting.
-- [ ] Audit `FlowSpacing`, `FlowRadii`, `FlowControlSize`, dan `FlowCardVariant` supaya spacing tidak perlu di-hardcode berulang di screen.
-- [ ] Pastikan nested card tidak digunakan untuk layout biasa; card hanya untuk item berulang, summary, chart, modal/content container yang memang butuh frame.
+- [x] Revisi design token spacing agar card tidak terlalu tinggi dan konten tidak terasa terhimpit.
+- [x] Tetapkan tiga density variant untuk `FlowCard`:
+  - [x] `compact`: padding 12-14dp untuk summary kecil, list compact, dan filter/action item.
+  - [x] `standard`: padding 16dp untuk transaksi, account item, settings row, dan card umum.
+  - [x] `featured`: padding 18-20dp maksimal untuk Total Balance dan chart utama.
+- [x] Hindari padding 24dp ke atas pada mobile kecuali empty state atau form section yang benar-benar membutuhkan ruang.
+- [x] Tetapkan gap internal card: 4dp untuk label-detail dekat, 8dp untuk item satu grup, 12dp untuk blok berbeda, 16dp hanya untuk pemisah antar section penting.
+- [x] Audit `FlowSpacing`, `FlowRadii`, `FlowControlSize`, dan `FlowCardVariant` supaya spacing tidak perlu di-hardcode berulang di screen.
+- [x] Pastikan nested card tidak digunakan untuk layout biasa; card hanya untuk item berulang, summary, chart, modal/content container yang memang butuh frame.
 
 ### 13.4 Typography scale dan hierarchy
 

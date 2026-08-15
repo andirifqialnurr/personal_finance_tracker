@@ -9,6 +9,15 @@ abstract final class FlowSpacing {
   static const lg = 24.0;
   static const xl = 32.0;
   static const xxl = 40.0;
+
+  static const cardCompact = 12.0;
+  static const cardStandard = 16.0;
+  static const cardFeatured = 20.0;
+
+  static const gapTight = xxs;
+  static const gapGroup = xs;
+  static const gapBlock = sm;
+  static const gapSection = md;
 }
 
 abstract final class FlowRadii {

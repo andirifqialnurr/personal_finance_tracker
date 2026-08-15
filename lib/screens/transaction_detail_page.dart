@@ -39,10 +39,11 @@ class TransactionDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Transaction detail')),
       body: ListView(
-        padding: const EdgeInsets.all(FlowSpacing.lg),
+        padding: const EdgeInsets.all(FlowSpacing.md),
         children: [
           FlowCard(
             variant: FlowCardVariant.balance,
+            density: FlowCardDensity.featured,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -93,7 +94,7 @@ class TransactionDetailPage extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ],
-          const SizedBox(height: FlowSpacing.lg),
+          const SizedBox(height: FlowSpacing.gapSection),
           Row(
             children: [
               Expanded(

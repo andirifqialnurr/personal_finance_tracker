@@ -56,7 +56,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
         .where((transaction) => transaction.type == TransactionType.expense)
         .fold<int>(0, (sum, transaction) => sum + transaction.amount);
     return ListView(
-      padding: const EdgeInsets.all(FlowSpacing.lg),
+      padding: const EdgeInsets.all(FlowSpacing.md),
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -98,7 +98,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
           ],
         ),
 
-        const SizedBox(height: FlowSpacing.lg),
+        const SizedBox(height: FlowSpacing.gapSection),
         FlowCard(
           variant: FlowCardVariant.balance,
           child: Column(
@@ -135,7 +135,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ],
           ),
         ),
-        const SizedBox(height: FlowSpacing.md),
+        const SizedBox(height: FlowSpacing.gapSection),
 
         Row(
           children: [
@@ -158,12 +158,12 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ),
           ],
         ),
-        const SizedBox(height: FlowSpacing.lg),
+        const SizedBox(height: FlowSpacing.gapSection),
         _CashFlowCard(
           transactions: monthTransactions.toList(growable: false),
           currency: widget.currency,
         ),
-        const SizedBox(height: FlowSpacing.lg),
+        const SizedBox(height: FlowSpacing.gapSection),
         _RecentTransactionsCard(
           transactions: widget.transactions,
           accounts: widget.accounts,
@@ -233,9 +233,9 @@ class _SummaryCard extends StatelessWidget {
               ? FlowIconContainerVariant.income
               : FlowIconContainerVariant.expense,
         ),
-        const SizedBox(height: FlowSpacing.sm),
+        const SizedBox(height: FlowSpacing.gapBlock),
         Text(label, style: Theme.of(context).textTheme.labelMedium),
-        const SizedBox(height: FlowSpacing.xxs),
+        const SizedBox(height: FlowSpacing.gapTight),
         FlowAmountText(
           amount: amount,
           variant: variant,
@@ -269,16 +269,17 @@ class _CashFlowCard extends StatelessWidget {
     }
     return FlowCard(
       variant: FlowCardVariant.chart,
+      density: FlowCardDensity.featured,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Cash flow', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: FlowSpacing.xs),
+          const SizedBox(height: FlowSpacing.gapGroup),
           Text(
             'Income and expense by week',
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: FlowSpacing.md),
+          const SizedBox(height: FlowSpacing.gapSection),
           FlowApexChart(
             height: 148,
             options: _cashFlowOptions(context, incomeByWeek, expenseByWeek),
@@ -302,14 +303,8 @@ class _CashFlowCard extends StatelessWidget {
         'animations': {'enabled': true, 'speed': 360},
       },
       'series': [
-        {
-          'name': 'Income',
-          'data': incomeByWeek,
-        },
-        {
-          'name': 'Expense',
-          'data': expenseByWeek,
-        },
+        {'name': 'Income', 'data': incomeByWeek},
+        {'name': 'Expense', 'data': expenseByWeek},
       ],
       'colors': [
         flowChartColorHex(Theme.of(context).colorScheme.primary),
@@ -323,10 +318,7 @@ class _CashFlowCard extends StatelessWidget {
         'labels': {'prefix': '$symbol ', 'decimals': 0},
       },
       'plotOptions': {
-        'bar': {
-          'columnWidth': '52%',
-          'borderRadius': 8,
-        },
+        'bar': {'columnWidth': '52%', 'borderRadius': 8},
       },
       'dataLabels': {'enabled': false},
       'legend': {'show': true, 'position': 'bottom'},
@@ -365,6 +357,7 @@ class _RecentTransactionsCard extends StatelessWidget {
     final visible = recent.take(5).toList(growable: false);
     return FlowCard(
       variant: FlowCardVariant.transaction,
+      density: FlowCardDensity.standard,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -386,7 +379,7 @@ class _RecentTransactionsCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: FlowSpacing.xs),
+          const SizedBox(height: FlowSpacing.gapGroup),
           if (visible.isEmpty)
             FlowEmptyState(
               icon: Icons.receipt_long_outlined,

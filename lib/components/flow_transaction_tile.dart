@@ -36,7 +36,7 @@ class FlowTransactionTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(FlowRadii.input),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: FlowSpacing.sm),
+          padding: const EdgeInsets.symmetric(vertical: FlowSpacing.gapGroup),
           child: Row(
             children: [
               FlowIconContainer(icon: icon, variant: iconVariant),

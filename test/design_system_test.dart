@@ -22,6 +22,13 @@ void main() {
     expect(FlowTheme.dark().brightness, Brightness.dark);
     expect(FlowRadii.card, greaterThan(FlowRadii.input));
     expect(FlowControlSize.minTouchTarget, greaterThanOrEqualTo(44));
+    expect(FlowCardDensity.compact.padding, 12);
+    expect(FlowCardDensity.standard.padding, 16);
+    expect(FlowCardDensity.featured.padding, 20);
+    expect(FlowSpacing.gapTight, 4);
+    expect(FlowSpacing.gapGroup, 8);
+    expect(FlowSpacing.gapBlock, 12);
+    expect(FlowSpacing.gapSection, 16);
   });
 
   testWidgets('component variants render with shared structure', (

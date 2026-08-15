@@ -51,10 +51,10 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
             )
           : null,
       body: ListView(
-        padding: const EdgeInsets.all(FlowSpacing.lg),
+        padding: const EdgeInsets.all(FlowSpacing.md),
         children: [
           Text('Appearance', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: FlowSpacing.sm),
+          const SizedBox(height: FlowSpacing.gapBlock),
           FlowSegmentedControl(
             labels: const ['Light', 'Dark'],
             selectedIndex: selectedIndex,
@@ -64,14 +64,14 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
               widget.onThemeModeChanged(mode);
             },
           ),
-          const SizedBox(height: FlowSpacing.lg),
+          const SizedBox(height: FlowSpacing.gapSection),
           FlowSelector(
             label: 'Currency',
             value: widget.currency,
             icon: Icons.payments_outlined,
             onTap: _selectCurrency,
           ),
-          const SizedBox(height: FlowSpacing.md),
+          const SizedBox(height: FlowSpacing.gapSection),
           FlowSelector(
             label: 'Categories',
             value:
@@ -86,21 +86,21 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
               ),
             ),
           ),
-          const SizedBox(height: FlowSpacing.xl),
+          const SizedBox(height: FlowSpacing.gapSection),
           Text(
             'Data management',
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: FlowSpacing.sm),
+          const SizedBox(height: FlowSpacing.gapBlock),
           FlowButton(
             label: _isExporting ? 'Exporting CSV...' : 'Export CSV',
             variant: FlowButtonVariant.secondary,
             icon: Icons.file_download_outlined,
             onPressed: _isExporting ? null : _exportCsv,
           ),
-          const SizedBox(height: FlowSpacing.xl),
+          const SizedBox(height: FlowSpacing.gapSection),
           Text('Danger zone', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: FlowSpacing.sm),
+          const SizedBox(height: FlowSpacing.gapBlock),
           FlowButton(
             label: 'Delete all data',
             variant: FlowButtonVariant.destructive,

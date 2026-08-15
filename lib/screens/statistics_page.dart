@@ -46,7 +46,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
         FlowSpacing.md,
         FlowSpacing.sm,
         FlowSpacing.md,
-        FlowSpacing.xxl,
+        FlowSpacing.md,
       ),
       children: [
         _PeriodSelector(
@@ -65,6 +65,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           const SizedBox(height: FlowSpacing.sm),
           FlowCard(
             variant: FlowCardVariant.chart,
+            density: FlowCardDensity.featured,
             child: _CategoryChart(
               categories: data.categories,
               currency: widget.currency,
@@ -75,6 +76,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           const SizedBox(height: FlowSpacing.sm),
           FlowCard(
             variant: FlowCardVariant.chart,
+            density: FlowCardDensity.featured,
             child: _SpendingTrendChart(
               points: data.trend,
               currency: widget.currency,
@@ -85,6 +87,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           const SizedBox(height: FlowSpacing.sm),
           FlowCard(
             variant: FlowCardVariant.summary,
+            density: FlowCardDensity.standard,
             child: _TopCategories(
               categories: data.categories,
               currency: widget.currency,
@@ -225,20 +228,14 @@ class StatisticsData {
         StatisticsPeriod.monthly => DateTime(anchor.year, anchor.month - 11),
       };
 
-  static DateTime _periodEnd(StatisticsPeriod period, DateTime start) =>
-      switch (period) {
-        StatisticsPeriod.daily => DateTime(
-          start.year,
-          start.month,
-          start.day + 1,
-        ),
-        StatisticsPeriod.weekly => DateTime(
-          start.year,
-          start.month,
-          start.day + 7,
-        ),
-        StatisticsPeriod.monthly => DateTime(start.year, start.month + 12),
-      };
+  static DateTime _periodEnd(
+    StatisticsPeriod period,
+    DateTime start,
+  ) => switch (period) {
+    StatisticsPeriod.daily => DateTime(start.year, start.month, start.day + 1),
+    StatisticsPeriod.weekly => DateTime(start.year, start.month, start.day + 7),
+    StatisticsPeriod.monthly => DateTime(start.year, start.month + 12),
+  };
 
   static DateTime _trendBucket(StatisticsPeriod period, DateTime date) =>
       switch (period) {
@@ -495,8 +492,9 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
         _selectedIndex != null && _selectedIndex! < widget.points.length
         ? _selectedIndex
         : null;
-    final selectedPoint =
-        selectedIndex == null ? null : widget.points[selectedIndex];
+    final selectedPoint = selectedIndex == null
+        ? null
+        : widget.points[selectedIndex];
 
     return Column(
       children: [
@@ -564,10 +562,7 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
         'animations': {'enabled': true, 'speed': 420},
       },
       'series': [
-        {
-          'name': 'Expense',
-          'data': scaledAmounts,
-        },
+        {'name': 'Expense', 'data': scaledAmounts},
       ],
       'colors': [flowChartColorHex(primary)],
       'stroke': {'curve': 'smooth', 'width': 3},
@@ -576,10 +571,7 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
       'legend': {'show': false},
       'fill': {
         'type': 'gradient',
-        'gradient': {
-          'opacityFrom': 0.28,
-          'opacityTo': 0.02,
-        },
+        'gradient': {'opacityFrom': 0.28, 'opacityTo': 0.02},
       },
       'xaxis': {
         'categories': [for (final point in widget.points) point.label],
@@ -604,9 +596,7 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
           'decimals': axisUnit.decimals,
         },
       },
-      'grid': {
-        'borderColor': flowChartColorHex(outline),
-      },
+      'grid': {'borderColor': flowChartColorHex(outline)},
     };
   }
 }
@@ -769,6 +759,7 @@ class _PeriodSelector extends StatelessWidget {
       const SizedBox(height: FlowSpacing.sm),
       FlowCard(
         variant: FlowCardVariant.action,
+        density: FlowCardDensity.compact,
         child: Row(
           children: [
             IconButton(
@@ -842,6 +833,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FlowCard(
     variant: FlowCardVariant.summary,
+    density: FlowCardDensity.compact,
     child: Row(
       children: [
         Expanded(
@@ -881,19 +873,17 @@ class _SummaryValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.labelMedium),
-          const SizedBox(height: FlowSpacing.xs),
-          _ResponsiveCurrencyText(
-            amount: value,
-            currency: currency,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(color: color),
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: Theme.of(context).textTheme.labelMedium),
+      const SizedBox(height: FlowSpacing.xs),
+      _ResponsiveCurrencyText(
+        amount: value,
+        currency: currency,
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color),
+      ),
+    ],
+  );
 }
 
 class _ResponsiveCurrencyText extends StatelessWidget {
@@ -909,15 +899,15 @@ class _ResponsiveCurrencyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerLeft,
-        child: Text(
-          formatCurrency(amount, currency),
-          maxLines: 1,
-          softWrap: false,
-          style: style,
-        ),
-      );
+    fit: BoxFit.scaleDown,
+    alignment: Alignment.centerLeft,
+    child: Text(
+      formatCurrency(amount, currency),
+      maxLines: 1,
+      softWrap: false,
+      style: style,
+    ),
+  );
 }
 
 class _SectionHeading extends StatelessWidget {

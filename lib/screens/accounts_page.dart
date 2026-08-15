@@ -31,9 +31,9 @@ class AccountsPage extends StatelessWidget {
         .where((account) => !account.isArchived)
         .toList(growable: false);
     return ListView(
-      padding: const EdgeInsets.all(FlowSpacing.lg),
+      padding: const EdgeInsets.all(FlowSpacing.md),
       children: [
-        const SizedBox(height: FlowSpacing.lg),
+        const SizedBox(height: FlowSpacing.gapSection),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -60,6 +60,7 @@ class AccountsPage extends StatelessWidget {
           for (final account in activeAccounts) ...[
             FlowCard(
               variant: FlowCardVariant.action,
+              density: FlowCardDensity.standard,
               child: InkWell(
                 onTap: () => onOpenDetail(account),
                 borderRadius: BorderRadius.circular(FlowRadii.card),

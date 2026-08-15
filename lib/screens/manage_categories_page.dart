@@ -5,7 +5,11 @@ import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
 
 class ManageCategoriesPage extends StatefulWidget {
-  const ManageCategoriesPage({super.key, required this.categories, required this.onChanged});
+  const ManageCategoriesPage({
+    super.key,
+    required this.categories,
+    required this.onChanged,
+  });
 
   final List<Category> categories;
   final ValueChanged<List<Category>> onChanged;
@@ -22,7 +26,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Manage categories')),
       body: ListView(
-        padding: const EdgeInsets.all(FlowSpacing.lg),
+        padding: const EdgeInsets.all(FlowSpacing.md),
         children: [
           Text(
             'Archived categories stay available for old transactions.',
@@ -32,15 +36,22 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
           for (final category in _categories) ...[
             FlowCard(
               variant: FlowCardVariant.action,
+              density: FlowCardDensity.standard,
               child: Row(
                 children: [
-                  FlowIconContainer(icon: Icons.category_outlined, variant: FlowIconContainerVariant.category),
+                  FlowIconContainer(
+                    icon: Icons.category_outlined,
+                    variant: FlowIconContainerVariant.category,
+                  ),
                   const SizedBox(width: FlowSpacing.sm),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(category.name, style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          category.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         Text(
                           '${_typeLabel(category.transactionType)}${category.isArchived ? ' · Archived' : ''}',
                           style: Theme.of(context).textTheme.bodySmall,
@@ -55,8 +66,14 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                   ),
                   IconButton(
                     onPressed: () => _toggleArchive(category),
-                    tooltip: category.isArchived ? 'Restore category' : 'Archive category',
-                    icon: Icon(category.isArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
+                    tooltip: category.isArchived
+                        ? 'Restore category'
+                        : 'Archive category',
+                    icon: Icon(
+                      category.isArchived
+                          ? Icons.unarchive_outlined
+                          : Icons.archive_outlined,
+                    ),
                   ),
                 ],
               ),
@@ -74,10 +91,20 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Rename category'),
-        content: TextField(controller: controller, autofocus: true, textCapitalization: TextCapitalization.sentences),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: const Text('Save')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Save'),
+          ),
         ],
       ),
     );
@@ -86,7 +113,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
     _update(category, name: name);
   }
 
-  void _toggleArchive(Category category) => _update(category, isArchived: !category.isArchived);
+  void _toggleArchive(Category category) =>
+      _update(category, isArchived: !category.isArchived);
 
   void _update(Category category, {String? name, bool? isArchived}) {
     final updated = Category(

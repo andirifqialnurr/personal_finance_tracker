@@ -48,16 +48,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
       for (final category in widget.categories)
         if (category.id != null) category.id!: category.name,
     };
-    final filtered = FlowTransactionFilter(
-        query: _query,
-        type: _typeFilter,
-        accountId: _accountFilter,
-        categoryId: _categoryFilter,
-        startDate: _dateRange?.start,
-        endDate: _dateRange?.end.add(const Duration(days: 1)),
-      )
-        .apply(widget.transactions, categoryNames: categoryNames)
-      ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    final filtered =
+        FlowTransactionFilter(
+            query: _query,
+            type: _typeFilter,
+            accountId: _accountFilter,
+            categoryId: _categoryFilter,
+            startDate: _dateRange?.start,
+            endDate: _dateRange?.end.add(const Duration(days: 1)),
+          ).apply(widget.transactions, categoryNames: categoryNames)
+          ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
     final incomeTotal = filtered
         .where((transaction) => transaction.type == TransactionType.income)
         .fold<int>(0, (sum, transaction) => sum + transaction.amount);
@@ -74,7 +74,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       (grouped[day] ??= []).add(transaction);
     }
     return ListView(
-      padding: const EdgeInsets.all(FlowSpacing.lg),
+      padding: const EdgeInsets.all(FlowSpacing.md),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +152,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
-        const SizedBox(height: FlowSpacing.md),
+        const SizedBox(height: FlowSpacing.gapSection),
         Row(
           children: [
             Expanded(
@@ -174,7 +174,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             ),
           ],
         ),
-        const SizedBox(height: FlowSpacing.lg),
+        const SizedBox(height: FlowSpacing.gapSection),
         if (widget.transactions.isEmpty)
           const FlowEmptyState(
             icon: Icons.receipt_long_outlined,
@@ -196,6 +196,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             const SizedBox(height: FlowSpacing.xs),
             FlowCard(
               variant: FlowCardVariant.transaction,
+              density: FlowCardDensity.standard,
               child: Column(
                 children: [
                   for (final transaction in entry.value)
@@ -343,22 +344,25 @@ class _TransactionFilterSheetState extends State<_TransactionFilterSheet> {
       for (final category in widget.categories)
         if (category.id != null) category.id!: category.name,
     };
-    final categoryIds = widget.transactions
-        .map((transaction) => transaction.categoryId)
-        .whereType<int>()
-        .toSet()
-      ..addAll(categoryNames.keys);
-    final modalHeight =
-        (MediaQuery.sizeOf(context).height * .82).clamp(320.0, 620.0);
+    final categoryIds =
+        widget.transactions
+            .map((transaction) => transaction.categoryId)
+            .whereType<int>()
+            .toSet()
+          ..addAll(categoryNames.keys);
+    final modalHeight = (MediaQuery.sizeOf(context).height * .82).clamp(
+      320.0,
+      620.0,
+    );
 
     return SizedBox(
       height: modalHeight.toDouble(),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            FlowSpacing.lg,
+            FlowSpacing.md,
             FlowSpacing.xs,
-            FlowSpacing.lg,
+            FlowSpacing.md,
             FlowSpacing.md,
           ),
           child: Column(
@@ -437,8 +441,7 @@ class _TransactionFilterSheetState extends State<_TransactionFilterSheet> {
                             ),
                           ),
                       ],
-                      onChanged: (value) =>
-                          setState(() => _categoryId = value),
+                      onChanged: (value) => setState(() => _categoryId = value),
                     ),
                     const SizedBox(height: FlowSpacing.md),
                     InkWell(
@@ -557,6 +560,7 @@ class _TotalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FlowCard(
     variant: FlowCardVariant.summary,
+    density: FlowCardDensity.compact,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

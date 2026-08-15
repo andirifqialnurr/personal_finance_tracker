@@ -44,17 +44,21 @@ class AccountDetailPage extends StatelessWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(FlowSpacing.lg),
+        padding: const EdgeInsets.all(FlowSpacing.md),
         children: [
           FlowCard(
             variant: FlowCardVariant.balance,
+            density: FlowCardDensity.featured,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Current balance', style: Theme.of(context).textTheme.labelMedium),
-                const SizedBox(height: FlowSpacing.xs),
+                Text(
+                  'Current balance',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                const SizedBox(height: FlowSpacing.gapGroup),
                 FlowAmountText(amount: formatCurrency(balance, currency)),
-                const SizedBox(height: FlowSpacing.sm),
+                const SizedBox(height: FlowSpacing.gapBlock),
                 Text(
                   '${accountTransactions.length} transaction${accountTransactions.length == 1 ? '' : 's'}',
                   style: Theme.of(context).textTheme.bodySmall,
@@ -62,19 +66,24 @@ class AccountDetailPage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: FlowSpacing.lg),
-          Text('Account transactions', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: FlowSpacing.sm),
+          const SizedBox(height: FlowSpacing.gapSection),
+          Text(
+            'Account transactions',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: FlowSpacing.gapBlock),
           if (accountTransactions.isEmpty)
             const FlowEmptyState(
               icon: Icons.receipt_long_outlined,
               title: 'No transactions yet',
-              message: 'Transactions recorded for this account will appear here.',
+              message:
+                  'Transactions recorded for this account will appear here.',
             )
           else
             for (final transaction in accountTransactions) ...[
               FlowCard(
                 variant: FlowCardVariant.transaction,
+                density: FlowCardDensity.standard,
                 child: InkWell(
                   onTap: () => onOpenTransaction(transaction),
                   borderRadius: BorderRadius.circular(FlowRadii.card),
@@ -89,7 +98,10 @@ class AccountDetailPage extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(_label(transaction), style: Theme.of(context).textTheme.titleMedium),
+                            Text(
+                              _label(transaction),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                             Text(
                               '${transaction.occurredAt.day}/${transaction.occurredAt.month}/${transaction.occurredAt.year}',
                               style: Theme.of(context).textTheme.bodySmall,
@@ -114,10 +126,12 @@ class AccountDetailPage extends StatelessWidget {
     );
   }
 
-  int _balance(List<Transaction> items) => account.openingBalance + items.fold<int>(
-    0,
-    (sum, transaction) => sum + _signedAmount(transaction, account.id),
-  );
+  int _balance(List<Transaction> items) =>
+      account.openingBalance +
+      items.fold<int>(
+        0,
+        (sum, transaction) => sum + _signedAmount(transaction, account.id),
+      );
 
   static int _signedAmount(Transaction transaction, int? accountId) {
     if (transaction.type == TransactionType.transfer) {
@@ -132,9 +146,11 @@ class AccountDetailPage extends StatelessWidget {
 
   static bool _isIncoming(Transaction transaction, int? accountId) =>
       transaction.type == TransactionType.income ||
-      (transaction.type == TransactionType.transfer && transaction.destinationAccountId == accountId);
+      (transaction.type == TransactionType.transfer &&
+          transaction.destinationAccountId == accountId);
 
-  static String _label(Transaction transaction) => transaction.note?.isNotEmpty == true
+  static String _label(Transaction transaction) =>
+      transaction.note?.isNotEmpty == true
       ? transaction.note!
       : switch (transaction.type) {
           TransactionType.income => 'Income',
@@ -148,17 +164,19 @@ class AccountDetailPage extends StatelessWidget {
     TransactionType.transfer => Icons.swap_horiz,
   };
 
-  static FlowIconContainerVariant _iconVariant(TransactionType type) => switch (type) {
-    TransactionType.income => FlowIconContainerVariant.income,
-    TransactionType.expense => FlowIconContainerVariant.expense,
-    TransactionType.transfer => FlowIconContainerVariant.transfer,
-  };
+  static FlowIconContainerVariant _iconVariant(TransactionType type) =>
+      switch (type) {
+        TransactionType.income => FlowIconContainerVariant.income,
+        TransactionType.expense => FlowIconContainerVariant.expense,
+        TransactionType.transfer => FlowIconContainerVariant.transfer,
+      };
 
-  static FlowAmountVariant _amountVariant(Transaction transaction, int? accountId) =>
-      _isIncoming(transaction, accountId)
-          ? FlowAmountVariant.income
-          : transaction.type == TransactionType.transfer
-              ? FlowAmountVariant.transfer
-              : FlowAmountVariant.expense;
-
+  static FlowAmountVariant _amountVariant(
+    Transaction transaction,
+    int? accountId,
+  ) => _isIncoming(transaction, accountId)
+      ? FlowAmountVariant.income
+      : transaction.type == TransactionType.transfer
+      ? FlowAmountVariant.transfer
+      : FlowAmountVariant.expense;
 }
