@@ -168,6 +168,86 @@ Dokumen ini menjadi breakdown implementasi berdasarkan `01-personal-finance-flut
 - [x] Jalankan `flutter analyze`, `flutter test`, dan `flutter build apk --debug`; perbaiki blocker pertama yang ditemukan.
 - [x] Lakukan final visual pass untuk kontras, radius, shadow, safe area, keyboard, cursor input, overflow, dan keterbacaan chart.
 
+## 13. Chart Apex, density system, dan backlog audit (request baru)
+
+Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hijau. `flutter analyze` hijau, test statistik/controller hijau, tetapi full suite masih gagal karena beberapa test harness lama belum mengikuti Riverpod `ProviderScope` dan satu ekspektasi masking balance belum selaras dengan state wrapper test.
+
+### 13.1 Rework chart ke ApexChart
+
+- [ ] Audit package chart Flutter yang paling cocok untuk request ApexChart, terutama `apexcharts_flutter`; cek status versi terbaru, lisensi, API, platform support Android/iOS, dan risiko karena package masih early preview/unofficial.
+- [ ] Tambahkan dependency chart hanya setelah audit singkat selesai; pin versi agar API preview tidak berubah diam-diam.
+- [ ] Buat wrapper chart reusable, misalnya `FlowApexChartCard` atau `FlowStatisticsChart`, agar konfigurasi Apex tidak tersebar di screen.
+- [ ] Ganti `Statistics` spending trend dari custom `CustomPainter` (`_LineChartPainter`) ke Apex line/area chart.
+- [ ] Ganti `Statistics` spending by category dari custom donut painter ke Apex donut/pie chart dengan legend dan label yang lebih rapi.
+- [ ] Evaluasi `Home` cash-flow chart agar ikut memakai chart reusable; Home tetap ringkas dan tidak berubah menjadi dashboard ramai.
+- [ ] Pertahankan aturan domain: transfer tidak masuk income/expense, amount tetap positif, dan chart hanya memakai data dari transaksi lokal.
+- [ ] Pertahankan fallback/empty state ketika data kosong, satu titik, semua nilai nol, atau kategori kosong.
+
+### 13.2 Filter periode chart
+
+- [ ] Ubah selector periode statistik menjadi lebih natural untuk personal finance: **Harian**, **Pekanan**, **Bulanan**; pertimbangkan **Tahunan** sebagai mode lanjutan bila tetap dibutuhkan.
+- [ ] Definisikan default Statistics ke **Pekanan** atau **Bulanan dengan breakdown harian** setelah dibandingkan secara visual; jangan default ke mode yang membuat chart terlalu ramai pada layar kecil.
+- [ ] Mode Harian: tampilkan transaksi/expense pada tanggal dipilih atau bucket jam sederhana bila data harian cukup.
+- [ ] Mode Pekanan: tampilkan bucket minggu dalam bulan berjalan atau 7 hari terakhir; ini menjadi kandidat default karena paling mudah dibaca.
+- [ ] Mode Bulanan: tampilkan bucket bulan untuk tren jangka lebih panjang, idealnya 6-12 bulan.
+- [ ] Pastikan label sumbu tidak bertumpuk pada small width 320-359dp; gunakan label yang disingkat dan tick yang dipilih otomatis.
+- [ ] Tambahkan tooltip/value formatter Rupiah yang ringkas, contoh `Rp 1,2 jt` untuk axis dan nilai penuh di tooltip/detail.
+- [ ] Tambahkan test agregasi untuk Harian, Pekanan, Bulanan, batas bulan, minggu lintas bulan, dan data tanpa transaksi.
+
+### 13.3 Design density contract
+
+- [ ] Revisi design token spacing agar card tidak terlalu tinggi dan konten tidak terasa terhimpit.
+- [ ] Tetapkan tiga density variant untuk `FlowCard`:
+  - [ ] `compact`: padding 12-14dp untuk summary kecil, list compact, dan filter/action item.
+  - [ ] `standard`: padding 16dp untuk transaksi, account item, settings row, dan card umum.
+  - [ ] `featured`: padding 18-20dp maksimal untuk Total Balance dan chart utama.
+- [ ] Hindari padding 24dp ke atas pada mobile kecuali empty state atau form section yang benar-benar membutuhkan ruang.
+- [ ] Tetapkan gap internal card: 4dp untuk label-detail dekat, 8dp untuk item satu grup, 12dp untuk blok berbeda, 16dp hanya untuk pemisah antar section penting.
+- [ ] Audit `FlowSpacing`, `FlowRadii`, `FlowControlSize`, dan `FlowCardVariant` supaya spacing tidak perlu di-hardcode berulang di screen.
+- [ ] Pastikan nested card tidak digunakan untuk layout biasa; card hanya untuk item berulang, summary, chart, modal/content container yang memang butuh frame.
+
+### 13.4 Typography scale dan hierarchy
+
+- [ ] Turunkan ukuran font default yang terlalu besar pada card kecil.
+- [ ] Tetapkan skala praktis:
+  - [ ] label/caption 11-12sp, medium weight.
+  - [ ] body/list title 13-14sp.
+  - [ ] section title 15-16sp.
+  - [ ] amount kecil 15-17sp.
+  - [ ] Total Balance utama 24-28sp.
+- [ ] Batasi pemakaian `titleLarge`, `headlineSmall`, dan `displaySmall` hanya untuk elemen utama; jangan dipakai di semua nominal/card.
+- [ ] Pastikan angka uang memakai tabular numerals bila memungkinkan dan tetap aman untuk nominal besar.
+- [ ] Terapkan `maxLines`, `overflow`, `FittedBox`, atau `Flexible` secara konsisten pada nominal, nama akun, nama kategori, dan metadata transaksi.
+
+### 13.5 Layout hygiene per card/container
+
+- [ ] Tetapkan struktur minimum card: header kecil, body utama, metadata/footer bila diperlukan.
+- [ ] Pastikan setiap card hanya punya satu visual focus; jangan mencampur nominal besar, chart, legend, action, dan copy panjang dalam satu blok tanpa hierarchy.
+- [ ] Rapikan `Home` Total Balance, Income/Expense summary, Cash flow, dan Recent Transactions agar tinggi card proporsional dengan konten.
+- [ ] Rapikan `Transactions` total cards, search/filter row, dan transaction list agar nominal tidak menekan teks.
+- [ ] Rapikan `Statistics` summary, chart, legend, dan top categories setelah pindah ke ApexChart.
+- [ ] Rapikan `Accounts` card agar nama akun panjang, saldo, dan archive icon tidak saling menekan.
+- [ ] Rapikan `Settings` selector/action rows agar button dan label tidak terasa oversized.
+- [ ] Verifikasi small/medium/large phone widths dalam Light dan Dark untuk overflow, clipped text, touch target, keyboard, dan safe area.
+
+### 13.6 Riverpod cleanup dan test recovery
+
+- [ ] Selesaikan sisa `RIVERPOD_MIGRATION_TODO.md` atau sinkronkan ulang bila scope berubah.
+- [ ] Kurangi callback/props drilling di `FlowShell` untuk data global yang sudah bisa dibaca via provider.
+- [ ] Update widget test lama agar membungkus `FlowApp` dengan `ProviderScope` atau memakai constructor override store yang valid.
+- [ ] Perbaiki test masking Total Balance agar benar-benar mengubah state wrapper atau uji dari store/provider yang persisten.
+- [ ] Jalankan `flutter analyze`.
+- [ ] Jalankan `flutter test --concurrency=1` sampai full suite hijau.
+- [ ] Jalankan `flutter build apk --debug` dan catat blocker environment secara spesifik bila Flutter CLI/lockfile bermasalah.
+
+### 13.7 Product polish backlog dari audit
+
+- [ ] Update `README.md` dari template Flutter menjadi dokumentasi proyek Flow: fitur, setup, arsitektur singkat, test command, dan screenshot/recording bila tersedia.
+- [ ] Tambahkan akses untuk melihat dan restore archived account; saat ini archive menyembunyikan akun aktif tetapi tidak ada restore surface yang jelas.
+- [ ] Pertimbangkan Import CSV agar Export CSV tidak menjadi satu arah saja.
+- [ ] Pertimbangkan backup/restore lokal sebagai fitur V2 ringan tanpa cloud sync.
+- [ ] Pertahankan batas MVP: jangan menambah login, cloud sync, koneksi bank/e-wallet, OCR, AI, investasi, atau payment gateway tanpa request eksplisit.
+
 ## Di luar scope prototype awal
 
 - Budget, recurring transactions, saving goals, receipt attachment, backup/restore, biometric lock, multi-currency conversion, dan cloud sync.
