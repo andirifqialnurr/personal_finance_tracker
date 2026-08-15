@@ -185,14 +185,14 @@ Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hi
 
 ### 13.2 Filter periode chart
 
-- [ ] Ubah selector periode statistik menjadi lebih natural untuk personal finance: **Harian**, **Pekanan**, **Bulanan**; pertimbangkan **Tahunan** sebagai mode lanjutan bila tetap dibutuhkan.
-- [ ] Definisikan default Statistics ke **Pekanan** atau **Bulanan dengan breakdown harian** setelah dibandingkan secara visual; jangan default ke mode yang membuat chart terlalu ramai pada layar kecil.
-- [ ] Mode Harian: tampilkan transaksi/expense pada tanggal dipilih atau bucket jam sederhana bila data harian cukup.
-- [ ] Mode Pekanan: tampilkan bucket minggu dalam bulan berjalan atau 7 hari terakhir; ini menjadi kandidat default karena paling mudah dibaca.
-- [ ] Mode Bulanan: tampilkan bucket bulan untuk tren jangka lebih panjang, idealnya 6-12 bulan.
-- [ ] Pastikan label sumbu tidak bertumpuk pada small width 320-359dp; gunakan label yang disingkat dan tick yang dipilih otomatis.
-- [ ] Tambahkan tooltip/value formatter Rupiah yang ringkas, contoh `Rp 1,2 jt` untuk axis dan nilai penuh di tooltip/detail.
-- [ ] Tambahkan test agregasi untuk Harian, Pekanan, Bulanan, batas bulan, minggu lintas bulan, dan data tanpa transaksi.
+- [x] Ubah selector periode statistik menjadi lebih natural untuk personal finance: **Harian**, **Pekanan**, **Bulanan**; pertimbangkan **Tahunan** sebagai mode lanjutan bila tetap dibutuhkan.
+- [x] Definisikan default Statistics ke **Pekanan** atau **Bulanan dengan breakdown harian** setelah dibandingkan secara visual; jangan default ke mode yang membuat chart terlalu ramai pada layar kecil.
+- [x] Mode Harian: tampilkan transaksi/expense pada tanggal dipilih atau bucket jam sederhana bila data harian cukup.
+- [x] Mode Pekanan: tampilkan bucket minggu dalam bulan berjalan atau 7 hari terakhir; ini menjadi kandidat default karena paling mudah dibaca.
+- [x] Mode Bulanan: tampilkan bucket bulan untuk tren jangka lebih panjang, idealnya 6-12 bulan.
+- [x] Pastikan label sumbu tidak bertumpuk pada small width 320-359dp; gunakan label yang disingkat dan tick yang dipilih otomatis.
+- [x] Tambahkan tooltip/value formatter Rupiah yang ringkas, contoh `Rp 1,2 jt` untuk axis dan nilai penuh di tooltip/detail.
+- [x] Tambahkan test agregasi untuk Harian, Pekanan, Bulanan, batas bulan, minggu lintas bulan, dan data tanpa transaksi.
 
 ### 13.3 Design density contract
 

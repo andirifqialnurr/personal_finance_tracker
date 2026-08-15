@@ -27,7 +27,7 @@ class StatisticsPage extends StatefulWidget {
 
 class _StatisticsPageState extends State<StatisticsPage> {
   late DateTime _selectedDate = DateTime.now();
-  StatisticsPeriod _period = StatisticsPeriod.monthly;
+  StatisticsPeriod _period = StatisticsPeriod.weekly;
 
   @override
   Widget build(BuildContext context) {
@@ -104,16 +104,20 @@ class _StatisticsPageState extends State<StatisticsPage> {
   void _changePeriodDate(int offset) {
     setState(() {
       _selectedDate = switch (_period) {
-        StatisticsPeriod.yearly => DateTime(_selectedDate.year + offset, 1),
+        StatisticsPeriod.daily => DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day + offset,
+        ),
+        StatisticsPeriod.weekly => DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day + (offset * 7),
+        ),
         StatisticsPeriod.monthly => DateTime(
           _selectedDate.year,
           _selectedDate.month + offset,
           1,
-        ),
-        StatisticsPeriod.date => DateTime(
-          _selectedDate.year,
-          _selectedDate.month,
-          _selectedDate.day + offset,
         ),
       };
     });
@@ -130,7 +134,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 }
 
-enum StatisticsPeriod { yearly, monthly, date }
+enum StatisticsPeriod { daily, weekly, monthly }
 
 class StatisticsData {
   const StatisticsData({
@@ -152,7 +156,7 @@ class StatisticsData {
   factory StatisticsData.fromTransactions(
     List<Transaction> transactions,
     DateTime anchor, {
-    StatisticsPeriod period = StatisticsPeriod.monthly,
+    StatisticsPeriod period = StatisticsPeriod.weekly,
     Map<int, String> categoryNames = const {},
   }) {
     var income = 0;
@@ -208,31 +212,44 @@ class StatisticsData {
 
   static DateTime _periodStart(StatisticsPeriod period, DateTime anchor) =>
       switch (period) {
-        StatisticsPeriod.yearly => DateTime(anchor.year, 1),
-        StatisticsPeriod.monthly => DateTime(anchor.year, anchor.month),
-        StatisticsPeriod.date => DateTime(
+        StatisticsPeriod.daily => DateTime(
           anchor.year,
           anchor.month,
           anchor.day,
         ),
+        StatisticsPeriod.weekly => DateTime(
+          anchor.year,
+          anchor.month,
+          anchor.day - 6,
+        ),
+        StatisticsPeriod.monthly => DateTime(anchor.year, anchor.month - 11),
       };
 
   static DateTime _periodEnd(StatisticsPeriod period, DateTime start) =>
       switch (period) {
-        StatisticsPeriod.yearly => DateTime(start.year + 1, 1),
-        StatisticsPeriod.monthly => DateTime(start.year, start.month + 1),
-        StatisticsPeriod.date => DateTime(
+        StatisticsPeriod.daily => DateTime(
           start.year,
           start.month,
           start.day + 1,
         ),
+        StatisticsPeriod.weekly => DateTime(
+          start.year,
+          start.month,
+          start.day + 7,
+        ),
+        StatisticsPeriod.monthly => DateTime(start.year, start.month + 12),
       };
 
   static DateTime _trendBucket(StatisticsPeriod period, DateTime date) =>
       switch (period) {
-        StatisticsPeriod.yearly => DateTime(date.year, date.month),
-        StatisticsPeriod.monthly => DateTime(date.year, date.month, date.day),
-        StatisticsPeriod.date => DateTime(date.year, date.month, date.day),
+        StatisticsPeriod.daily => DateTime(
+          date.year,
+          date.month,
+          date.day,
+          (date.hour ~/ 4) * 4,
+        ),
+        StatisticsPeriod.weekly => DateTime(date.year, date.month, date.day),
+        StatisticsPeriod.monthly => DateTime(date.year, date.month),
       };
 
   static List<TrendPoint> _buildTrend(
@@ -241,20 +258,25 @@ class StatisticsData {
     Map<DateTime, int> totals,
   ) {
     final count = switch (period) {
-      StatisticsPeriod.yearly => 12,
-      StatisticsPeriod.monthly => DateTime(start.year, start.month + 1, 0).day,
-      StatisticsPeriod.date => 1,
+      StatisticsPeriod.daily => 6,
+      StatisticsPeriod.weekly => 7,
+      StatisticsPeriod.monthly => 12,
     };
     final points = <TrendPoint>[];
     for (var index = 0; index < count; index++) {
       final bucket = switch (period) {
-        StatisticsPeriod.yearly => DateTime(start.year, index + 1),
-        StatisticsPeriod.monthly => DateTime(
+        StatisticsPeriod.daily => DateTime(
           start.year,
           start.month,
-          index + 1,
+          start.day,
+          index * 4,
         ),
-        StatisticsPeriod.date => start,
+        StatisticsPeriod.weekly => DateTime(
+          start.year,
+          start.month,
+          start.day + index,
+        ),
+        StatisticsPeriod.monthly => DateTime(start.year, start.month + index),
       };
       points.add(
         TrendPoint(
@@ -271,10 +293,10 @@ class StatisticsData {
     StatisticsPeriod period,
     DateTime date,
   ) => switch (period) {
-    StatisticsPeriod.yearly => _monthName(date.month).substring(0, 3),
-    StatisticsPeriod.monthly => '${date.day}',
-    StatisticsPeriod.date =>
+    StatisticsPeriod.daily => '${date.hour.toString().padLeft(2, '0')}:00',
+    StatisticsPeriod.weekly =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}',
+    StatisticsPeriod.monthly => _monthName(date.month).substring(0, 3),
   };
 
   static String _monthName(int month) => const [
@@ -313,6 +335,10 @@ class TrendPoint {
   final DateTime date;
   final String label;
   final int amount;
+
+  String axisLabel(String currency) => formatCompactCurrency(amount, currency);
+
+  String tooltipLabel(String currency) => formatCurrency(amount, currency);
 }
 
 class _CategoryChart extends StatelessWidget {
@@ -485,7 +511,7 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
                   ),
             child: FlowApexChart(
               key: const Key('statistics-line-chart'),
-              height: 188,
+              height: 196,
               options: _trendOptions(context),
             ),
           ),
@@ -494,7 +520,7 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
         if (selectedPoint != null) ...[
           const SizedBox(height: FlowSpacing.xs),
           Text(
-            '${selectedPoint.label}: ${formatCurrency(selectedPoint.amount, widget.currency)}',
+            '${selectedPoint.label}: ${selectedPoint.tooltipLabel(widget.currency)}',
             style: Theme.of(context).textTheme.labelLarge,
           ),
         ],
@@ -520,6 +546,15 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
     final primary = Theme.of(context).colorScheme.primary;
     final outline = Theme.of(context).colorScheme.outline;
     final symbol = currencySymbol(widget.currency);
+    final maxAmount = widget.points.fold<int>(
+      0,
+      (value, point) => point.amount > value ? point.amount : value,
+    );
+    final axisUnit = _compactAxisUnit(maxAmount);
+    final scaledAmounts = [
+      for (final point in widget.points)
+        _scaledChartValue(point.amount, axisUnit.suffix),
+    ];
     return {
       'chart': {
         'type': 'area',
@@ -531,7 +566,7 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
       'series': [
         {
           'name': 'Expense',
-          'data': [for (final point in widget.points) point.amount],
+          'data': scaledAmounts,
         },
       ],
       'colors': [flowChartColorHex(primary)],
@@ -548,13 +583,26 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
       },
       'xaxis': {
         'categories': [for (final point in widget.points) point.label],
-        'tickAmount': widget.points.length <= 12 ? widget.points.length : 6,
+        'tickAmount': widget.points.length <= 7 ? widget.points.length : 6,
+        'labels': {
+          'hideOverlappingLabels': true,
+          'trim': true,
+          'style': {'fontSize': '10px'},
+        },
       },
       'yaxis': {
-        'labels': {'prefix': '$symbol ', 'decimals': 0},
+        'labels': {
+          'prefix': '$symbol ',
+          'suffix': axisUnit.suffix,
+          'decimals': axisUnit.decimals,
+        },
       },
       'tooltip': {
-        'y': {'prefix': '$symbol ', 'decimals': 0},
+        'y': {
+          'prefix': '$symbol ',
+          'suffix': axisUnit.suffix,
+          'decimals': axisUnit.decimals,
+        },
       },
       'grid': {
         'borderColor': flowChartColorHex(outline),
@@ -570,19 +618,23 @@ class _TrendAxisLabels extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceAround,
     children: [
       for (final index in _visibleTrendIndexes(points.length))
-        Text(
-          points[index].label,
-          style: Theme.of(context).textTheme.labelSmall,
+        Expanded(
+          child: Text(
+            points[index].label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
         ),
     ],
   );
 }
 
 List<int> _visibleTrendIndexes(int length) {
-  if (length <= 12) return [for (var index = 0; index < length; index++) index];
+  if (length <= 7) return [for (var index = 0; index < length; index++) index];
   final step = (length / 6).ceil();
   final visible = <int>[];
   for (var index = 0; index < length; index += step) {
@@ -593,6 +645,42 @@ List<int> _visibleTrendIndexes(int length) {
 }
 
 const _chartHorizontalPadding = 12.0;
+
+({String suffix, int decimals}) _compactAxisUnit(int maxAmount) {
+  if (maxAmount >= 1000000000) return (suffix: ' M', decimals: 1);
+  if (maxAmount >= 1000000) return (suffix: ' jt', decimals: 1);
+  if (maxAmount >= 1000) return (suffix: ' rb', decimals: 0);
+  return (suffix: '', decimals: 0);
+}
+
+num _scaledChartValue(int amount, String suffix) => switch (suffix.trim()) {
+  'M' => amount / 1000000000,
+  'jt' => amount / 1000000,
+  'rb' => amount / 1000,
+  _ => amount,
+};
+
+String formatCompactCurrency(int amount, String currency) {
+  final symbol = currencySymbol(currency);
+  if (amount >= 1000000000) {
+    return '$symbol ${_formatCompactDecimal(amount / 1000000000)} M';
+  }
+  if (amount >= 1000000) {
+    return '$symbol ${_formatCompactDecimal(amount / 1000000)} jt';
+  }
+  if (amount >= 1000) {
+    return '$symbol ${(amount / 1000).round()} rb';
+  }
+  return formatCurrency(amount, currency);
+}
+
+String _formatCompactDecimal(num value) {
+  final fixed = value.toStringAsFixed(1);
+  final trimmed = fixed.endsWith('.0')
+      ? fixed.substring(0, fixed.length - 2)
+      : fixed;
+  return trimmed.replaceAll('.', ',');
+}
 
 class _TopCategories extends StatelessWidget {
   const _TopCategories({required this.categories, required this.currency});
@@ -674,7 +762,7 @@ class _PeriodSelector extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     children: [
       FlowSegmentedControl(
-        labels: const ['Tahunan', 'Bulanan', 'Tanggal'],
+        labels: const ['Harian', 'Pekanan', 'Bulanan'],
         selectedIndex: period.index,
         onChanged: (index) => onPeriodChanged(StatisticsPeriod.values[index]),
       ),
@@ -689,7 +777,7 @@ class _PeriodSelector extends StatelessWidget {
               icon: const Icon(Icons.chevron_left),
             ),
             Expanded(
-              child: period == StatisticsPeriod.date
+              child: period == StatisticsPeriod.daily
                   ? TextButton.icon(
                       onPressed: onPickDate,
                       icon: const Icon(Icons.calendar_today_outlined, size: 18),
@@ -698,6 +786,8 @@ class _PeriodSelector extends StatelessWidget {
                   : Text(
                       _periodTitle(period, date),
                       textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
             ),
@@ -716,11 +806,16 @@ class _PeriodSelector extends StatelessWidget {
     StatisticsPeriod period,
     DateTime date,
   ) => switch (period) {
-    StatisticsPeriod.yearly => '${date.year}',
-    StatisticsPeriod.monthly => '${_monthName(date.month)} ${date.year}',
-    StatisticsPeriod.date =>
+    StatisticsPeriod.daily =>
       '${date.day.toString().padLeft(2, '0')} ${_monthName(date.month)} ${date.year}',
+    StatisticsPeriod.weekly =>
+      '${_shortDate(DateTime(date.year, date.month, date.day - 6))} - ${_shortDate(date)} ${date.year}',
+    StatisticsPeriod.monthly =>
+      '${_monthName(DateTime(date.year, date.month - 11).month).substring(0, 3)} ${DateTime(date.year, date.month - 11).year} - ${_monthName(date.month).substring(0, 3)} ${date.year}',
   };
+
+  static String _shortDate(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
 
   static String _monthName(int month) => const [
     'January',

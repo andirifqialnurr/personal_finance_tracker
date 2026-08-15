@@ -57,17 +57,17 @@ void main() {
     expect(find.text('No transactions yet'), findsOneWidget);
   });
 
-  testWidgets('Statistics exposes yearly, monthly, and date periods', (
+  testWidgets('Statistics exposes daily, weekly, and monthly periods', (
     WidgetTester tester,
   ) async {
     await pumpWithFirstAccount(tester);
 
     await tapShellTab(tester, 2);
 
-    expect(find.text('Tahunan'), findsOneWidget);
+    expect(find.text('Harian'), findsOneWidget);
+    expect(find.text('Pekanan'), findsOneWidget);
     expect(find.text('Bulanan'), findsOneWidget);
-    expect(find.text('Tanggal'), findsOneWidget);
-    await tester.tap(find.text('Tanggal'));
+    await tester.tap(find.text('Harian'));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Previous period'), findsOneWidget);
     expect(find.byTooltip('Next period'), findsOneWidget);
