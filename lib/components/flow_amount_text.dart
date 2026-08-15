@@ -23,13 +23,30 @@ class FlowAmountText extends StatelessWidget {
       FlowAmountVariant.transfer => Theme.of(context).colorScheme.primary,
       FlowAmountVariant.balance => Theme.of(context).colorScheme.onSurface,
     };
-    return Text(
-      amount,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: Theme.of(
-        context,
-      ).textTheme.displaySmall?.copyWith(color: color).merge(style),
+    final textTheme = Theme.of(context).textTheme;
+    final baseStyle = switch (variant) {
+      FlowAmountVariant.balance => textTheme.displaySmall,
+      FlowAmountVariant.income ||
+      FlowAmountVariant.expense ||
+      FlowAmountVariant.transfer => textTheme.labelLarge?.copyWith(
+        fontSize: 16,
+      ),
+    };
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Text(
+        amount,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        style: baseStyle
+            ?.copyWith(
+              color: color,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            )
+            .merge(style),
+      ),
     );
   }
 }

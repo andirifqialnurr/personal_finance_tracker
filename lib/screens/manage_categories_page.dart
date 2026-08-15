@@ -50,7 +50,9 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                       children: [
                         Text(
                           category.name,
-                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         Text(
                           '${_typeLabel(category.transactionType)}${category.isArchived ? ' · Archived' : ''}',

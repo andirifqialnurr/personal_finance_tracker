@@ -64,7 +64,9 @@ abstract final class FlowTheme {
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
           return textTheme.labelMedium?.copyWith(
-            color: isSelected ? FlowColors.accent : textTheme.labelMedium?.color,
+            color: isSelected
+                ? FlowColors.accent
+                : textTheme.labelMedium?.color,
           );
         }),
         height: FlowControlSize.minTouchTarget + FlowSpacing.md,
@@ -127,35 +129,35 @@ abstract final class FlowTheme {
     return base.copyWith(
       displaySmall: base.displaySmall?.copyWith(
         color: text,
-        fontSize: 32,
+        fontSize: 28,
         fontWeight: FontWeight.w700,
-        letterSpacing: -0.6,
+        letterSpacing: 0,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
       headlineSmall: base.headlineSmall?.copyWith(
         color: text,
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: FontWeight.w700,
-        letterSpacing: -0.3,
+        letterSpacing: 0,
       ),
       titleLarge: base.titleLarge?.copyWith(
         color: text,
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: FontWeight.w700,
       ),
       titleMedium: base.titleMedium?.copyWith(
         color: text,
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
       ),
       bodyLarge: base.bodyLarge?.copyWith(
         color: text,
-        fontSize: 16,
+        fontSize: 14,
         height: 1.45,
       ),
       bodyMedium: base.bodyMedium?.copyWith(
         color: text,
-        fontSize: 14,
+        fontSize: 13,
         height: 1.45,
       ),
       bodySmall: base.bodySmall?.copyWith(
@@ -165,15 +167,19 @@ abstract final class FlowTheme {
       ),
       labelLarge: base.labelLarge?.copyWith(
         color: text,
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
       ),
       labelMedium: base.labelMedium?.copyWith(
         color: mutedText,
         fontSize: 12,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
       ),
-      labelSmall: base.labelSmall?.copyWith(color: mutedText, fontSize: 11),
+      labelSmall: base.labelSmall?.copyWith(
+        color: mutedText,
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 }

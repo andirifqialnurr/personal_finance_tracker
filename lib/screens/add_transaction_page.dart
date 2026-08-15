@@ -75,9 +75,11 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   List<Category> get _availableCategories => widget.categories.isNotEmpty
       ? widget.categories
       : [
-          for (var index = 0;
-              index < DefaultCategorySeeder.defaults.length;
-              index++)
+          for (
+            var index = 0;
+            index < DefaultCategorySeeder.defaults.length;
+            index++
+          )
             Category(
               id: index + 1,
               name: DefaultCategorySeeder.defaults[index].name,
@@ -322,7 +324,7 @@ class _SelectionSheet<T> extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: FlowSpacing.sm),
           if (items.isEmpty)
             Text(
@@ -334,8 +336,18 @@ class _SelectionSheet<T> extends StatelessWidget {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: FlowIconContainer(icon: iconOf(item)),
-                title: Text(titleOf(item)),
-                subtitle: Text(subtitleOf(item)),
+                title: Text(
+                  titleOf(item),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                subtitle: Text(
+                  subtitleOf(item),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 onTap: () => Navigator.of(context).pop(item),
               ),
         ],

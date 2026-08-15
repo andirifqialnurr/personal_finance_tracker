@@ -880,7 +880,9 @@ class _SummaryValue extends StatelessWidget {
       _ResponsiveCurrencyText(
         amount: value,
         currency: currency,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color),
+        style: Theme.of(
+          context,
+        ).textTheme.labelLarge?.copyWith(color: color, fontSize: 16),
       ),
     ],
   );
@@ -898,16 +900,21 @@ class _ResponsiveCurrencyText extends StatelessWidget {
   final TextStyle? style;
 
   @override
-  Widget build(BuildContext context) => FittedBox(
-    fit: BoxFit.scaleDown,
-    alignment: Alignment.centerLeft,
-    child: Text(
-      formatCurrency(amount, currency),
-      maxLines: 1,
-      softWrap: false,
-      style: style,
-    ),
-  );
+  Widget build(BuildContext context) {
+    final effectiveStyle = style?.copyWith(
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Text(
+        formatCurrency(amount, currency),
+        maxLines: 1,
+        softWrap: false,
+        style: effectiveStyle,
+      ),
+    );
+  }
 }
 
 class _SectionHeading extends StatelessWidget {

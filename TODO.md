@@ -208,16 +208,16 @@ Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hi
 
 ### 13.4 Typography scale dan hierarchy
 
-- [ ] Turunkan ukuran font default yang terlalu besar pada card kecil.
-- [ ] Tetapkan skala praktis:
-  - [ ] label/caption 11-12sp, medium weight.
-  - [ ] body/list title 13-14sp.
-  - [ ] section title 15-16sp.
-  - [ ] amount kecil 15-17sp.
-  - [ ] Total Balance utama 24-28sp.
-- [ ] Batasi pemakaian `titleLarge`, `headlineSmall`, dan `displaySmall` hanya untuk elemen utama; jangan dipakai di semua nominal/card.
-- [ ] Pastikan angka uang memakai tabular numerals bila memungkinkan dan tetap aman untuk nominal besar.
-- [ ] Terapkan `maxLines`, `overflow`, `FittedBox`, atau `Flexible` secara konsisten pada nominal, nama akun, nama kategori, dan metadata transaksi.
+- [x] Turunkan ukuran font default yang terlalu besar pada card kecil.
+- [x] Tetapkan skala praktis:
+  - [x] label/caption 11-12sp, medium weight.
+  - [x] body/list title 13-14sp.
+  - [x] section title 15-16sp.
+  - [x] amount kecil 15-17sp.
+  - [x] Total Balance utama 24-28sp.
+- [x] Batasi pemakaian `titleLarge`, `headlineSmall`, dan `displaySmall` hanya untuk elemen utama; jangan dipakai di semua nominal/card.
+- [x] Pastikan angka uang memakai tabular numerals bila memungkinkan dan tetap aman untuk nominal besar.
+- [x] Terapkan `maxLines`, `overflow`, `FittedBox`, atau `Flexible` secara konsisten pada nominal, nama akun, nama kategori, dan metadata transaksi.
 
 ### 13.5 Layout hygiene per card/container
 

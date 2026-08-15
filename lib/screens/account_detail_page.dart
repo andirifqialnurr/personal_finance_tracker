@@ -69,7 +69,7 @@ class AccountDetailPage extends StatelessWidget {
           const SizedBox(height: FlowSpacing.gapSection),
           Text(
             'Account transactions',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: FlowSpacing.gapBlock),
           if (accountTransactions.isEmpty)
@@ -100,7 +100,9 @@ class AccountDetailPage extends StatelessWidget {
                           children: [
                             Text(
                               _label(transaction),
-                              style: Theme.of(context).textTheme.titleMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyLarge,
                             ),
                             Text(
                               '${transaction.occurredAt.day}/${transaction.occurredAt.month}/${transaction.occurredAt.year}',

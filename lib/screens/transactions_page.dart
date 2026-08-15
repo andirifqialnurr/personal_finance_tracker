@@ -372,7 +372,7 @@ class _TransactionFilterSheetState extends State<_TransactionFilterSheet> {
                   Expanded(
                     child: Text(
                       'Filter transactions',
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
                   IconButton(

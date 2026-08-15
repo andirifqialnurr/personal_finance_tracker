@@ -29,6 +29,13 @@ void main() {
     expect(FlowSpacing.gapGroup, 8);
     expect(FlowSpacing.gapBlock, 12);
     expect(FlowSpacing.gapSection, 16);
+    final textTheme = FlowTheme.light().textTheme;
+    expect(textTheme.labelSmall?.fontSize, 11);
+    expect(textTheme.labelMedium?.fontSize, 12);
+    expect(textTheme.bodyMedium?.fontSize, 13);
+    expect(textTheme.titleMedium?.fontSize, 15);
+    expect(textTheme.displaySmall?.fontSize, 28);
+    expect(textTheme.displaySmall?.letterSpacing, 0);
   });
 
   testWidgets('component variants render with shared structure', (
