@@ -174,9 +174,9 @@ Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hi
 
 ### 13.1 Rework chart ke ApexChart
 
-- [ ] Audit package chart Flutter yang paling cocok untuk request ApexChart, terutama `apexcharts_flutter`; cek status versi terbaru, lisensi, API, platform support Android/iOS, dan risiko karena package masih early preview/unofficial.
-- [ ] Tambahkan dependency chart hanya setelah audit singkat selesai; pin versi agar API preview tidak berubah diam-diam.
-- [ ] Buat wrapper chart reusable, misalnya `FlowApexChartCard` atau `FlowStatisticsChart`, agar konfigurasi Apex tidak tersebar di screen.
+- [x] Audit package chart Flutter yang paling cocok untuk request ApexChart, terutama `apexcharts_flutter`; cek status versi terbaru, lisensi, API, platform support Android/iOS, dan risiko karena package masih early preview/unofficial.
+- [x] Tambahkan dependency chart hanya setelah audit singkat selesai; pin versi agar API preview tidak berubah diam-diam.
+- [x] Buat wrapper chart reusable, misalnya `FlowApexChartCard` atau `FlowStatisticsChart`, agar konfigurasi Apex tidak tersebar di screen.
 - [ ] Ganti `Statistics` spending trend dari custom `CustomPainter` (`_LineChartPainter`) ke Apex line/area chart.
 - [ ] Ganti `Statistics` spending by category dari custom donut painter ke Apex donut/pie chart dengan legend dan label yang lebih rapi.
 - [ ] Evaluasi `Home` cash-flow chart agar ikut memakai chart reusable; Home tetap ringkas dan tidak berubah menjadi dashboard ramai.
