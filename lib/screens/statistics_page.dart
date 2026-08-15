@@ -368,7 +368,7 @@ class _CategoryChart extends StatelessWidget {
   Map<String, dynamic> _donutOptions(BuildContext context, int total) {
     final colors = [
       for (var index = 0; index < categories.length; index++)
-        _colorHex(_chartColor(index, context)),
+        flowChartColorHex(_chartColor(index, context)),
     ];
     return {
       'chart': {
@@ -534,7 +534,7 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
           'data': [for (final point in widget.points) point.amount],
         },
       ],
-      'colors': [_colorHex(primary)],
+      'colors': [flowChartColorHex(primary)],
       'stroke': {'curve': 'smooth', 'width': 3},
       'markers': {'size': 4},
       'dataLabels': {'enabled': false},
@@ -557,7 +557,7 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
         'y': {'prefix': '$symbol ', 'decimals': 0},
       },
       'grid': {
-        'borderColor': _colorHex(outline),
+        'borderColor': flowChartColorHex(outline),
       },
     };
   }
@@ -833,9 +833,4 @@ class _SectionHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Text(title, style: Theme.of(context).textTheme.titleMedium);
-}
-
-String _colorHex(Color color) {
-  final value = color.toARGB32() & 0xFFFFFF;
-  return '#${value.toRadixString(16).padLeft(6, '0').toUpperCase()}';
 }

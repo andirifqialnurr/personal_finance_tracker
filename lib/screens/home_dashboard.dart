@@ -267,10 +267,6 @@ class _CashFlowCard extends StatelessWidget {
           break;
       }
     }
-    final maxAmount = List<int>.generate(
-      incomeByWeek.length,
-      (index) => incomeByWeek[index] + expenseByWeek[index],
-    ).fold<int>(0, (max, value) => value > max ? value : max);
     return FlowCard(
       variant: FlowCardVariant.chart,
       child: Column(
@@ -283,48 +279,61 @@ class _CashFlowCard extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: FlowSpacing.md),
-          SizedBox(
-            height: 132,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                for (var index = 0; index < 5; index++)
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Container(
-                          height: maxAmount == 0
-                              ? 8
-                              : 72 *
-                                    ((incomeByWeek[index] +
-                                            expenseByWeek[index]) /
-                                        maxAmount),
-                          width: 28,
-                          decoration: BoxDecoration(
-                            color: incomeByWeek[index] >= expenseByWeek[index]
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.error,
-                            borderRadius: BorderRadius.circular(FlowRadii.pill),
-                          ),
-                        ),
-                        const SizedBox(height: FlowSpacing.xs),
-                        Text(
-                          'W${index + 1}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
+          FlowApexChart(
+            height: 148,
+            options: _cashFlowOptions(context, incomeByWeek, expenseByWeek),
           ),
-          const SizedBox(height: FlowSpacing.xs),
         ],
       ),
     );
+  }
+
+  Map<String, dynamic> _cashFlowOptions(
+    BuildContext context,
+    List<int> incomeByWeek,
+    List<int> expenseByWeek,
+  ) {
+    final symbol = currencySymbol(currency);
+    return {
+      'chart': {
+        'type': 'bar',
+        'fontFamily': 'Montserrat',
+        'toolbar': {'show': false},
+        'animations': {'enabled': true, 'speed': 360},
+      },
+      'series': [
+        {
+          'name': 'Income',
+          'data': incomeByWeek,
+        },
+        {
+          'name': 'Expense',
+          'data': expenseByWeek,
+        },
+      ],
+      'colors': [
+        flowChartColorHex(Theme.of(context).colorScheme.primary),
+        flowChartColorHex(Theme.of(context).colorScheme.error),
+      ],
+      'xaxis': {
+        'categories': const ['W1', 'W2', 'W3', 'W4', 'W5'],
+        'tickAmount': 5,
+      },
+      'yaxis': {
+        'labels': {'prefix': '$symbol ', 'decimals': 0},
+      },
+      'plotOptions': {
+        'bar': {
+          'columnWidth': '52%',
+          'borderRadius': 8,
+        },
+      },
+      'dataLabels': {'enabled': false},
+      'legend': {'show': true, 'position': 'bottom'},
+      'tooltip': {
+        'y': {'prefix': '$symbol ', 'decimals': 0},
+      },
+    };
   }
 }
 
