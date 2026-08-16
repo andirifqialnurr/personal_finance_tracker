@@ -84,6 +84,12 @@ void main() {
     state = container.read(flowControllerProvider).requireValue;
     expect(state.accounts.single.isArchived, isTrue);
     expect((await store.load()).accounts.single.isArchived, isTrue);
+
+    await controller.restoreAccount(state.accounts.single);
+
+    state = container.read(flowControllerProvider).requireValue;
+    expect(state.accounts.single.isArchived, isFalse);
+    expect((await store.load()).accounts.single.isArchived, isFalse);
   });
 
   test('FlowController saves, edits, and deletes transactions', () async {

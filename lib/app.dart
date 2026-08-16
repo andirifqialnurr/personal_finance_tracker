@@ -336,6 +336,8 @@ class _FlowShellState extends ConsumerState<FlowShell> {
               onEdit: widget.onEditAccount,
               onArchive: (account) =>
                   unawaited(controller.archiveAccount(account)),
+              onRestore: (account) =>
+                  unawaited(controller.restoreAccount(account)),
               transactions: transactions,
               currency: currency,
               onOpenDetail: widget.onOpenAccountDetail,

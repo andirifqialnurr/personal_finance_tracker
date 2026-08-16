@@ -242,11 +242,11 @@ Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hi
 
 ### 13.7 Product polish backlog dari audit
 
-- [ ] Update `README.md` dari template Flutter menjadi dokumentasi proyek Flow: fitur, setup, arsitektur singkat, test command, dan screenshot/recording bila tersedia.
-- [ ] Tambahkan akses untuk melihat dan restore archived account; saat ini archive menyembunyikan akun aktif tetapi tidak ada restore surface yang jelas.
-- [ ] Pertimbangkan Import CSV agar Export CSV tidak menjadi satu arah saja.
-- [ ] Pertimbangkan backup/restore lokal sebagai fitur V2 ringan tanpa cloud sync.
-- [ ] Pertahankan batas MVP: jangan menambah login, cloud sync, koneksi bank/e-wallet, OCR, AI, investasi, atau payment gateway tanpa request eksplisit.
+- [x] Update `README.md` dari template Flutter menjadi dokumentasi proyek Flow: fitur, setup, arsitektur singkat, test command, dan screenshot/recording bila tersedia.
+- [x] Tambahkan akses untuk melihat dan restore archived account; saat ini archive menyembunyikan akun aktif tetapi tidak ada restore surface yang jelas.
+- [x] Pertimbangkan Import CSV agar Export CSV tidak menjadi satu arah saja.
+- [x] Pertimbangkan backup/restore lokal sebagai fitur V2 ringan tanpa cloud sync.
+- [x] Pertahankan batas MVP: jangan menambah login, cloud sync, koneksi bank/e-wallet, OCR, AI, investasi, atau payment gateway tanpa request eksplisit.
 
 ## Di luar scope prototype awal
 

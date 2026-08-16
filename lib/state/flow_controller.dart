@@ -48,6 +48,18 @@ class FlowController extends StateNotifier<AsyncValue<FlowState>> {
     await saveAccount(archived);
   }
 
+  Future<void> restoreAccount(Account account) async {
+    final id = account.id;
+    if (id == null) return;
+    final restored = _copyAccount(
+      account,
+      id,
+      isArchived: false,
+      updatedAt: DateTime.now().toUtc(),
+    );
+    await saveAccount(restored);
+  }
+
   Future<void> saveTransaction(
     Transaction transaction, {
     Transaction? editing,

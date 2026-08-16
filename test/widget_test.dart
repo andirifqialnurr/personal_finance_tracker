@@ -137,6 +137,13 @@ void main() {
 
     expect(find.text('No accounts yet'), findsOneWidget);
     expect(find.text('Create account'), findsOneWidget);
+    expect(find.text('Archived accounts'), findsOneWidget);
+
+    await tester.tap(find.text('Restore'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No accounts yet'), findsNothing);
+    expect(find.text('Cash'), findsWidgets);
   });
 
   testWidgets(
