@@ -248,6 +248,45 @@ Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hi
 - [x] Pertimbangkan backup/restore lokal sebagai fitur V2 ringan tanpa cloud sync.
 - [x] Pertahankan batas MVP: jangan menambah login, cloud sync, koneksi bank/e-wallet, OCR, AI, investasi, atau payment gateway tanpa request eksplisit.
 
+## 14. Rekomendasi fitur tambahan berikutnya
+
+Catatan: section ini adalah backlog baru setelah seluruh task sebelumnya selesai. Implementasikan bertahap dan tetap mengikuti `design-system.md`.
+
+### 14.1 Import CSV
+
+- [ ] Buat alur Import CSV yang kompatibel dengan format Export CSV saat ini.
+- [ ] Tambahkan preview sebelum import: jumlah transaksi, akun/kategori yang cocok, dan baris yang error.
+- [ ] Tangani duplikasi transaksi dengan aturan deterministic, misalnya kombinasi tanggal, amount, type, account, category, dan note.
+- [ ] Sediakan hasil import ringkas: berhasil, dilewati, dan gagal.
+
+### 14.2 Backup dan restore lokal
+
+- [ ] Buat export backup lokal satu file yang berisi accounts, categories, transactions, dan settings.
+- [ ] Buat restore backup dengan preview dampak sebelum menimpa data lokal.
+- [ ] Tambahkan konfirmasi kuat untuk restore karena operasi ini dapat mengganti data aktif.
+- [ ] Pertahankan tanpa cloud sync; file tetap dikelola user secara lokal.
+
+### 14.3 Recurring transaction templates
+
+- [ ] Tambahkan template transaksi berulang untuk gaji, tagihan, langganan, dan transfer rutin.
+- [ ] Sediakan frekuensi sederhana: weekly, monthly, dan custom day-of-month.
+- [ ] Buat generated transaction tetap editable dan tidak otomatis masuk income/expense sampai user mengonfirmasi.
+- [ ] Tampilkan reminder ringkas di Home tanpa membuat dashboard ramai.
+
+### 14.4 Budget bulanan per kategori
+
+- [ ] Tambahkan budget bulanan opsional untuk kategori expense.
+- [ ] Tampilkan progress budget di Statistics dan Home secara compact.
+- [ ] Beri status aman/perhatian/melebihi budget dengan warna semantic yang sudah ada.
+- [ ] Pastikan budget tidak mengubah transaksi atau saldo.
+
+### 14.5 Savings goals
+
+- [ ] Tambahkan goal tab atau section ringan untuk target tabungan manual.
+- [ ] Hubungkan goal ke akun opsional tanpa membuat rekening virtual baru.
+- [ ] Tampilkan progress berdasarkan saldo akun yang dipilih atau input kontribusi manual.
+- [ ] Jaga scope tetap personal tracking, bukan investasi atau payment flow.
+
 ## Di luar scope prototype awal
 
 - Budget, recurring transactions, saving goals, receipt attachment, backup/restore, biometric lock, multi-currency conversion, dan cloud sync.
