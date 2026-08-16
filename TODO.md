@@ -221,14 +221,14 @@ Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hi
 
 ### 13.5 Layout hygiene per card/container
 
-- [ ] Tetapkan struktur minimum card: header kecil, body utama, metadata/footer bila diperlukan.
-- [ ] Pastikan setiap card hanya punya satu visual focus; jangan mencampur nominal besar, chart, legend, action, dan copy panjang dalam satu blok tanpa hierarchy.
-- [ ] Rapikan `Home` Total Balance, Income/Expense summary, Cash flow, dan Recent Transactions agar tinggi card proporsional dengan konten.
-- [ ] Rapikan `Transactions` total cards, search/filter row, dan transaction list agar nominal tidak menekan teks.
-- [ ] Rapikan `Statistics` summary, chart, legend, dan top categories setelah pindah ke ApexChart.
-- [ ] Rapikan `Accounts` card agar nama akun panjang, saldo, dan archive icon tidak saling menekan.
-- [ ] Rapikan `Settings` selector/action rows agar button dan label tidak terasa oversized.
-- [ ] Verifikasi small/medium/large phone widths dalam Light dan Dark untuk overflow, clipped text, touch target, keyboard, dan safe area.
+- [x] Tetapkan struktur minimum card: header kecil, body utama, metadata/footer bila diperlukan.
+- [x] Pastikan setiap card hanya punya satu visual focus; jangan mencampur nominal besar, chart, legend, action, dan copy panjang dalam satu blok tanpa hierarchy.
+- [x] Rapikan `Home` Total Balance, Income/Expense summary, Cash flow, dan Recent Transactions agar tinggi card proporsional dengan konten.
+- [x] Rapikan `Transactions` total cards, search/filter row, dan transaction list agar nominal tidak menekan teks.
+- [x] Rapikan `Statistics` summary, chart, legend, dan top categories setelah pindah ke ApexChart.
+- [x] Rapikan `Accounts` card agar nama akun panjang, saldo, dan archive icon tidak saling menekan.
+- [x] Rapikan `Settings` selector/action rows agar button dan label tidak terasa oversized.
+- [x] Verifikasi small/medium/large phone widths dalam Light dan Dark untuk overflow, clipped text, touch target, keyboard, dan safe area.
 
 ### 13.6 Riverpod cleanup dan test recovery
 

@@ -101,6 +101,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
         const SizedBox(height: FlowSpacing.gapSection),
         FlowCard(
           variant: FlowCardVariant.balance,
+          density: FlowCardDensity.featured,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -127,10 +128,18 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   ),
                 ],
               ),
+              const SizedBox(height: FlowSpacing.gapGroup),
               FlowAmountText(
                 amount: widget.hideBalance
                     ? formatMaskedCurrency(totalBalance, widget.currency)
                     : formatCurrency(totalBalance, widget.currency),
+              ),
+              const SizedBox(height: FlowSpacing.gapTight),
+              Text(
+                'Across ${activeAccounts.length} active account${activeAccounts.length == 1 ? '' : 's'}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ),
@@ -227,15 +236,26 @@ class _SummaryCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FlowIconContainer(
-          icon: icon,
-          variant: variant == FlowAmountVariant.income
-              ? FlowIconContainerVariant.income
-              : FlowIconContainerVariant.expense,
+        Row(
+          children: [
+            FlowIconContainer(
+              icon: icon,
+              variant: variant == FlowAmountVariant.income
+                  ? FlowIconContainerVariant.income
+                  : FlowIconContainerVariant.expense,
+            ),
+            const SizedBox(width: FlowSpacing.xs),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: FlowSpacing.gapBlock),
-        Text(label, style: Theme.of(context).textTheme.labelMedium),
-        const SizedBox(height: FlowSpacing.gapTight),
+        const SizedBox(height: FlowSpacing.gapGroup),
         FlowAmountText(
           amount: amount,
           variant: variant,
@@ -269,7 +289,7 @@ class _CashFlowCard extends StatelessWidget {
     }
     return FlowCard(
       variant: FlowCardVariant.chart,
-      density: FlowCardDensity.featured,
+      density: FlowCardDensity.standard,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -279,9 +299,9 @@ class _CashFlowCard extends StatelessWidget {
             'Income and expense by week',
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: FlowSpacing.gapSection),
+          const SizedBox(height: FlowSpacing.gapBlock),
           FlowApexChart(
-            height: 148,
+            height: 132,
             options: _cashFlowOptions(context, incomeByWeek, expenseByWeek),
           ),
         ],

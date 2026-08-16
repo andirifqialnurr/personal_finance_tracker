@@ -64,38 +64,67 @@ class AccountsPage extends StatelessWidget {
               child: InkWell(
                 onTap: () => onOpenDetail(account),
                 borderRadius: BorderRadius.circular(FlowRadii.card),
-                child: Row(
+                child: Column(
                   children: [
-                    FlowIconContainer(
-                      icon: _iconFor(account.type),
-                      variant: FlowIconContainerVariant.account,
+                    Row(
+                      children: [
+                        FlowIconContainer(
+                          icon: _iconFor(account.type),
+                          variant: FlowIconContainerVariant.account,
+                        ),
+                        const SizedBox(width: FlowSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                account.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const SizedBox(height: FlowSpacing.xxs),
+                              Text(
+                                _typeLabel(account.type),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _confirmArchive(context, account),
+                          tooltip: 'Archive account',
+                          icon: const Icon(Icons.archive_outlined),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: FlowSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            account.name,
+                    const SizedBox(height: FlowSpacing.gapGroup),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Current balance',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: Theme.of(context).textTheme.labelMedium,
                           ),
-                          Text(
-                            _typeLabel(account.type),
-                            style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(width: FlowSpacing.sm),
+                        Flexible(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: FlowAmountText(
+                              amount: formatCurrency(
+                                _balanceFor(account),
+                                currency,
+                              ),
+                              style: const TextStyle(fontSize: 15),
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                    FlowAmountText(
-                      amount: formatCurrency(_balanceFor(account), currency),
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    IconButton(
-                      onPressed: () => _confirmArchive(context, account),
-                      tooltip: 'Archive account',
-                      icon: const Icon(Icons.archive_outlined),
+                        ),
+                      ],
                     ),
                   ],
                 ),

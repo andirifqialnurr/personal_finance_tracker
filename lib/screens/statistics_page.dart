@@ -355,34 +355,46 @@ class _CategoryChart extends StatelessWidget {
     }
     return Column(
       children: [
-        SizedBox(
-          height: 176,
-          child: Row(
-            children: [
-              Expanded(
-                child: FlowApexChart(
-                  height: 176,
-                  options: _donutOptions(context, total),
-                ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final stacked = constraints.maxWidth < 340;
+            final chart = FlowApexChart(
+              height: stacked ? 148 : 176,
+              options: _donutOptions(context, total),
+            );
+            final legend = Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var index = 0; index < categories.length; index++)
+                  _LegendRow(
+                    label: categories[index].label,
+                    amount: categories[index].amount,
+                    color: _chartColor(index, context),
+                    total: total,
+                  ),
+              ],
+            );
+            if (stacked) {
+              return Column(
+                children: [
+                  chart,
+                  const SizedBox(height: FlowSpacing.gapGroup),
+                  legend,
+                ],
+              );
+            }
+            return SizedBox(
+              height: 176,
+              child: Row(
+                children: [
+                  Expanded(child: chart),
+                  const SizedBox(width: FlowSpacing.md),
+                  Expanded(child: legend),
+                ],
               ),
-              const SizedBox(width: FlowSpacing.md),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (var index = 0; index < categories.length; index++)
-                      _LegendRow(
-                        label: categories[index].label,
-                        amount: categories[index].amount,
-                        color: _chartColor(index, context),
-                        total: total,
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ],
     );
@@ -456,10 +468,12 @@ class _LegendRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
+          const SizedBox(width: FlowSpacing.xs),
           Text('$percent%', style: Theme.of(context).textTheme.labelMedium),
         ],
       ),
@@ -696,31 +710,37 @@ class _TopCategories extends StatelessWidget {
                   ? 0
                   : FlowSpacing.sm,
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    categories[index].label,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-                Flexible(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: _ResponsiveCurrencyText(
-                      amount: categories[index].amount,
-                      currency: currency,
-                      style: Theme.of(context).textTheme.labelLarge,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        categories[index].label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: FlowSpacing.sm),
+                    SizedBox(
+                      width: 42,
+                      child: Text(
+                        '${(categories[index].amount * 100 / total).round()}%',
+                        textAlign: TextAlign.end,
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: FlowSpacing.sm),
-                SizedBox(
-                  width: 42,
-                  child: Text(
-                    '${(categories[index].amount * 100 / total).round()}%',
-                    textAlign: TextAlign.end,
-                    style: Theme.of(context).textTheme.labelMedium,
+                const SizedBox(height: FlowSpacing.gapTight),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _ResponsiveCurrencyText(
+                    amount: categories[index].amount,
+                    currency: currency,
+                    style: Theme.of(context).textTheme.labelLarge,
                   ),
                 ),
               ],

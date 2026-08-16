@@ -160,6 +160,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 label: 'Income',
                 amount: incomeTotal,
                 variant: FlowAmountVariant.income,
+                icon: Icons.arrow_downward,
                 currency: widget.currency,
               ),
             ),
@@ -169,6 +170,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 label: 'Expense',
                 amount: expenseTotal,
                 variant: FlowAmountVariant.expense,
+                icon: Icons.arrow_upward,
                 currency: widget.currency,
               ),
             ),
@@ -550,11 +552,13 @@ class _TotalCard extends StatelessWidget {
     required this.label,
     required this.amount,
     required this.variant,
+    required this.icon,
     required this.currency,
   });
   final String label;
   final int amount;
   final FlowAmountVariant variant;
+  final IconData icon;
   final String currency;
 
   @override
@@ -564,8 +568,27 @@ class _TotalCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: Theme.of(context).textTheme.labelMedium),
-        const SizedBox(height: FlowSpacing.xs),
+        Row(
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: variant == FlowAmountVariant.income
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(width: FlowSpacing.xs),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: FlowSpacing.gapGroup),
         FlowAmountText(
           amount: formatCurrency(amount, currency),
           variant: variant,
