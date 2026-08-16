@@ -232,13 +232,13 @@ Catatan awal: full `flutter test --concurrency=1` pada audit 2026-08-15 belum hi
 
 ### 13.6 Riverpod cleanup dan test recovery
 
-- [ ] Selesaikan sisa `RIVERPOD_MIGRATION_TODO.md` atau sinkronkan ulang bila scope berubah.
-- [ ] Kurangi callback/props drilling di `FlowShell` untuk data global yang sudah bisa dibaca via provider.
-- [ ] Update widget test lama agar membungkus `FlowApp` dengan `ProviderScope` atau memakai constructor override store yang valid.
-- [ ] Perbaiki test masking Total Balance agar benar-benar mengubah state wrapper atau uji dari store/provider yang persisten.
-- [ ] Jalankan `flutter analyze`.
-- [ ] Jalankan `flutter test --concurrency=1` sampai full suite hijau.
-- [ ] Jalankan `flutter build apk --debug` dan catat blocker environment secara spesifik bila Flutter CLI/lockfile bermasalah.
+- [x] Selesaikan sisa `RIVERPOD_MIGRATION_TODO.md` atau sinkronkan ulang bila scope berubah.
+- [x] Kurangi callback/props drilling di `FlowShell` untuk data global yang sudah bisa dibaca via provider.
+- [x] Update widget test lama agar membungkus `FlowApp` dengan `ProviderScope` atau memakai constructor override store yang valid.
+- [x] Perbaiki test masking Total Balance agar benar-benar mengubah state wrapper atau uji dari store/provider yang persisten.
+- [x] Jalankan `flutter analyze`.
+- [x] Jalankan `flutter test --concurrency=1` sampai full suite hijau.
+- [x] Jalankan `flutter build apk --debug` dan catat blocker environment secara spesifik bila Flutter CLI/lockfile bermasalah.
 
 ### 13.7 Product polish backlog dari audit
 

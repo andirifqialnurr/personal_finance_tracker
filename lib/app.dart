@@ -27,9 +27,11 @@ class FlowApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final overrideStore = store;
-    if (overrideStore == null) return const _FlowAppView();
     return ProviderScope(
-      overrides: [flowStoreProvider.overrideWithValue(overrideStore)],
+      overrides: [
+        if (overrideStore != null)
+          flowStoreProvider.overrideWithValue(overrideStore),
+      ],
       child: const _FlowAppView(),
     );
   }
@@ -77,25 +79,8 @@ class _FlowAppViewState extends ConsumerState<_FlowAppView> {
       );
     }
     return FlowShell(
-      accounts: state.accounts,
-      transactions: state.transactions,
-      categories: state.categories,
-      currency: state.currency,
-      hideBalance: state.hideBalance,
-      onHideBalanceChanged: (value) =>
-          unawaited(controller.changeHideBalance(value)),
-      themeMode: state.themeMode,
-      onThemeModeChanged: (mode) => unawaited(controller.changeThemeMode(mode)),
-      onCurrencyChanged: (currency) =>
-          unawaited(controller.changeCurrency(currency)),
-      onCategoriesChanged: (categories) =>
-          unawaited(controller.saveCategories(categories)),
-      onExportCsv: controller.exportCsv,
-      onDeleteAll: () => unawaited(controller.deleteAllData()),
       onAddAccount: () => _openAccountForm(context),
       onEditAccount: (account) => _openAccountForm(context, account),
-      onArchiveAccount: (account) =>
-          unawaited(controller.archiveAccount(account)),
       onOpenAccountDetail: (account) => _openAccountDetail(context, account),
       onAddTransaction: () => _openAddTransaction(context),
       onOpenTransactionDetail: (transaction) =>
@@ -270,53 +255,27 @@ ThemeModeSetting legacyThemeModeSetting(ThemeMode mode) => switch (mode) {
   ThemeMode.system => ThemeModeSetting.light,
 };
 
-class FlowShell extends StatefulWidget {
+class FlowShell extends ConsumerStatefulWidget {
   const FlowShell({
     super.key,
-    required this.accounts,
-    required this.transactions,
-    this.categories = const [],
-    this.currency = 'IDR',
-    this.hideBalance = false,
-    this.onHideBalanceChanged,
-    required this.themeMode,
-    required this.onThemeModeChanged,
-    required this.onCurrencyChanged,
-    required this.onCategoriesChanged,
-    required this.onExportCsv,
-    required this.onDeleteAll,
     required this.onAddAccount,
     required this.onEditAccount,
-    required this.onArchiveAccount,
     required this.onOpenAccountDetail,
     required this.onAddTransaction,
     required this.onOpenTransactionDetail,
   });
 
-  final List<Account> accounts;
-  final List<Transaction> transactions;
-  final List<Category> categories;
-  final String currency;
-  final bool hideBalance;
-  final ValueChanged<bool>? onHideBalanceChanged;
-  final ThemeMode themeMode;
-  final ValueChanged<ThemeMode> onThemeModeChanged;
-  final ValueChanged<String> onCurrencyChanged;
-  final ValueChanged<List<Category>> onCategoriesChanged;
-  final Future<String> Function() onExportCsv;
-  final VoidCallback onDeleteAll;
   final VoidCallback onAddAccount;
   final ValueChanged<Account> onEditAccount;
-  final ValueChanged<Account> onArchiveAccount;
   final ValueChanged<Account> onOpenAccountDetail;
   final VoidCallback onAddTransaction;
   final ValueChanged<Transaction> onOpenTransactionDetail;
 
   @override
-  State<FlowShell> createState() => _FlowShellState();
+  ConsumerState<FlowShell> createState() => _FlowShellState();
 }
 
-class _FlowShellState extends State<FlowShell> {
+class _FlowShellState extends ConsumerState<FlowShell> {
   int _selectedIndex = 0;
 
   static const _pages = <_FlowPageData>[
@@ -329,6 +288,13 @@ class _FlowShellState extends State<FlowShell> {
 
   @override
   Widget build(BuildContext context) {
+    final accounts = ref.watch(accountsProvider);
+    final transactions = ref.watch(transactionsProvider);
+    final categories = ref.watch(categoriesProvider);
+    final currency = ref.watch(currencyProvider);
+    final hideBalance = ref.watch(hideBalanceProvider);
+    final themeMode = ref.watch(themeModeProvider);
+    final controller = ref.read(flowControllerProvider.notifier);
     final floatingDecoration = _floatingSurfaceDecoration(context);
     final theme = Theme.of(context);
     final selectedNavColor = theme.colorScheme.primary;
@@ -343,44 +309,49 @@ class _FlowShellState extends State<FlowShell> {
           index: _selectedIndex,
           children: [
             HomeDashboard(
-              accounts: widget.accounts,
-              transactions: widget.transactions,
-              categories: widget.categories,
-              currency: widget.currency,
-              hideBalance: widget.hideBalance,
-              onHideBalanceChanged: widget.onHideBalanceChanged,
+              accounts: accounts,
+              transactions: transactions,
+              categories: categories,
+              currency: currency,
+              hideBalance: hideBalance,
+              onHideBalanceChanged: (value) =>
+                  unawaited(controller.changeHideBalance(value)),
               onAddTransaction: widget.onAddTransaction,
             ),
             TransactionsPage(
-              transactions: widget.transactions,
-              accounts: widget.accounts,
-              categories: widget.categories,
-              currency: widget.currency,
+              transactions: transactions,
+              accounts: accounts,
+              categories: categories,
+              currency: currency,
               onOpenDetail: widget.onOpenTransactionDetail,
             ),
             StatisticsPage(
-              transactions: widget.transactions,
-              categories: widget.categories,
-              currency: widget.currency,
+              transactions: transactions,
+              categories: categories,
+              currency: currency,
             ),
             AccountsPage(
-              accounts: widget.accounts,
+              accounts: accounts,
               onAdd: widget.onAddAccount,
               onEdit: widget.onEditAccount,
-              onArchive: widget.onArchiveAccount,
-              transactions: widget.transactions,
-              currency: widget.currency,
+              onArchive: (account) =>
+                  unawaited(controller.archiveAccount(account)),
+              transactions: transactions,
+              currency: currency,
               onOpenDetail: widget.onOpenAccountDetail,
             ),
             FlowSettingsPage(
-              initialThemeMode: widget.themeMode,
-              onThemeModeChanged: widget.onThemeModeChanged,
-              currency: widget.currency,
-              onCurrencyChanged: widget.onCurrencyChanged,
-              categories: widget.categories,
-              onCategoriesChanged: widget.onCategoriesChanged,
-              onExportCsv: widget.onExportCsv,
-              onDeleteAll: widget.onDeleteAll,
+              initialThemeMode: themeMode,
+              onThemeModeChanged: (mode) =>
+                  unawaited(controller.changeThemeMode(mode)),
+              currency: currency,
+              onCurrencyChanged: (value) =>
+                  unawaited(controller.changeCurrency(value)),
+              categories: categories,
+              onCategoriesChanged: (value) =>
+                  unawaited(controller.saveCategories(value)),
+              onExportCsv: controller.exportCsv,
+              onDeleteAll: () => unawaited(controller.deleteAllData()),
               showAppBar: false,
             ),
           ],

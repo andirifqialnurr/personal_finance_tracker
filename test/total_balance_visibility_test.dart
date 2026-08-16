@@ -30,24 +30,15 @@ void main() {
     updatedAt: timestamp,
   );
 
-  Widget home({bool hideBalance = false, ValueChanged<bool>? onChanged}) =>
-      MaterialApp(
-        theme: FlowTheme.light(),
-        home: Scaffold(
-          body: HomeDashboard(
-            accounts: [account],
-            hideBalance: hideBalance,
-            onHideBalanceChanged: onChanged,
-            onAddTransaction: () {},
-          ),
-        ),
-      );
-
   testWidgets('masks only the total balance and keeps the toggle reversible', (
     tester,
   ) async {
-    var changedTo = false;
-    await tester.pumpWidget(home(onChanged: (value) => changedTo = value));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: FlowTheme.light(),
+        home: Scaffold(body: _BalanceVisibilityHarness(account: account)),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text(formatCurrency(100000, 'IDR')), findsOneWidget);
@@ -56,8 +47,6 @@ void main() {
 
     expect(find.text('Rp ••••••'), findsOneWidget);
     expect(find.text(formatCurrency(100000, 'IDR')), findsNothing);
-    expect(changedTo, isTrue);
-
     await tester.tap(find.byTooltip('Show balance'));
     await tester.pumpAndSettle();
     expect(find.text(formatCurrency(100000, 'IDR')), findsOneWidget);
@@ -114,4 +103,28 @@ void main() {
     expect(find.text(formatCurrency(100000, 'IDR')), findsOneWidget);
     expect((await store.load()).settings.hideBalance, isFalse);
   });
+}
+
+class _BalanceVisibilityHarness extends StatefulWidget {
+  const _BalanceVisibilityHarness({required this.account});
+
+  final Account account;
+
+  @override
+  State<_BalanceVisibilityHarness> createState() =>
+      _BalanceVisibilityHarnessState();
+}
+
+class _BalanceVisibilityHarnessState extends State<_BalanceVisibilityHarness> {
+  bool _hideBalance = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return HomeDashboard(
+      accounts: [widget.account],
+      hideBalance: _hideBalance,
+      onHideBalanceChanged: (value) => setState(() => _hideBalance = value),
+      onAddTransaction: () {},
+    );
+  }
 }

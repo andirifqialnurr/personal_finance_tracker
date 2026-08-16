@@ -5,6 +5,7 @@ import 'package:personal_finance_tracker/app.dart';
 
 Future<void> pumpWithFirstAccount(WidgetTester tester) async {
   await tester.pumpWidget(const FlowApp());
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Create first account'));
   await tester.pumpAndSettle();
   await tester.enterText(find.byType(TextFormField).first, 'Cash');
@@ -27,6 +28,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const FlowApp());
+    await tester.pumpAndSettle();
 
     expect(find.text('Welcome to Flow'), findsOneWidget);
     expect(find.text('IDR'), findsOneWidget);

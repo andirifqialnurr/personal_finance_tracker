@@ -4,23 +4,23 @@ Dokumen ini membreakdown perubahan yang akan terjadi saat aplikasi Flow dipindah
 
 ## Tujuan
 
-- [ ] Memusatkan app state global di layer state management yang testable.
-- [ ] Mempertahankan kontrak offline-first: SQLite tetap source of truth persistence lokal.
-- [ ] Mempertahankan `FlowStore` sebagai abstraction untuk `SqliteFlowStore` dan `MemoryFlowStore`.
-- [ ] Mengurangi constructor drilling untuk data global seperti accounts, transactions, categories, settings, dan callbacks mutation.
-- [ ] Menjaga UI state lokal tetap lokal: form input, search/filter, selected tab, selected chart period, dan bottom sheet selection.
-- [ ] Tidak mengubah behavior domain: saldo tetap `opening_balance + income - expense + incoming_transfer - outgoing_transfer`.
-- [ ] Tidak memasukkan transfer ke income/expense statistics.
+- [x] Memusatkan app state global di layer state management yang testable.
+- [x] Mempertahankan kontrak offline-first: SQLite tetap source of truth persistence lokal.
+- [x] Mempertahankan `FlowStore` sebagai abstraction untuk `SqliteFlowStore` dan `MemoryFlowStore`.
+- [x] Mengurangi constructor drilling untuk data global seperti accounts, transactions, categories, settings, dan callbacks mutation.
+- [x] Menjaga UI state lokal tetap lokal: form input, search/filter, selected tab, selected chart period, dan bottom sheet selection.
+- [x] Tidak mengubah behavior domain: saldo tetap `opening_balance + income - expense + incoming_transfer - outgoing_transfer`.
+- [x] Tidak memasukkan transfer ke income/expense statistics.
 
 ## Scope Utama
 
 - [x] Tambah Riverpod sebagai dependency.
 - [x] Buat state global immutable untuk data aplikasi.
 - [x] Buat controller Riverpod untuk load/save/delete/export/reset data.
-- [ ] Refactor `FlowApp` agar membaca state dari provider.
-- [ ] Refactor screen yang saat ini bergantung pada callback panjang dari `FlowApp`.
-- [ ] Update test agar bisa override `FlowStore` dengan `MemoryFlowStore`.
-- [ ] Jalankan validasi analyzer/test/build setelah migrasi selesai.
+- [x] Refactor `FlowApp` agar membaca state dari provider.
+- [x] Refactor screen yang saat ini bergantung pada callback panjang dari `FlowApp`.
+- [x] Update test agar bisa override `FlowStore` dengan `MemoryFlowStore`.
+- [x] Jalankan validasi analyzer/test/build setelah migrasi selesai.
 
 ## File Baru
 
@@ -47,7 +47,7 @@ Dokumen ini membreakdown perubahan yang akan terjadi saat aplikasi Flow dipindah
 
 - [x] Buat Riverpod controller untuk mengelola `FlowState`.
 - [x] Controller membaca `FlowStore` dari provider.
-- [ ] Method yang perlu dibuat:
+- [x] Method yang perlu dibuat:
   - [x] `Future<void> restore()`
   - [x] `Future<void> saveAccount(Account account)`
   - [x] `Future<void> archiveAccount(Account account)`
@@ -95,15 +95,15 @@ Dokumen ini membreakdown perubahan yang akan terjadi saat aplikasi Flow dipindah
 
 ### `pubspec.yaml`
 
-- [ ] Tambahkan dependency Riverpod.
-- [ ] Gunakan command preferensi:
+- [x] Tambahkan dependency Riverpod.
+- [x] Gunakan command preferensi:
 
 ```powershell
 flutter pub add flutter_riverpod
 ```
 
-- [ ] Jangan menambah dependency state management lain seperti `provider`, `bloc`, atau `get_it` kecuali ada alasan baru.
-- [ ] Setelah dependency berubah, pastikan `pubspec.lock` ikut ter-update dari `flutter pub get`.
+- [x] Jangan menambah dependency state management lain seperti `provider`, `bloc`, atau `get_it` kecuali ada alasan baru.
+- [x] Setelah dependency berubah, pastikan `pubspec.lock` ikut ter-update dari `flutter pub get`.
 
 ### `lib/main.dart`
 
@@ -159,176 +159,173 @@ runApp(
   - [x] error sederhana saat restore gagal
   - [x] `FlowWelcomePage` jika belum ada akun
   - [x] `FlowShell` jika akun sudah ada
-- [ ] Kurangi parameter `FlowShell` jika data bisa dibaca langsung lewat provider.
+- [x] Kurangi parameter `FlowShell` jika data bisa dibaca langsung lewat provider.
 - [x] Pertahankan selected tab di `FlowShell` sebagai local state.
 - [x] Pastikan bottom navigation selected state tidak reset saat data berubah.
 
 ### `lib/screens/welcome_page.dart`
 
-- [ ] Evaluasi apakah tetap menerima `currency` dan callbacks dari parent.
-- [ ] Jika refactor penuh, ubah menjadi `ConsumerWidget`.
-- [ ] Ambil currency dari provider.
-- [ ] Trigger create account flow tetap melalui callback navigasi dari parent, bukan dari controller langsung.
-- [ ] `onCurrencyChanged` memanggil controller.
+- [x] Evaluasi apakah tetap menerima `currency` dan callbacks dari parent.
+- [x] Keputusan scope: tetap presentational; `FlowApp` membaca currency dari provider dan meneruskan callback navigasi.
+- [x] Trigger create account flow tetap melalui callback navigasi dari parent, bukan dari controller langsung.
+- [x] `onCurrencyChanged` memanggil controller.
 
 ### `lib/screens/home_dashboard.dart`
 
 - [x] Pilihan migrasi bertahap: tetap menerima props dari `FlowShell`.
-- [ ] Pilihan migrasi penuh: ubah menjadi `ConsumerWidget`.
-- [ ] Jika migrasi penuh:
-  - [ ] baca accounts, transactions, categories, currency, hideBalance dari provider.
-  - [ ] `onHideBalanceChanged` panggil controller.
+- [x] Keputusan scope: `FlowShell` membaca accounts, transactions, categories, currency, dan hideBalance dari provider lalu meneruskan props presentational.
+- [x] `onHideBalanceChanged` dari `FlowShell` memanggil controller.
 - [x] Hapus mirror local `_hideBalance` jika state global sudah reaktif.
 - [x] Pertahankan `onAddTransaction` sebagai callback navigasi.
 - [x] Pastikan perhitungan total balance tidak berubah.
 
 ### `lib/screens/transactions_page.dart`
 
-- [ ] Biarkan search query dan filter modal tetap local state.
-- [ ] Data global dapat tetap dikirim dari `FlowShell` atau dibaca dari provider.
-- [ ] `onOpenDetail` tetap callback navigasi.
-- [ ] Jangan pindahkan `_query`, `_type`, `_accountId`, `_categoryId`, `_dateRange` ke global state kecuali ada kebutuhan deep link atau persist filter.
-- [ ] Pastikan grouping tanggal, total filter income/expense, dan no-result state tidak berubah.
+- [x] Biarkan search query dan filter modal tetap local state.
+- [x] Data global dapat tetap dikirim dari `FlowShell` atau dibaca dari provider.
+- [x] `onOpenDetail` tetap callback navigasi.
+- [x] Jangan pindahkan `_query`, `_type`, `_accountId`, `_categoryId`, `_dateRange` ke global state kecuali ada kebutuhan deep link atau persist filter.
+- [x] Pastikan grouping tanggal, total filter income/expense, dan no-result state tidak berubah.
 
 ### `lib/screens/statistics_page.dart`
 
-- [ ] Biarkan period dan selected date tetap local state.
-- [ ] Data transactions/categories bisa dibaca dari provider atau tetap props.
-- [ ] Jangan mengubah agregasi:
-  - [ ] yearly = 12 bucket bulanan
-  - [ ] monthly = bucket harian per bulan
-  - [ ] date = 1 bucket tanggal terpilih
-- [ ] Pastikan transfer tetap dikeluarkan dari income/expense statistics.
+- [x] Biarkan period dan selected date tetap local state.
+- [x] Data transactions/categories bisa dibaca dari provider atau tetap props.
+- [x] Jangan mengubah agregasi:
+  - [x] daily = bucket empat jam pada tanggal terpilih
+  - [x] weekly = bucket tujuh hari terakhir
+  - [x] monthly = bucket dua belas bulan terakhir
+- [x] Pastikan transfer tetap dikeluarkan dari income/expense statistics.
 
 ### `lib/screens/accounts_page.dart`
 
-- [ ] Evaluasi menjadi `ConsumerWidget` agar accounts/transactions/currency dibaca dari provider.
-- [ ] `onAdd`, `onEdit`, dan `onOpenDetail` tetap callback navigasi.
-- [ ] `onArchive` panggil controller.
-- [ ] Pertahankan konfirmasi archive di UI.
+- [x] Keputusan scope: tetap presentational; `FlowShell` membaca accounts/transactions/currency dari provider.
+- [x] `onAdd`, `onEdit`, dan `onOpenDetail` tetap callback navigasi.
+- [x] `onArchive` panggil controller.
+- [x] Pertahankan konfirmasi archive di UI.
 
 ### `lib/screens/account_form_page.dart`
 
-- [ ] Form state tetap local.
-- [ ] `onSaved` bisa tetap callback parent atau langsung memanggil controller jika page menjadi `ConsumerStatefulWidget`.
-- [ ] Jangan simpan controller text input ke global state.
-- [ ] Pastikan opening balance formatter tetap jalan.
+- [x] Form state tetap local.
+- [x] `onSaved` tetap callback parent; `FlowApp` memanggil controller.
+- [x] Jangan simpan controller text input ke global state.
+- [x] Pastikan opening balance formatter tetap jalan.
 
 ### `lib/screens/add_transaction_page.dart`
 
-- [ ] Form state tetap local.
-- [ ] Accounts/categories bisa tetap props atau dibaca via provider.
-- [ ] `onSaved` bisa tetap callback parent atau langsung memanggil controller.
-- [ ] Pertahankan validasi:
-  - [ ] amount wajib valid dan positif
-  - [ ] account wajib
-  - [ ] category wajib untuk income/expense
-  - [ ] destination wajib untuk transfer
-  - [ ] source dan destination transfer tidak sama
-- [ ] Jangan ubah aturan amount sebagai nilai positif.
+- [x] Form state tetap local.
+- [x] Accounts/categories tetap props dari state provider terbaru saat route dibuka.
+- [x] `onSaved` tetap callback parent; `FlowApp` memanggil controller.
+- [x] Pertahankan validasi:
+  - [x] amount wajib valid dan positif
+  - [x] account wajib
+  - [x] category wajib untuk income/expense
+  - [x] destination wajib untuk transfer
+  - [x] source dan destination transfer tidak sama
+- [x] Jangan ubah aturan amount sebagai nilai positif.
 
 ### `lib/screens/transaction_detail_page.dart`
 
-- [ ] Bisa tetap stateless dengan callback.
-- [ ] Jika refactor penuh, delete transaction dapat memanggil controller.
-- [ ] Detail display tetap membutuhkan nama account/category yang bisa dihitung dari provider.
-- [ ] Pertahankan confirmation sheet sebelum delete.
+- [x] Bisa tetap stateless dengan callback.
+- [x] Keputusan scope: delete transaction tetap callback route; `FlowApp` memanggil controller.
+- [x] Detail display tetap membutuhkan nama account/category yang dihitung dari state provider saat route dibuka.
+- [x] Pertahankan confirmation sheet sebelum delete.
 
 ### `lib/screens/account_detail_page.dart`
 
-- [ ] Bisa tetap menerima account/transactions dari navigator.
-- [ ] Jika dibaca dari provider, pastikan account archived/deleted state tetap aman.
-- [ ] `onEdit` dan `onOpenTransaction` tetap callback navigasi.
+- [x] Bisa tetap menerima account/transactions dari navigator.
+- [x] Account archived state tetap aman karena archive terjadi lewat controller dan shell rebuild dari provider.
+- [x] `onEdit` dan `onOpenTransaction` tetap callback navigasi.
 
 ### `lib/screens/settings_page.dart`
 
-- [ ] Ubah setting global agar panggil controller:
-  - [ ] theme mode
-  - [ ] currency
-  - [ ] categories
-  - [ ] export CSV
-  - [ ] delete all data
-- [ ] `_isExporting` tetap local state kecuali ingin global loading per action.
-- [ ] Pertahankan pilihan visible hanya Light/Dark.
-- [ ] Tetap baca legacy `ThemeModeSetting.system` sebagai fallback ke Light.
+- [x] Ubah setting global agar panggil controller:
+  - [x] theme mode
+  - [x] currency
+  - [x] categories
+  - [x] export CSV
+  - [x] delete all data
+- [x] `_isExporting` tetap local state kecuali ingin global loading per action.
+- [x] Pertahankan pilihan visible hanya Light/Dark.
+- [x] Tetap baca legacy `ThemeModeSetting.system` sebagai fallback ke Light.
 
 ### `lib/screens/manage_categories_page.dart`
 
-- [ ] Local draft categories tetap boleh dipertahankan untuk UX edit/archive.
-- [ ] Saat selesai/update, panggil controller save categories.
-- [ ] Pastikan category lama tidak dihapus fisik agar transaksi lama tetap punya referensi aman.
+- [x] Local draft categories tetap boleh dipertahankan untuk UX edit/archive.
+- [x] Saat selesai/update, panggil controller save categories.
+- [x] Pastikan category lama tidak dihapus fisik agar transaksi lama tetap punya referensi aman.
 
 ### `lib/data/flow_store.dart`
 
-- [ ] Pertahankan interface `FlowStore`.
-- [ ] Tambahkan method hanya jika benar-benar dibutuhkan oleh controller.
-- [ ] Pertimbangkan method berikut bila migrasi membutuhkan atomic update:
-  - [ ] `Future<List<Category>> saveCategories(List<Category> categories)`
-  - [ ] `Future<AppSettings> loadSettings()` tidak wajib karena `load()` sudah ada.
-- [ ] Pastikan `SqliteFlowStore.saveAccount/saveTransaction/saveCategory` tetap mengembalikan entity tersimpan.
-- [ ] Pertahankan `MemoryFlowStore` untuk tests dan fallback unsupported target.
+- [x] Pertahankan interface `FlowStore`.
+- [x] Tambahkan method hanya jika benar-benar dibutuhkan oleh controller.
+- [x] Pertimbangkan method berikut bila migrasi membutuhkan atomic update:
+  - [x] `Future<List<Category>> saveCategories(List<Category> categories)` tidak ditambahkan; controller menyimpan batch kategori lewat method existing.
+  - [x] `Future<AppSettings> loadSettings()` tidak wajib karena `load()` sudah ada.
+- [x] Pastikan `SqliteFlowStore.saveAccount/saveTransaction/saveCategory` tetap mengembalikan entity tersimpan.
+- [x] Pertahankan `MemoryFlowStore` untuk tests dan fallback unsupported target.
 
 ### `lib/data/flow_repositories.dart`
 
-- [ ] Tidak perlu perubahan besar.
-- [ ] Cek apakah method batch category save dibutuhkan.
-- [ ] Jangan ubah query order kecuali test mengharuskan.
-- [ ] Jangan mengubah behavior transaction balance/statistics dari file ini.
+- [x] Tidak perlu perubahan besar.
+- [x] Cek apakah method batch category save dibutuhkan.
+- [x] Jangan ubah query order kecuali test mengharuskan.
+- [x] Jangan mengubah behavior transaction balance/statistics dari file ini.
 
 ### `lib/data/flow_csv_exporter.dart`
 
-- [ ] Tidak perlu perubahan domain.
-- [ ] Pemanggilan pindah dari `FlowApp._exportCsv` ke `FlowController.exportCsv`.
-- [ ] Pastikan exporter tetap menerima accounts/categories/transactions dari state terbaru.
+- [x] Tidak perlu perubahan domain.
+- [x] Pemanggilan pindah dari `FlowApp._exportCsv` ke `FlowController.exportCsv`.
+- [x] Pastikan exporter tetap menerima accounts/categories/transactions dari state terbaru.
 
 ### `lib/data/models/*`
 
-- [ ] Tidak perlu perubahan besar.
-- [ ] Tambahkan `copyWith` hanya bila dibutuhkan controller dan tidak membuat model membengkak.
-- [ ] Prioritaskan helper internal di controller bila perubahan model tidak diperlukan.
+- [x] Tidak perlu perubahan besar.
+- [x] Tambahkan `copyWith` hanya bila dibutuhkan controller dan tidak membuat model membengkak.
+- [x] Prioritaskan helper internal di controller bila perubahan model tidak diperlukan.
 
 ## Test Yang Diubah
 
 ### `test/core_flow_test.dart`
 
-- [ ] Update harness agar memakai `ProviderScope`.
-- [ ] Override `flowStoreProvider` dengan `MemoryFlowStore`.
-- [ ] Pastikan flow income dan transfer tetap menyimpan data ke store.
-- [ ] Jangan mengubah ekspektasi transfer.
+- [x] Update harness agar memakai `ProviderScope`.
+- [x] Override `flowStoreProvider` dengan `MemoryFlowStore`.
+- [x] Pastikan flow income dan transfer tetap menyimpan data ke store.
+- [x] Jangan mengubah ekspektasi transfer.
 
 ### `test/mvp_state_test.dart`
 
-- [ ] Update `FlowApp(store: store)` menjadi provider override, atau pertahankan constructor compatibility sementara.
-- [ ] Pastikan app restore snapshot tetap menampilkan Home dan Recent transactions.
-- [ ] Pertahankan surface size checks 320/360/400dp.
+- [x] Update `FlowApp(store: store)` menjadi provider override, atau pertahankan constructor compatibility sementara.
+- [x] Pastikan app restore snapshot tetap menampilkan Home dan Recent transactions.
+- [x] Pertahankan surface size checks 320/360/400dp.
 
 ### `test/total_balance_visibility_test.dart`
 
-- [ ] Update setup state settings via provider/store.
-- [ ] Pastikan hide balance persist setelah reload.
-- [ ] Pastikan hanya nominal Total Balance yang dimasking.
+- [x] Update setup state settings via provider/store.
+- [x] Pastikan hide balance persist setelah reload.
+- [x] Pastikan hanya nominal Total Balance yang dimasking.
 
 ### `test/ui_refinement_test.dart`
 
-- [ ] Update harness Riverpod untuk theme mode state.
-- [ ] Pastikan floating navigation masih mempertahankan selected tab.
-- [ ] Jalankan dengan concurrency 1 bila surface-size/layout test tidak stabil.
+- [x] Update harness Riverpod untuk theme mode state.
+- [x] Pastikan floating navigation masih mempertahankan selected tab.
+- [x] Jalankan dengan concurrency 1 bila surface-size/layout test tidak stabil.
 
 ### `test/flow_store_test.dart`
 
-- [ ] Idealnya tidak berubah karena ini test persistence layer.
-- [ ] Update hanya jika interface `FlowStore` bertambah.
+- [x] Idealnya tidak berubah karena ini test persistence layer.
+- [x] Update hanya jika interface `FlowStore` bertambah.
 
 ### Test Baru: `test/flow_controller_test.dart`
 
-- [ ] Tambahkan unit/widget-adjacent test controller tanpa full UI.
-- [ ] Test restore dari `MemoryFlowStore`.
-- [ ] Test save account menghasilkan `hasCompletedWelcome = true`.
-- [ ] Test save transaction create/edit.
-- [ ] Test delete transaction.
-- [ ] Test change settings: theme, currency, hide balance.
-- [ ] Test delete all restores default categories dan default settings.
-- [ ] Test export CSV memakai state terkini.
+- [x] Tambahkan unit/widget-adjacent test controller tanpa full UI.
+- [x] Test restore dari `MemoryFlowStore`.
+- [x] Test save account menghasilkan `hasCompletedWelcome = true`.
+- [x] Test save transaction create/edit.
+- [x] Test delete transaction.
+- [x] Test change settings: theme, currency, hide balance.
+- [x] Test delete all restores default categories dan default settings.
+- [x] Test export CSV memakai state terkini.
 
 ## Urutan Implementasi Disarankan
 
@@ -361,47 +358,46 @@ runApp(
 
 ### Batch 4 - Screen Cleanup Bertahap
 
-- [ ] Kurangi callback drilling di `FlowShell`.
+- [x] Kurangi callback drilling di `FlowShell`.
 - [x] Update Home hide balance agar langsung ke controller.
-- [ ] Update Settings agar langsung ke controller.
-- [ ] Evaluasi Accounts/Transactions/Statistics apakah tetap props atau provider selector.
-- [ ] Jangan refactor semua screen sekaligus jika test mulai sulit dibaca.
+- [x] Update Settings agar langsung ke controller.
+- [x] Evaluasi Accounts/Transactions/Statistics apakah tetap props atau provider selector.
+- [x] Jangan refactor semua screen sekaligus jika test mulai sulit dibaca.
 
 ### Batch 5 - Test dan Stabilization
 
-- [ ] Update semua test harness Riverpod.
+- [x] Update semua test harness Riverpod.
 - [x] Jalankan `dart format`.
-- [ ] Jalankan `flutter analyze`.
-- [ ] Jalankan `flutter test --concurrency=1`.
-- [ ] Jalankan `flutter build apk --debug`.
+- [x] Jalankan `flutter analyze`.
+- [x] Jalankan `flutter test --concurrency=1`.
+- [x] Jalankan `flutter build apk --debug`.
 - [x] Jika Flutter CLI timeout/lock, catat proses dan lockfile secara eksplisit sebelum retry.
 
-Catatan validasi 2026-08-13:
+Catatan validasi 2026-08-16:
 
-- [x] `dart analyze` full melaporkan `No issues found!` setelah cleanup unused local variable di `lib/screens/accounts_page.dart`.
-- [ ] `flutter test --concurrency=1` belum berhasil selesai; command timeout setelah 180 detik.
-- [ ] `flutter build apk --debug` belum berhasil selesai; command timeout setelah 240 detik.
-- [x] Emulator aktif terdeteksi sebagai `emulator-5554` dengan model `sdk_gphone64_x86_64`.
-- [x] Setelah timeout Flutter CLI, proses `dart.exe` dari `C:\Users\HP\develop\flutter\bin\cache\dart-sdk\bin\dart.exe` dan `C:\Users\HP\develop\flutter\bin\cache\lockfile` terdeteksi aktif.
+- [x] `flutter analyze` melaporkan `No issues found!`.
+- [x] `flutter test --concurrency=1` selesai hijau dengan 49 test.
+- [x] `flutter build apk --debug` berhasil membuat `build\app\outputs\flutter-apk\app-debug.apk`.
+- [x] `dart format` sempat timeout/hang pada file terbatas; analyzer, full test, dan debug build menjadi validasi utama untuk batch ini.
 
 ## Risiko dan Guardrail
 
-- [ ] Jangan membuat duplicate source of truth antara `FlowState` dan list mutable lama di `FlowApp`.
-- [ ] Jangan memindahkan ephemeral UI state ke global provider tanpa kebutuhan jelas.
-- [ ] Jangan mengubah schema SQLite hanya untuk migrasi state management.
-- [ ] Jangan mengubah PRD/MVP behavior saat refactor.
-- [ ] Jangan menghapus `MemoryFlowStore`; itu masih penting untuk tests.
-- [ ] Jangan mengklaim analyzer/test/build sukses jika Flutter CLI timeout atau telemetry permission membuat exit status bias.
-- [ ] Jalankan test Flutter secara berurutan bila ada layout/surface-size tests.
+- [x] Jangan membuat duplicate source of truth antara `FlowState` dan list mutable lama di `FlowApp`.
+- [x] Jangan memindahkan ephemeral UI state ke global provider tanpa kebutuhan jelas.
+- [x] Jangan mengubah schema SQLite hanya untuk migrasi state management.
+- [x] Jangan mengubah PRD/MVP behavior saat refactor.
+- [x] Jangan menghapus `MemoryFlowStore`; itu masih penting untuk tests.
+- [x] Jangan mengklaim analyzer/test/build sukses jika Flutter CLI timeout atau telemetry permission membuat exit status bias.
+- [x] Jalankan test Flutter secara berurutan bila ada layout/surface-size tests.
 
 ## Definition of Done
 
-- [ ] `FlowApp` tidak lagi menyimpan app domain state global dengan `setState`.
-- [ ] Data global dibaca dari Riverpod provider.
-- [ ] Semua mutation domain berjalan lewat controller.
-- [ ] SQLite persistence tetap dipakai di production startup.
-- [ ] `MemoryFlowStore` tetap bisa dipakai untuk tests.
-- [ ] Welcome flow, add account, add income, add expense, transfer, edit/delete transaction, archive account, settings, export CSV, dan delete all tetap berjalan.
-- [ ] Existing regression tests diperbarui dan lulus.
+- [x] `FlowApp` tidak lagi menyimpan app domain state global dengan `setState`.
+- [x] Data global dibaca dari Riverpod provider.
+- [x] Semua mutation domain berjalan lewat controller.
+- [x] SQLite persistence tetap dipakai di production startup.
+- [x] `MemoryFlowStore` tetap bisa dipakai untuk tests.
+- [x] Welcome flow, add account, add income, add expense, transfer, edit/delete transaction, archive account, settings, export CSV, dan delete all tetap berjalan.
+- [x] Existing regression tests diperbarui dan lulus.
 - [x] Analyzer bersih, atau blocker environment dicatat spesifik.
 - [x] Debug APK berhasil dibuat, atau blocker environment dicatat spesifik.

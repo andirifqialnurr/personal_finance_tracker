@@ -30,6 +30,10 @@ class AccountsPage extends StatelessWidget {
     final activeAccounts = accounts
         .where((account) => !account.isArchived)
         .toList(growable: false);
+    final totalBalance = activeAccounts.fold<int>(
+      0,
+      (sum, account) => sum + _balanceFor(account),
+    );
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.md),
       children: [
@@ -56,7 +60,33 @@ class AccountsPage extends StatelessWidget {
             message: 'Create an account to start tracking your balance.',
             action: FlowButton(label: 'Create account', onPressed: onAdd),
           )
-        else
+        else ...[
+          FlowCard(
+            variant: FlowCardVariant.balance,
+            density: FlowCardDensity.standard,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total balance',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                const SizedBox(height: FlowSpacing.gapGroup),
+                FlowAmountText(
+                  amount: formatCurrency(totalBalance, currency),
+                  style: const TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: FlowSpacing.gapTight),
+                Text(
+                  '${activeAccounts.length} active account${activeAccounts.length == 1 ? '' : 's'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: FlowSpacing.sm),
           for (final account in activeAccounts) ...[
             FlowCard(
               variant: FlowCardVariant.action,
@@ -132,6 +162,7 @@ class AccountsPage extends StatelessWidget {
             ),
             const SizedBox(height: FlowSpacing.sm),
           ],
+        ],
       ],
     );
   }
