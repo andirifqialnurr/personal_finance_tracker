@@ -145,6 +145,59 @@ void main() {
     expect((await store.load()).transactions, isEmpty);
   });
 
+  test('FlowController previews and imports CSV transactions', () async {
+    final accounts = [
+      Account(
+        id: 1,
+        name: 'Cash',
+        type: AccountType.cash,
+        openingBalance: 0,
+        icon: 'wallet',
+        color: '#168C78',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      ),
+    ];
+    final store = MemoryFlowStore(
+      accounts: accounts,
+    );
+    final container = ProviderContainer(
+      overrides: [flowStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    await _readLoaded(container);
+
+    final controller = container.read(flowControllerProvider.notifier);
+    final csv = FlowCsvExporter.build(
+      accounts: accounts,
+      categories: MemoryFlowStore.defaultCategories(),
+      transactions: [
+        Transaction(
+          type: TransactionType.income,
+          amount: 250000,
+          accountId: 1,
+          categoryId: 1,
+          note: 'Freelance',
+          occurredAt: timestamp,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        ),
+      ],
+    );
+
+    final preview = await controller.previewCsvImport(csv);
+    expect(preview.readyCount, 1);
+    expect(preview.errorCount, 0);
+
+    final imported = await controller.importCsv(preview);
+
+    final state = container.read(flowControllerProvider).requireValue;
+    expect(imported, 1);
+    expect(state.transactions.single.amount, 250000);
+    expect(state.transactions.single.id, 1);
+    expect((await store.load()).transactions.single.note, 'Freelance');
+  });
+
   test('FlowController saves categories and deletes all data', () async {
     final store = MemoryFlowStore(
       accounts: [

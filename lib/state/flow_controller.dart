@@ -170,6 +170,38 @@ class FlowController extends StateNotifier<AsyncValue<FlowState>> {
     return file.path;
   }
 
+  Future<FlowCsvImportPreview> previewCsvImport(String csv) async {
+    final current = _currentState();
+    return FlowCsvImporter.preview(
+      csv: csv,
+      accounts: current.accounts,
+      categories: current.categories,
+      existingTransactions: current.transactions,
+    );
+  }
+
+  Future<int> importCsv(FlowCsvImportPreview preview) async {
+    var importedCount = 0;
+    await _guardMutation(() async {
+      if (preview.transactions.isEmpty) return;
+      final current = _currentState();
+      var transactions = List<Transaction>.of(current.transactions);
+      for (final transaction in preview.transactions) {
+        final saved = await _store.saveTransaction(transaction);
+        importedCount += 1;
+        transactions = _replaceOrAdd<Transaction>(
+          transactions,
+          saved,
+          (item) => item.id == saved.id,
+        );
+      }
+      state = AsyncValue.data(
+        current.copyWith(transactions: List.unmodifiable(transactions)),
+      );
+    });
+    return importedCount;
+  }
+
   Future<void> closeStore() => _store.close();
 
   Future<void> _saveSettings(AppSettings Function(AppSettings) update) async {
