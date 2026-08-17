@@ -425,12 +425,16 @@ class _CashFlowCard extends StatelessWidget {
     List<int> expenseByWeek,
   ) {
     final symbol = currencySymbol(currency);
-    final labelColor = flowChartColorHex(Theme.of(context).colorScheme.onSurface);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelColor = isDark
+        ? '#FFFFFF'
+        : flowChartColorHex(Theme.of(context).colorScheme.onSurface);
     final gridColor = flowChartColorHex(Theme.of(context).colorScheme.outline);
     return {
       'chart': {
         'type': 'bar',
         'fontFamily': 'Montserrat',
+        'foreColor': labelColor,
         'toolbar': {'show': false},
         'animations': {'enabled': true, 'speed': 360},
       },
@@ -471,6 +475,16 @@ class _CashFlowCard extends StatelessWidget {
       'legend': {
         'show': true,
         'position': 'bottom',
+        'horizontalAlign': 'center',
+        'fontSize': '11px',
+        'fontWeight': 600,
+        'itemMargin': {'horizontal': 8, 'vertical': 0},
+        'markers': {
+          'width': 10,
+          'height': 10,
+          'radius': 2,
+          'offsetY': 1,
+        },
         'labels': {'colors': labelColor},
       },
       'tooltip': {
