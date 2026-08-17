@@ -10,10 +10,12 @@ class FlowAmountText extends StatelessWidget {
     required this.amount,
     this.variant = FlowAmountVariant.balance,
     this.style,
+    this.alignment = Alignment.centerLeft,
   });
   final String amount;
   final FlowAmountVariant variant;
   final TextStyle? style;
+  final Alignment alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +36,7 @@ class FlowAmountText extends StatelessWidget {
     };
     return FittedBox(
       fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
+      alignment: alignment,
       child: Text(
         amount,
         maxLines: 1,

@@ -62,11 +62,19 @@ class FlowTransactionTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: FlowSpacing.sm),
-              Flexible(
-                child: FlowAmountText(
-                  amount: amount,
-                  variant: amountVariant,
-                  style: const TextStyle(fontSize: 14),
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: 96,
+                  maxWidth: 140,
+                ),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FlowAmountText(
+                    amount: amount,
+                    variant: amountVariant,
+                    alignment: Alignment.centerRight,
+                    style: const TextStyle(fontSize: 14),
+                  ),
                 ),
               ),
             ],
