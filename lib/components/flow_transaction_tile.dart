@@ -61,11 +61,11 @@ class FlowTransactionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: FlowSpacing.sm),
+              const SizedBox(width: FlowSpacing.xs),
               ConstrainedBox(
                 constraints: const BoxConstraints(
-                  minWidth: 96,
-                  maxWidth: 140,
+                  minWidth: 76,
+                  maxWidth: 112,
                 ),
                 child: Align(
                   alignment: Alignment.centerRight,

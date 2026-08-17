@@ -425,6 +425,8 @@ class _CashFlowCard extends StatelessWidget {
     List<int> expenseByWeek,
   ) {
     final symbol = currencySymbol(currency);
+    final labelColor = flowChartColorHex(Theme.of(context).colorScheme.onSurface);
+    final gridColor = flowChartColorHex(Theme.of(context).colorScheme.outline);
     return {
       'chart': {
         'type': 'bar',
@@ -443,15 +445,34 @@ class _CashFlowCard extends StatelessWidget {
       'xaxis': {
         'categories': const ['W1', 'W2', 'W3', 'W4', 'W5'],
         'tickAmount': 5,
+        'axisBorder': {'color': gridColor},
+        'axisTicks': {'color': gridColor},
+        'labels': {
+          'style': {
+            'colors': List<String>.filled(5, labelColor),
+            'fontSize': '10px',
+          },
+        },
       },
       'yaxis': {
-        'labels': {'prefix': '$symbol ', 'decimals': 0},
+        'labels': {
+          'prefix': '$symbol ',
+          'decimals': 0,
+          'style': {
+            'colors': [labelColor],
+            'fontSize': '10px',
+          },
+        },
       },
       'plotOptions': {
         'bar': {'columnWidth': '52%', 'borderRadius': 8},
       },
       'dataLabels': {'enabled': false},
-      'legend': {'show': true, 'position': 'bottom'},
+      'legend': {
+        'show': true,
+        'position': 'bottom',
+        'labels': {'colors': labelColor},
+      },
       'tooltip': {
         'y': {'prefix': '$symbol ', 'decimals': 0},
       },
