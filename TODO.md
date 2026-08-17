@@ -254,10 +254,10 @@ Catatan: section ini adalah backlog baru setelah seluruh task sebelumnya selesai
 
 ### 14.1 Import CSV
 
-- [ ] Buat alur Import CSV yang kompatibel dengan format Export CSV saat ini.
-- [ ] Tambahkan preview sebelum import: jumlah transaksi, akun/kategori yang cocok, dan baris yang error.
-- [ ] Tangani duplikasi transaksi dengan aturan deterministic, misalnya kombinasi tanggal, amount, type, account, category, dan note.
-- [ ] Sediakan hasil import ringkas: berhasil, dilewati, dan gagal.
+- [x] Buat alur Import CSV yang kompatibel dengan format Export CSV saat ini.
+- [x] Tambahkan preview sebelum import: jumlah transaksi, akun/kategori yang cocok, dan baris yang error.
+- [x] Tangani duplikasi transaksi dengan aturan deterministic, misalnya kombinasi tanggal, amount, type, account, category, dan note.
+- [x] Sediakan hasil import ringkas: berhasil, dilewati, dan gagal.
 
 ### 14.2 Backup dan restore lokal
 

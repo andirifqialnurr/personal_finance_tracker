@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../components/flow_components.dart';
-import '../data/models/models.dart';
+import '../data/data.dart';
 import 'manage_categories_page.dart';
 import '../theme/flow_tokens.dart';
 
@@ -15,6 +15,8 @@ class FlowSettingsPage extends StatefulWidget {
     required this.categories,
     required this.onCategoriesChanged,
     required this.onExportCsv,
+    required this.onPreviewImportCsv,
+    required this.onImportCsv,
     required this.onDeleteAll,
     this.showAppBar = true,
   });
@@ -25,6 +27,8 @@ class FlowSettingsPage extends StatefulWidget {
   final List<Category> categories;
   final ValueChanged<List<Category>> onCategoriesChanged;
   final Future<String> Function() onExportCsv;
+  final Future<FlowCsvImportPreview> Function(String csv) onPreviewImportCsv;
+  final Future<int> Function(FlowCsvImportPreview preview) onImportCsv;
   final VoidCallback onDeleteAll;
   final bool showAppBar;
 
@@ -97,6 +101,13 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
             variant: FlowButtonVariant.secondary,
             icon: Icons.file_download_outlined,
             onPressed: _isExporting ? null : _exportCsv,
+          ),
+          const SizedBox(height: FlowSpacing.gapGroup),
+          FlowButton(
+            label: 'Import CSV',
+            variant: FlowButtonVariant.secondary,
+            icon: Icons.file_upload_outlined,
+            onPressed: _openImportCsv,
           ),
           const SizedBox(height: FlowSpacing.gapSection),
           Text('Danger zone', style: Theme.of(context).textTheme.titleMedium),
@@ -182,4 +193,254 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
       if (mounted) setState(() => _isExporting = false);
     }
   }
+
+  Future<void> _openImportCsv() async {
+    final result = await showModalBottomSheet<_CsvImportResult>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _CsvImportSheet(
+        onPreviewImportCsv: widget.onPreviewImportCsv,
+        onImportCsv: widget.onImportCsv,
+      ),
+    );
+    if (!mounted || result == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Imported ${result.importedCount} transactions. Skipped ${result.skippedDuplicates} duplicates.',
+        ),
+      ),
+    );
+  }
+}
+
+class _CsvImportSheet extends StatefulWidget {
+  const _CsvImportSheet({
+    required this.onPreviewImportCsv,
+    required this.onImportCsv,
+  });
+
+  final Future<FlowCsvImportPreview> Function(String csv) onPreviewImportCsv;
+  final Future<int> Function(FlowCsvImportPreview preview) onImportCsv;
+
+  @override
+  State<_CsvImportSheet> createState() => _CsvImportSheetState();
+}
+
+class _CsvImportSheetState extends State<_CsvImportSheet> {
+  final _csvController = TextEditingController();
+  FlowCsvImportPreview? _preview;
+  String? _error;
+  bool _isPreviewing = false;
+  bool _isApplying = false;
+
+  @override
+  void dispose() {
+    _csvController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = _preview;
+    final canApply =
+        preview?.canImport == true && !_isPreviewing && !_isApplying;
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(FlowSpacing.md),
+          children: [
+            Text('Import CSV', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: FlowSpacing.gapBlock),
+            TextField(
+              key: const Key('flow-import-csv-input'),
+              controller: _csvController,
+              minLines: 5,
+              maxLines: 10,
+              textInputAction: TextInputAction.newline,
+              decoration: const InputDecoration(
+                labelText: 'CSV content',
+                hintText:
+                    'Date,Type,Amount,Account,Destination Account,Category,Note',
+              ),
+              onChanged: (_) {
+                if (_preview != null || _error != null) {
+                  setState(() {
+                    _preview = null;
+                    _error = null;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: FlowSpacing.gapBlock),
+            Row(
+              children: [
+                Expanded(
+                  child: FlowButton(
+                    label: _isPreviewing ? 'Previewing...' : 'Preview',
+                    variant: FlowButtonVariant.secondary,
+                    icon: Icons.visibility_outlined,
+                    onPressed: _isPreviewing || _isApplying
+                        ? null
+                        : _previewCsv,
+                  ),
+                ),
+                const SizedBox(width: FlowSpacing.gapGroup),
+                Expanded(
+                  child: FlowButton(
+                    label: _isApplying ? 'Importing...' : 'Import',
+                    icon: Icons.file_upload_outlined,
+                    onPressed: canApply ? () => _applyImport(preview) : null,
+                  ),
+                ),
+              ],
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: FlowSpacing.gapBlock),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+            if (preview != null) ...[
+              const SizedBox(height: FlowSpacing.gapBlock),
+              _CsvImportPreviewCard(preview: preview),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _previewCsv() async {
+    setState(() {
+      _isPreviewing = true;
+      _error = null;
+    });
+    try {
+      final preview = await widget.onPreviewImportCsv(_csvController.text);
+      if (!mounted) return;
+      setState(() => _preview = preview);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _error = 'CSV preview failed: $error');
+    } finally {
+      if (mounted) setState(() => _isPreviewing = false);
+    }
+  }
+
+  Future<void> _applyImport(FlowCsvImportPreview? preview) async {
+    if (preview == null || !preview.canImport) return;
+    setState(() {
+      _isApplying = true;
+      _error = null;
+    });
+    try {
+      final importedCount = await widget.onImportCsv(preview);
+      if (!mounted) return;
+      Navigator.of(context).pop(
+        _CsvImportResult(
+          importedCount: importedCount,
+          skippedDuplicates: preview.skippedDuplicates,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _error = 'CSV import failed: $error');
+    } finally {
+      if (mounted) setState(() => _isApplying = false);
+    }
+  }
+}
+
+class _CsvImportPreviewCard extends StatelessWidget {
+  const _CsvImportPreviewCard({required this.preview});
+
+  final FlowCsvImportPreview preview;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final errorColor = Theme.of(context).colorScheme.error;
+    final visibleErrors = preview.errors.take(4).toList();
+    return FlowCard(
+      density: FlowCardDensity.compact,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Preview result', style: textTheme.titleSmall),
+          const SizedBox(height: FlowSpacing.gapGroup),
+          _PreviewMetric(label: 'Ready', value: preview.readyCount.toString()),
+          _PreviewMetric(
+            label: 'Duplicates',
+            value: preview.skippedDuplicates.toString(),
+          ),
+          _PreviewMetric(label: 'Errors', value: preview.errorCount.toString()),
+          _PreviewMetric(
+            label: 'Matched accounts',
+            value: preview.matchedAccountNames.length.toString(),
+          ),
+          _PreviewMetric(
+            label: 'Matched categories',
+            value: preview.matchedCategoryNames.length.toString(),
+          ),
+          if (visibleErrors.isNotEmpty) ...[
+            const SizedBox(height: FlowSpacing.gapGroup),
+            for (final error in visibleErrors)
+              Text(
+                'Row ${error.rowNumber}: ${error.message}',
+                style: textTheme.bodySmall?.copyWith(color: errorColor),
+              ),
+            if (preview.errorCount > visibleErrors.length)
+              Text(
+                '+${preview.errorCount - visibleErrors.length} more errors',
+                style: textTheme.bodySmall?.copyWith(color: errorColor),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewMetric extends StatelessWidget {
+  const _PreviewMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: FlowSpacing.gapTight),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: FlowSpacing.gapGroup),
+          Text(value, style: Theme.of(context).textTheme.labelLarge),
+        ],
+      ),
+    );
+  }
+}
+
+class _CsvImportResult {
+  const _CsvImportResult({
+    required this.importedCount,
+    required this.skippedDuplicates,
+  });
+
+  final int importedCount;
+  final int skippedDuplicates;
 }
