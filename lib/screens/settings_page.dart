@@ -17,6 +17,9 @@ class FlowSettingsPage extends StatefulWidget {
     required this.onExportCsv,
     required this.onPreviewImportCsv,
     required this.onImportCsv,
+    this.onExportBackup,
+    this.onPreviewBackupRestore,
+    this.onRestoreBackup,
     required this.onDeleteAll,
     this.showAppBar = true,
   });
@@ -29,6 +32,9 @@ class FlowSettingsPage extends StatefulWidget {
   final Future<String> Function() onExportCsv;
   final Future<FlowCsvImportPreview> Function(String csv) onPreviewImportCsv;
   final Future<int> Function(FlowCsvImportPreview preview) onImportCsv;
+  final Future<String> Function()? onExportBackup;
+  final Future<FlowBackupPreview> Function(String json)? onPreviewBackupRestore;
+  final Future<void> Function(String json)? onRestoreBackup;
   final VoidCallback onDeleteAll;
   final bool showAppBar;
 
@@ -39,6 +45,7 @@ class FlowSettingsPage extends StatefulWidget {
 class _FlowSettingsPageState extends State<FlowSettingsPage> {
   late ThemeMode _themeMode = _normalizeThemeMode(widget.initialThemeMode);
   bool _isExporting = false;
+  bool _isExportingBackup = false;
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +116,26 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
             icon: Icons.file_upload_outlined,
             onPressed: _openImportCsv,
           ),
+          if (widget.onExportBackup != null &&
+              widget.onPreviewBackupRestore != null &&
+              widget.onRestoreBackup != null) ...[
+            const SizedBox(height: FlowSpacing.gapGroup),
+            FlowButton(
+              label: _isExportingBackup
+                  ? 'Exporting backup...'
+                  : 'Export local backup',
+              variant: FlowButtonVariant.secondary,
+              icon: Icons.backup_outlined,
+              onPressed: _isExportingBackup ? null : _exportBackup,
+            ),
+            const SizedBox(height: FlowSpacing.gapGroup),
+            FlowButton(
+              label: 'Restore local backup',
+              variant: FlowButtonVariant.secondary,
+              icon: Icons.restore_outlined,
+              onPressed: _openRestoreBackup,
+            ),
+          ],
           const SizedBox(height: FlowSpacing.gapSection),
           Text('Danger zone', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: FlowSpacing.gapBlock),
@@ -211,6 +238,198 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _exportBackup() async {
+    setState(() => _isExportingBackup = true);
+    try {
+      final path = await widget.onExportBackup!();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Backup exported to $path')));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Backup export failed: $error')));
+    } finally {
+      if (mounted) setState(() => _isExportingBackup = false);
+    }
+  }
+
+  Future<void> _openRestoreBackup() async {
+    final restored = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _BackupRestoreSheet(
+        onPreviewBackupRestore: widget.onPreviewBackupRestore!,
+        onRestoreBackup: widget.onRestoreBackup!,
+      ),
+    );
+    if (!mounted || restored != true) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Backup restored. Local data was replaced.')),
+    );
+  }
+}
+
+class _BackupRestoreSheet extends StatefulWidget {
+  const _BackupRestoreSheet({
+    required this.onPreviewBackupRestore,
+    required this.onRestoreBackup,
+  });
+
+  final Future<FlowBackupPreview> Function(String json) onPreviewBackupRestore;
+  final Future<void> Function(String json) onRestoreBackup;
+
+  @override
+  State<_BackupRestoreSheet> createState() => _BackupRestoreSheetState();
+}
+
+class _BackupRestoreSheetState extends State<_BackupRestoreSheet> {
+  final _jsonController = TextEditingController();
+  FlowBackupPreview? _preview;
+  String? _error;
+  bool _isPreviewing = false;
+  bool _isRestoring = false;
+
+  @override
+  void dispose() {
+    _jsonController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = _preview;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(FlowSpacing.md),
+          children: [
+            Text(
+              'Restore local backup',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: FlowSpacing.gapBlock),
+            TextField(
+              key: const Key('flow-backup-json-input'),
+              controller: _jsonController,
+              minLines: 6,
+              maxLines: 12,
+              textInputAction: TextInputAction.newline,
+              decoration: const InputDecoration(
+                labelText: 'Backup JSON',
+                hintText: '{"schema":"flow.local-backup", ...}',
+              ),
+              onChanged: (_) {
+                if (_preview != null || _error != null) {
+                  setState(() {
+                    _preview = null;
+                    _error = null;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: FlowSpacing.gapBlock),
+            Row(
+              children: [
+                Expanded(
+                  child: FlowButton(
+                    label: _isPreviewing ? 'Previewing...' : 'Preview',
+                    variant: FlowButtonVariant.secondary,
+                    icon: Icons.visibility_outlined,
+                    onPressed: _isPreviewing || _isRestoring
+                        ? null
+                        : _previewBackup,
+                  ),
+                ),
+                const SizedBox(width: FlowSpacing.gapGroup),
+                Expanded(
+                  child: FlowButton(
+                    label: _isRestoring ? 'Restoring...' : 'Restore',
+                    variant: FlowButtonVariant.destructive,
+                    icon: Icons.restore_outlined,
+                    onPressed: preview == null || _isRestoring
+                        ? null
+                        : _confirmRestore,
+                  ),
+                ),
+              ],
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: FlowSpacing.gapBlock),
+              Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+            if (preview != null) ...[
+              const SizedBox(height: FlowSpacing.gapBlock),
+              FlowCard(
+                density: FlowCardDensity.compact,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Restore preview', style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: FlowSpacing.gapGroup),
+                    _PreviewMetric(label: 'Accounts', value: '${preview.accounts}'),
+                    _PreviewMetric(label: 'Categories', value: '${preview.categories}'),
+                    _PreviewMetric(label: 'Transactions', value: '${preview.transactions}'),
+                    _PreviewMetric(label: 'Recurring', value: '${preview.recurringTemplates}'),
+                    _PreviewMetric(label: 'Budgets', value: '${preview.monthlyBudgets}'),
+                    _PreviewMetric(label: 'Goals', value: '${preview.savingsGoals}'),
+                    _PreviewMetric(label: 'Currency', value: preview.currency),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _previewBackup() async {
+    setState(() {
+      _isPreviewing = true;
+      _error = null;
+    });
+    try {
+      final preview = await widget.onPreviewBackupRestore(_jsonController.text);
+      if (!mounted) return;
+      setState(() => _preview = preview);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _error = 'Backup preview failed: $error');
+    } finally {
+      if (mounted) setState(() => _isPreviewing = false);
+    }
+  }
+
+  Future<void> _confirmRestore() async {
+    final confirmed = await FlowConfirmationSheet.show(
+      context: context,
+      title: 'Replace all local data?',
+      message:
+          'Restore will overwrite accounts, categories, transactions, settings, templates, budgets, and goals on this device.',
+      confirmLabel: 'Restore backup',
+    );
+    if (confirmed != true) return;
+    setState(() => _isRestoring = true);
+    try {
+      await widget.onRestoreBackup(_jsonController.text);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _error = 'Backup restore failed: $error');
+    } finally {
+      if (mounted) setState(() => _isRestoring = false);
+    }
   }
 }
 

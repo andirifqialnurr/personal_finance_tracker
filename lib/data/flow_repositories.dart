@@ -200,6 +200,134 @@ class SettingsRepository {
   }
 }
 
+class RecurringTemplateRepository {
+  RecurringTemplateRepository(this._database);
+  final FlowDatabase _database;
+
+  Future<int> create(RecurringTemplate template) =>
+      _database.database.insert('recurring_templates', template.toMap());
+
+  Future<RecurringTemplate?> findById(int id) async {
+    final rows = await _database.database.query(
+      'recurring_templates',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : RecurringTemplate.fromMap(rows.first);
+  }
+
+  Future<List<RecurringTemplate>> list({bool includeArchived = false}) async {
+    final rows = await _database.database.query(
+      'recurring_templates',
+      where: includeArchived ? null : 'is_archived = 0',
+      orderBy: 'created_at DESC, id DESC',
+    );
+    return rows.map(RecurringTemplate.fromMap).toList(growable: false);
+  }
+
+  Future<int> update(RecurringTemplate template) async {
+    final id = _id(template.id, 'recurring template');
+    return _database.database.update(
+      'recurring_templates',
+      template.toMap()..remove('id'),
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> delete(int id) => _database.database.delete(
+    'recurring_templates',
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
+
+class MonthlyBudgetRepository {
+  MonthlyBudgetRepository(this._database);
+  final FlowDatabase _database;
+
+  Future<int> create(MonthlyBudget budget) =>
+      _database.database.insert('monthly_budgets', budget.toMap());
+
+  Future<MonthlyBudget?> findById(int id) async {
+    final rows = await _database.database.query(
+      'monthly_budgets',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : MonthlyBudget.fromMap(rows.first);
+  }
+
+  Future<List<MonthlyBudget>> list() async {
+    final rows = await _database.database.query(
+      'monthly_budgets',
+      orderBy: 'month DESC, id DESC',
+    );
+    return rows.map(MonthlyBudget.fromMap).toList(growable: false);
+  }
+
+  Future<int> update(MonthlyBudget budget) async {
+    final id = _id(budget.id, 'monthly budget');
+    return _database.database.update(
+      'monthly_budgets',
+      budget.toMap()..remove('id'),
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> delete(int id) => _database.database.delete(
+    'monthly_budgets',
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
+
+class SavingsGoalRepository {
+  SavingsGoalRepository(this._database);
+  final FlowDatabase _database;
+
+  Future<int> create(SavingsGoal goal) =>
+      _database.database.insert('savings_goals', goal.toMap());
+
+  Future<SavingsGoal?> findById(int id) async {
+    final rows = await _database.database.query(
+      'savings_goals',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : SavingsGoal.fromMap(rows.first);
+  }
+
+  Future<List<SavingsGoal>> list({bool includeArchived = false}) async {
+    final rows = await _database.database.query(
+      'savings_goals',
+      where: includeArchived ? null : 'is_archived = 0',
+      orderBy: 'created_at DESC, id DESC',
+    );
+    return rows.map(SavingsGoal.fromMap).toList(growable: false);
+  }
+
+  Future<int> update(SavingsGoal goal) async {
+    final id = _id(goal.id, 'savings goal');
+    return _database.database.update(
+      'savings_goals',
+      goal.toMap()..remove('id'),
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> delete(int id) => _database.database.delete(
+    'savings_goals',
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
+
 int _id(int? id, String entity) {
   if (id == null) throw StateError('Cannot update $entity without an id');
   return id;

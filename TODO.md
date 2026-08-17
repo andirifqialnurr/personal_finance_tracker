@@ -261,31 +261,31 @@ Catatan: section ini adalah backlog baru setelah seluruh task sebelumnya selesai
 
 ### 14.2 Backup dan restore lokal
 
-- [ ] Buat export backup lokal satu file yang berisi accounts, categories, transactions, dan settings.
-- [ ] Buat restore backup dengan preview dampak sebelum menimpa data lokal.
-- [ ] Tambahkan konfirmasi kuat untuk restore karena operasi ini dapat mengganti data aktif.
-- [ ] Pertahankan tanpa cloud sync; file tetap dikelola user secara lokal.
+- [x] Buat export backup lokal satu file yang berisi accounts, categories, transactions, dan settings.
+- [x] Buat restore backup dengan preview dampak sebelum menimpa data lokal.
+- [x] Tambahkan konfirmasi kuat untuk restore karena operasi ini dapat mengganti data aktif.
+- [x] Pertahankan tanpa cloud sync; file tetap dikelola user secara lokal.
 
 ### 14.3 Recurring transaction templates
 
-- [ ] Tambahkan template transaksi berulang untuk gaji, tagihan, langganan, dan transfer rutin.
-- [ ] Sediakan frekuensi sederhana: weekly, monthly, dan custom day-of-month.
-- [ ] Buat generated transaction tetap editable dan tidak otomatis masuk income/expense sampai user mengonfirmasi.
-- [ ] Tampilkan reminder ringkas di Home tanpa membuat dashboard ramai.
+- [x] Tambahkan template transaksi berulang untuk gaji, tagihan, langganan, dan transfer rutin.
+- [x] Sediakan frekuensi sederhana: weekly, monthly, dan custom day-of-month.
+- [x] Buat generated transaction tetap editable dan tidak otomatis masuk income/expense sampai user mengonfirmasi.
+- [x] Tampilkan reminder ringkas di Home tanpa membuat dashboard ramai.
 
 ### 14.4 Budget bulanan per kategori
 
-- [ ] Tambahkan budget bulanan opsional untuk kategori expense.
-- [ ] Tampilkan progress budget di Statistics dan Home secara compact.
-- [ ] Beri status aman/perhatian/melebihi budget dengan warna semantic yang sudah ada.
-- [ ] Pastikan budget tidak mengubah transaksi atau saldo.
+- [x] Tambahkan budget bulanan opsional untuk kategori expense.
+- [x] Tampilkan progress budget di Statistics dan Home secara compact.
+- [x] Beri status aman/perhatian/melebihi budget dengan warna semantic yang sudah ada.
+- [x] Pastikan budget tidak mengubah transaksi atau saldo.
 
 ### 14.5 Savings goals
 
-- [ ] Tambahkan goal tab atau section ringan untuk target tabungan manual.
-- [ ] Hubungkan goal ke akun opsional tanpa membuat rekening virtual baru.
-- [ ] Tampilkan progress berdasarkan saldo akun yang dipilih atau input kontribusi manual.
-- [ ] Jaga scope tetap personal tracking, bukan investasi atau payment flow.
+- [x] Tambahkan goal tab atau section ringan untuk target tabungan manual.
+- [x] Hubungkan goal ke akun opsional tanpa membuat rekening virtual baru.
+- [x] Tampilkan progress berdasarkan saldo akun yang dipilih atau input kontribusi manual.
+- [x] Jaga scope tetap personal tracking, bukan investasi atau payment flow.
 
 ## Di luar scope prototype awal
 

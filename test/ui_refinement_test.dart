@@ -68,7 +68,7 @@ void main() {
           find.byKey(const Key('flow-floating-navigation')),
         );
         await tester.tapAt(
-          Offset(navRect.left + navRect.width * .5, navRect.center.dy),
+          Offset(navRect.left + navRect.width * ((2 + .5) / 6), navRect.center.dy),
         );
         await tester.pumpAndSettle();
         final chartFinder = find.byKey(

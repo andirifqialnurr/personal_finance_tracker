@@ -10,6 +10,7 @@ import 'screens/account_detail_page.dart';
 import 'screens/accounts_page.dart';
 import 'screens/add_transaction_page.dart';
 import 'screens/settings_page.dart';
+import 'screens/plans_page.dart';
 import 'screens/statistics_page.dart';
 import 'screens/transactions_page.dart';
 import 'screens/transaction_detail_page.dart';
@@ -83,6 +84,8 @@ class _FlowAppViewState extends ConsumerState<_FlowAppView> {
       onEditAccount: (account) => _openAccountForm(context, account),
       onOpenAccountDetail: (account) => _openAccountDetail(context, account),
       onAddTransaction: () => _openAddTransaction(context),
+      onOpenPrefilledTransaction: (transaction) =>
+          _openAddTransaction(context, transaction),
       onOpenTransactionDetail: (transaction) =>
           _openTransactionDetail(context, transaction),
     );
@@ -262,6 +265,7 @@ class FlowShell extends ConsumerStatefulWidget {
     required this.onEditAccount,
     required this.onOpenAccountDetail,
     required this.onAddTransaction,
+    required this.onOpenPrefilledTransaction,
     required this.onOpenTransactionDetail,
   });
 
@@ -269,6 +273,7 @@ class FlowShell extends ConsumerStatefulWidget {
   final ValueChanged<Account> onEditAccount;
   final ValueChanged<Account> onOpenAccountDetail;
   final VoidCallback onAddTransaction;
+  final ValueChanged<Transaction> onOpenPrefilledTransaction;
   final ValueChanged<Transaction> onOpenTransactionDetail;
 
   @override
@@ -283,6 +288,7 @@ class _FlowShellState extends ConsumerState<FlowShell> {
     _FlowPageData('Transactions', Icons.receipt_long_outlined),
     _FlowPageData('Statistics', Icons.show_chart_outlined),
     _FlowPageData('Accounts', Icons.account_balance_wallet_outlined),
+    _FlowPageData('Plans', Icons.flag_outlined),
     _FlowPageData('Settings', Icons.settings_outlined),
   ];
 
@@ -294,6 +300,9 @@ class _FlowShellState extends ConsumerState<FlowShell> {
     final currency = ref.watch(currencyProvider);
     final hideBalance = ref.watch(hideBalanceProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final recurringTemplates = ref.watch(recurringTemplatesProvider);
+    final monthlyBudgets = ref.watch(monthlyBudgetsProvider);
+    final savingsGoals = ref.watch(savingsGoalsProvider);
     final controller = ref.read(flowControllerProvider.notifier);
     final floatingDecoration = _floatingSurfaceDecoration(context);
     final theme = Theme.of(context);
@@ -312,6 +321,8 @@ class _FlowShellState extends ConsumerState<FlowShell> {
               accounts: accounts,
               transactions: transactions,
               categories: categories,
+              recurringTemplates: recurringTemplates,
+              monthlyBudgets: monthlyBudgets,
               currency: currency,
               hideBalance: hideBalance,
               onHideBalanceChanged: (value) =>
@@ -328,6 +339,7 @@ class _FlowShellState extends ConsumerState<FlowShell> {
             StatisticsPage(
               transactions: transactions,
               categories: categories,
+              monthlyBudgets: monthlyBudgets,
               currency: currency,
             ),
             AccountsPage(
@@ -342,6 +354,29 @@ class _FlowShellState extends ConsumerState<FlowShell> {
               currency: currency,
               onOpenDetail: widget.onOpenAccountDetail,
             ),
+            PlansPage(
+              accounts: accounts,
+              categories: categories,
+              transactions: transactions,
+              recurringTemplates: recurringTemplates,
+              monthlyBudgets: monthlyBudgets,
+              savingsGoals: savingsGoals,
+              currency: currency,
+              onSaveRecurringTemplate: (template) =>
+                  unawaited(controller.saveRecurringTemplate(template)),
+              onDeleteRecurringTemplate: (id) =>
+                  unawaited(controller.deleteRecurringTemplate(id)),
+              onUseRecurringTemplate: (template) =>
+                  widget.onOpenPrefilledTransaction(_fromTemplate(template)),
+              onSaveMonthlyBudget: (budget) =>
+                  unawaited(controller.saveMonthlyBudget(budget)),
+              onDeleteMonthlyBudget: (id) =>
+                  unawaited(controller.deleteMonthlyBudget(id)),
+              onSaveSavingsGoal: (goal) =>
+                  unawaited(controller.saveSavingsGoal(goal)),
+              onDeleteSavingsGoal: (id) =>
+                  unawaited(controller.deleteSavingsGoal(id)),
+            ),
             FlowSettingsPage(
               initialThemeMode: themeMode,
               onThemeModeChanged: (mode) =>
@@ -355,13 +390,18 @@ class _FlowShellState extends ConsumerState<FlowShell> {
               onExportCsv: controller.exportCsv,
               onPreviewImportCsv: controller.previewCsvImport,
               onImportCsv: controller.importCsv,
+              onExportBackup: controller.exportBackup,
+              onPreviewBackupRestore: controller.previewBackupRestore,
+              onRestoreBackup: controller.restoreBackup,
               onDeleteAll: () => unawaited(controller.deleteAllData()),
               showAppBar: false,
             ),
           ],
         ),
       ),
-      floatingActionButton: _selectedIndex == 2 || _selectedIndex == 4
+      floatingActionButton: _selectedIndex == 2 ||
+              _selectedIndex == 4 ||
+              _selectedIndex == 5
           ? null
           : FloatingActionButton(
               onPressed: widget.onAddTransaction,
@@ -421,6 +461,22 @@ class _FlowShellState extends ConsumerState<FlowShell> {
       ),
     );
   }
+}
+
+Transaction _fromTemplate(RecurringTemplate template) {
+  final now = DateTime.now();
+  final utcNow = now.toUtc();
+  return Transaction(
+    type: template.type,
+    amount: template.amount,
+    accountId: template.accountId,
+    destinationAccountId: template.destinationAccountId,
+    categoryId: template.categoryId,
+    note: template.note,
+    occurredAt: now,
+    createdAt: utcNow,
+    updatedAt: utcNow,
+  );
 }
 
 BoxDecoration _floatingSurfaceDecoration(BuildContext context) {

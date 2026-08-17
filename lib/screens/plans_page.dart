@@ -1,0 +1,887 @@
+import 'package:flutter/material.dart';
+
+import '../components/flow_components.dart';
+import '../data/models/models.dart';
+import '../theme/flow_colors.dart';
+import '../theme/flow_tokens.dart';
+import '../utils/flow_currency_input_formatter.dart';
+import '../utils/flow_format.dart';
+
+class PlansPage extends StatelessWidget {
+  const PlansPage({
+    super.key,
+    required this.accounts,
+    required this.categories,
+    required this.transactions,
+    required this.recurringTemplates,
+    required this.monthlyBudgets,
+    required this.savingsGoals,
+    required this.currency,
+    required this.onSaveRecurringTemplate,
+    required this.onDeleteRecurringTemplate,
+    required this.onUseRecurringTemplate,
+    required this.onSaveMonthlyBudget,
+    required this.onDeleteMonthlyBudget,
+    required this.onSaveSavingsGoal,
+    required this.onDeleteSavingsGoal,
+  });
+
+  final List<Account> accounts;
+  final List<Category> categories;
+  final List<Transaction> transactions;
+  final List<RecurringTemplate> recurringTemplates;
+  final List<MonthlyBudget> monthlyBudgets;
+  final List<SavingsGoal> savingsGoals;
+  final String currency;
+  final ValueChanged<RecurringTemplate> onSaveRecurringTemplate;
+  final ValueChanged<int> onDeleteRecurringTemplate;
+  final ValueChanged<RecurringTemplate> onUseRecurringTemplate;
+  final ValueChanged<MonthlyBudget> onSaveMonthlyBudget;
+  final ValueChanged<int> onDeleteMonthlyBudget;
+  final ValueChanged<SavingsGoal> onSaveSavingsGoal;
+  final ValueChanged<int> onDeleteSavingsGoal;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(FlowSpacing.md),
+      children: [
+        const SizedBox(height: FlowSpacing.gapSection),
+        _SectionHeader(
+          title: 'Recurring templates',
+          icon: Icons.event_repeat_outlined,
+          onAdd: () => _openRecurringForm(context),
+        ),
+        const SizedBox(height: FlowSpacing.sm),
+        if (recurringTemplates.where((item) => !item.isArchived).isEmpty)
+          const _InlineEmpty(
+            icon: Icons.event_repeat_outlined,
+            title: 'No recurring templates',
+            message: 'Create one for salary, bills, subscriptions, or routine transfers.',
+          )
+        else
+          for (final template
+              in recurringTemplates.where((item) => !item.isArchived)) ...[
+            _RecurringCard(
+              template: template,
+              accountName: _accountName(template.accountId),
+              categoryName: template.categoryId == null
+                  ? null
+                  : _categoryName(template.categoryId!),
+              currency: currency,
+              onUse: () => onUseRecurringTemplate(template),
+              onDelete: template.id == null
+                  ? null
+                  : () => onDeleteRecurringTemplate(template.id!),
+            ),
+            const SizedBox(height: FlowSpacing.sm),
+          ],
+        const SizedBox(height: FlowSpacing.gapSection),
+        _SectionHeader(
+          title: 'Monthly budgets',
+          icon: Icons.pie_chart_outline,
+          onAdd: () => _openBudgetForm(context),
+        ),
+        const SizedBox(height: FlowSpacing.sm),
+        if (monthlyBudgets.isEmpty)
+          const _InlineEmpty(
+            icon: Icons.pie_chart_outline,
+            title: 'No monthly budgets',
+            message: 'Set optional limits for expense categories without changing balances.',
+          )
+        else
+          for (final budget in monthlyBudgets) ...[
+            _BudgetCard(
+              budget: budget,
+              categoryName: budget.categoryId == null
+                  ? 'Uncategorized'
+                  : _categoryName(budget.categoryId!),
+              spent: _spentForBudget(budget),
+              currency: currency,
+              onDelete: budget.id == null
+                  ? null
+                  : () => onDeleteMonthlyBudget(budget.id!),
+            ),
+            const SizedBox(height: FlowSpacing.sm),
+          ],
+        const SizedBox(height: FlowSpacing.gapSection),
+        _SectionHeader(
+          title: 'Savings goals',
+          icon: Icons.savings_outlined,
+          onAdd: () => _openGoalForm(context),
+        ),
+        const SizedBox(height: FlowSpacing.sm),
+        if (savingsGoals.where((item) => !item.isArchived).isEmpty)
+          const _InlineEmpty(
+            icon: Icons.savings_outlined,
+            title: 'No savings goals',
+            message: 'Track a target manually or link it to an existing account.',
+          )
+        else
+          for (final goal in savingsGoals.where((item) => !item.isArchived)) ...[
+            _SavingsGoalCard(
+              goal: goal,
+              accountName: goal.accountId == null
+                  ? null
+                  : _accountName(goal.accountId!),
+              currentAmount: _currentGoalAmount(goal),
+              currency: currency,
+              onDelete: goal.id == null
+                  ? null
+                  : () => onDeleteSavingsGoal(goal.id!),
+            ),
+            const SizedBox(height: FlowSpacing.sm),
+          ],
+      ],
+    );
+  }
+
+  String _accountName(int id) {
+    return accounts
+        .firstWhere(
+          (account) => account.id == id,
+          orElse: () => Account(
+            id: id,
+            name: 'Account $id',
+            type: AccountType.other,
+            openingBalance: 0,
+            icon: 'account',
+            color: '#168C78',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        )
+        .name;
+  }
+
+  String _categoryName(int id) {
+    return categories
+        .firstWhere(
+          (category) => category.id == id,
+          orElse: () => Category(
+            id: id,
+            name: 'Category $id',
+            transactionType: TransactionType.expense,
+            icon: 'category',
+            color: '#C96B6B',
+          ),
+        )
+        .name;
+  }
+
+  int _spentForBudget(MonthlyBudget budget) {
+    return transactions.where((transaction) {
+      return transaction.type == TransactionType.expense &&
+          transaction.categoryId == budget.categoryId &&
+          transaction.occurredAt.year == budget.month.year &&
+          transaction.occurredAt.month == budget.month.month;
+    }).fold<int>(0, (sum, transaction) => sum + transaction.amount);
+  }
+
+  int _currentGoalAmount(SavingsGoal goal) {
+    final linkedBalance = goal.accountId == null
+        ? 0
+        : accounts
+              .where((account) => account.id == goal.accountId)
+              .fold<int>(0, (sum, account) => sum + _balanceFor(account));
+    return linkedBalance + goal.manualContribution;
+  }
+
+  int _balanceFor(Account account) {
+    return account.openingBalance +
+        transactions.fold<int>(0, (sum, transaction) {
+          if (transaction.type == TransactionType.transfer &&
+              transaction.destinationAccountId == account.id) {
+            return sum + transaction.amount;
+          }
+          if (transaction.accountId != account.id) return sum;
+          return switch (transaction.type) {
+            TransactionType.income => sum + transaction.amount,
+            TransactionType.expense => sum - transaction.amount,
+            TransactionType.transfer => sum - transaction.amount,
+          };
+        });
+  }
+
+  Future<void> _openRecurringForm(BuildContext context) async {
+    final template = await showModalBottomSheet<RecurringTemplate>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _RecurringTemplateSheet(
+        accounts: accounts.where((account) => !account.isArchived).toList(),
+        categories: categories.where((category) => !category.isArchived).toList(),
+      ),
+    );
+    if (template != null) onSaveRecurringTemplate(template);
+  }
+
+  Future<void> _openBudgetForm(BuildContext context) async {
+    final budget = await showModalBottomSheet<MonthlyBudget>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _BudgetSheet(
+        categories: categories
+            .where(
+              (category) =>
+                  !category.isArchived &&
+                  category.transactionType == TransactionType.expense,
+            )
+            .toList(),
+      ),
+    );
+    if (budget != null) onSaveMonthlyBudget(budget);
+  }
+
+  Future<void> _openGoalForm(BuildContext context) async {
+    final goal = await showModalBottomSheet<SavingsGoal>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _SavingsGoalSheet(
+        accounts: accounts.where((account) => !account.isArchived).toList(),
+      ),
+    );
+    if (goal != null) onSaveSavingsGoal(goal);
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.icon,
+    required this.onAdd,
+  });
+
+  final String title;
+  final IconData icon;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, size: 20),
+      const SizedBox(width: FlowSpacing.xs),
+      Expanded(
+        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      ),
+      IconButton(onPressed: onAdd, tooltip: 'Add', icon: const Icon(Icons.add)),
+    ],
+  );
+}
+
+class _InlineEmpty extends StatelessWidget {
+  const _InlineEmpty({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => FlowCard(
+    density: FlowCardDensity.compact,
+    child: Row(
+      children: [
+        FlowIconContainer(icon: icon),
+        const SizedBox(width: FlowSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.bodyLarge),
+              const SizedBox(height: FlowSpacing.xxs),
+              Text(message, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _RecurringCard extends StatelessWidget {
+  const _RecurringCard({
+    required this.template,
+    required this.accountName,
+    required this.categoryName,
+    required this.currency,
+    required this.onUse,
+    required this.onDelete,
+  });
+
+  final RecurringTemplate template;
+  final String accountName;
+  final String? categoryName;
+  final String currency;
+  final VoidCallback onUse;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) => FlowCard(
+    density: FlowCardDensity.standard,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                template.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+            TextButton(onPressed: onUse, child: const Text('Review')),
+            IconButton(
+              onPressed: onDelete,
+              tooltip: 'Delete template',
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
+        ),
+        Text(
+          [
+            _typeLabel(template.type),
+            _frequencyLabel(template),
+            accountName,
+            ?categoryName,
+          ].join(' - '),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        FlowAmountText(
+          amount: formatCurrency(template.amount, currency),
+          style: const TextStyle(fontSize: 15),
+        ),
+      ],
+    ),
+  );
+
+  static String _typeLabel(TransactionType type) => switch (type) {
+    TransactionType.income => 'Income',
+    TransactionType.expense => 'Expense',
+    TransactionType.transfer => 'Transfer',
+  };
+
+  static String _frequencyLabel(RecurringTemplate template) =>
+      template.frequency == RecurringFrequency.weekly
+      ? 'Weekly day ${template.weekday ?? 1}'
+      : 'Monthly day ${template.dayOfMonth ?? 1}';
+}
+
+class _BudgetCard extends StatelessWidget {
+  const _BudgetCard({
+    required this.budget,
+    required this.categoryName,
+    required this.spent,
+    required this.currency,
+    required this.onDelete,
+  });
+
+  final MonthlyBudget budget;
+  final String categoryName;
+  final int spent;
+  final String currency;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = budget.amount == 0 ? 0.0 : (spent / budget.amount).clamp(0, 1).toDouble();
+    final color = spent > budget.amount
+        ? FlowColors.expense
+        : spent > budget.amount * 0.8
+        ? FlowColors.chartAmber
+        : FlowColors.income;
+    return FlowCard(
+      density: FlowCardDensity.compact,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  categoryName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+              IconButton(
+                onPressed: onDelete,
+                tooltip: 'Delete budget',
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ],
+          ),
+          LinearProgressIndicator(value: ratio, color: color),
+          const SizedBox(height: FlowSpacing.gapGroup),
+          Text(
+            '${formatCurrency(spent, currency)} of ${formatCurrency(budget.amount, currency)}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SavingsGoalCard extends StatelessWidget {
+  const _SavingsGoalCard({
+    required this.goal,
+    required this.accountName,
+    required this.currentAmount,
+    required this.currency,
+    required this.onDelete,
+  });
+
+  final SavingsGoal goal;
+  final String? accountName;
+  final int currentAmount;
+  final String currency;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = (currentAmount / goal.targetAmount).clamp(0, 1).toDouble();
+    return FlowCard(
+      density: FlowCardDensity.standard,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  goal.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+              IconButton(
+                onPressed: onDelete,
+                tooltip: 'Delete goal',
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ],
+          ),
+          if (accountName != null)
+            Text(accountName!, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: FlowSpacing.gapGroup),
+          LinearProgressIndicator(value: ratio),
+          const SizedBox(height: FlowSpacing.gapGroup),
+          Text(
+            '${formatCurrency(currentAmount, currency)} of ${formatCurrency(goal.targetAmount, currency)}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecurringTemplateSheet extends StatefulWidget {
+  const _RecurringTemplateSheet({required this.accounts, required this.categories});
+
+  final List<Account> accounts;
+  final List<Category> categories;
+
+  @override
+  State<_RecurringTemplateSheet> createState() => _RecurringTemplateSheetState();
+}
+
+class _RecurringTemplateSheetState extends State<_RecurringTemplateSheet> {
+  final _nameController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _noteController = TextEditingController();
+  TransactionType _type = TransactionType.expense;
+  RecurringFrequency _frequency = RecurringFrequency.monthly;
+  Account? _account;
+  Account? _destinationAccount;
+  Category? _category;
+  int _dayOfMonth = DateTime.now().day.clamp(1, 28);
+  int _weekday = DateTime.now().weekday;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _amountController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => _SheetScaffold(
+    title: 'Recurring template',
+    children: [
+      TextField(
+        controller: _nameController,
+        decoration: const InputDecoration(labelText: 'Name'),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: FlowSpacing.md),
+      FlowSegmentedControl(
+        labels: const ['Expense', 'Income', 'Transfer'],
+        selectedIndex: _typeIndex(_type),
+        onChanged: (index) => setState(() {
+          _type = _typeFromIndex(index);
+          _category = null;
+          _destinationAccount = null;
+        }),
+      ),
+      const SizedBox(height: FlowSpacing.md),
+      TextField(
+        controller: _amountController,
+        inputFormatters: const [FlowCurrencyInputFormatter()],
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(labelText: 'Amount'),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: FlowSpacing.md),
+      FlowSelector(
+        label: 'Account',
+        value: _account?.name ?? 'Select account',
+        onTap: () async {
+          final selected = await _selectAccount(context, widget.accounts);
+          if (selected != null) setState(() => _account = selected);
+        },
+      ),
+      if (_type == TransactionType.transfer) ...[
+        const SizedBox(height: FlowSpacing.md),
+        FlowSelector(
+          label: 'To account',
+          value: _destinationAccount?.name ?? 'Select destination',
+          onTap: () async {
+            final selected = await _selectAccount(context, widget.accounts);
+            if (selected != null) setState(() => _destinationAccount = selected);
+          },
+        ),
+      ] else ...[
+        const SizedBox(height: FlowSpacing.md),
+        FlowSelector(
+          label: 'Category',
+          value: _category?.name ?? 'Select category',
+          onTap: () async {
+            final selected = await _selectCategory(context);
+            if (selected != null) setState(() => _category = selected);
+          },
+        ),
+      ],
+      const SizedBox(height: FlowSpacing.md),
+      FlowSegmentedControl(
+        labels: const ['Weekly', 'Monthly'],
+        selectedIndex: _frequency.index,
+        onChanged: (index) => setState(() => _frequency = RecurringFrequency.values[index]),
+      ),
+      const SizedBox(height: FlowSpacing.md),
+      TextField(
+        decoration: InputDecoration(
+          labelText: _frequency == RecurringFrequency.weekly
+              ? 'Weekday 1-7'
+              : 'Day of month 1-28',
+        ),
+        keyboardType: TextInputType.number,
+        onChanged: (value) {
+          final parsed = int.tryParse(value);
+          if (parsed == null) return;
+          setState(() {
+            if (_frequency == RecurringFrequency.weekly) {
+              _weekday = parsed.clamp(1, 7);
+            } else {
+              _dayOfMonth = parsed.clamp(1, 28);
+            }
+          });
+        },
+      ),
+      const SizedBox(height: FlowSpacing.md),
+      TextField(
+        controller: _noteController,
+        decoration: const InputDecoration(labelText: 'Note (optional)'),
+      ),
+      const SizedBox(height: FlowSpacing.lg),
+      FlowButton(label: 'Save template', onPressed: _canSave ? _save : null),
+    ],
+  );
+
+  bool get _canSave {
+    final amount = parseCurrencyInput(_amountController.text) ?? 0;
+    final hasTarget = _type == TransactionType.transfer
+        ? _destinationAccount != null && _destinationAccount != _account
+        : _category != null;
+    return _nameController.text.trim().isNotEmpty &&
+        amount > 0 &&
+        _account != null &&
+        hasTarget;
+  }
+
+  void _save() {
+    final now = DateTime.now().toUtc();
+    Navigator.of(context).pop(
+      RecurringTemplate(
+        name: _nameController.text.trim(),
+        type: _type,
+        amount: parseCurrencyInput(_amountController.text)!,
+        accountId: _account!.id!,
+        destinationAccountId: _destinationAccount?.id,
+        categoryId: _category?.id,
+        note: _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
+        frequency: _frequency,
+        dayOfMonth: _frequency == RecurringFrequency.monthly ? _dayOfMonth : null,
+        weekday: _frequency == RecurringFrequency.weekly ? _weekday : null,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  int _typeIndex(TransactionType type) => switch (type) {
+    TransactionType.expense => 0,
+    TransactionType.income => 1,
+    TransactionType.transfer => 2,
+  };
+
+  TransactionType _typeFromIndex(int index) => switch (index) {
+    1 => TransactionType.income,
+    2 => TransactionType.transfer,
+    _ => TransactionType.expense,
+  };
+
+  Future<Category?> _selectCategory(BuildContext context) {
+    return showModalBottomSheet<Category>(
+      context: context,
+      builder: (_) => _OptionSheet<Category>(
+        title: 'Select category',
+        items: widget.categories
+            .where((category) => category.transactionType == _type)
+            .toList(),
+        labelOf: (category) => category.name,
+      ),
+    );
+  }
+}
+
+class _BudgetSheet extends StatefulWidget {
+  const _BudgetSheet({required this.categories});
+  final List<Category> categories;
+
+  @override
+  State<_BudgetSheet> createState() => _BudgetSheetState();
+}
+
+class _BudgetSheetState extends State<_BudgetSheet> {
+  final _amountController = TextEditingController();
+  Category? _category;
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => _SheetScaffold(
+    title: 'Monthly budget',
+    children: [
+      FlowSelector(
+        label: 'Category',
+        value: _category?.name ?? 'Select category',
+        onTap: () async {
+          final selected = await showModalBottomSheet<Category>(
+            context: context,
+            builder: (_) => _OptionSheet<Category>(
+              title: 'Select category',
+              items: widget.categories,
+              labelOf: (category) => category.name,
+            ),
+          );
+          if (selected != null) setState(() => _category = selected);
+        },
+      ),
+      const SizedBox(height: FlowSpacing.md),
+      TextField(
+        controller: _amountController,
+        inputFormatters: const [FlowCurrencyInputFormatter()],
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(labelText: 'Budget amount'),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: FlowSpacing.lg),
+      FlowButton(label: 'Save budget', onPressed: _canSave ? _save : null),
+    ],
+  );
+
+  bool get _canSave =>
+      _category != null && (parseCurrencyInput(_amountController.text) ?? 0) > 0;
+
+  void _save() {
+    final now = DateTime.now().toUtc();
+    final month = DateTime(now.year, now.month);
+    Navigator.of(context).pop(
+      MonthlyBudget(
+        categoryId: _category!.id,
+        month: month,
+        amount: parseCurrencyInput(_amountController.text)!,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+}
+
+class _SavingsGoalSheet extends StatefulWidget {
+  const _SavingsGoalSheet({required this.accounts});
+  final List<Account> accounts;
+
+  @override
+  State<_SavingsGoalSheet> createState() => _SavingsGoalSheetState();
+}
+
+class _SavingsGoalSheetState extends State<_SavingsGoalSheet> {
+  final _nameController = TextEditingController();
+  final _targetController = TextEditingController();
+  final _contributionController = TextEditingController();
+  Account? _account;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _targetController.dispose();
+    _contributionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => _SheetScaffold(
+    title: 'Savings goal',
+    children: [
+      TextField(
+        controller: _nameController,
+        decoration: const InputDecoration(labelText: 'Goal name'),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: FlowSpacing.md),
+      TextField(
+        controller: _targetController,
+        inputFormatters: const [FlowCurrencyInputFormatter()],
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(labelText: 'Target amount'),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: FlowSpacing.md),
+      FlowSelector(
+        label: 'Linked account',
+        value: _account?.name ?? 'Manual only',
+        onTap: () async {
+          final selected = await _selectAccount(context, widget.accounts);
+          if (selected != null) setState(() => _account = selected);
+        },
+      ),
+      const SizedBox(height: FlowSpacing.md),
+      TextField(
+        controller: _contributionController,
+        inputFormatters: const [FlowCurrencyInputFormatter()],
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(labelText: 'Manual contribution'),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: FlowSpacing.lg),
+      FlowButton(label: 'Save goal', onPressed: _canSave ? _save : null),
+    ],
+  );
+
+  bool get _canSave =>
+      _nameController.text.trim().isNotEmpty &&
+      (parseCurrencyInput(_targetController.text) ?? 0) > 0;
+
+  void _save() {
+    final now = DateTime.now().toUtc();
+    Navigator.of(context).pop(
+      SavingsGoal(
+        name: _nameController.text.trim(),
+        targetAmount: parseCurrencyInput(_targetController.text)!,
+        accountId: _account?.id,
+        manualContribution: parseCurrencyInput(_contributionController.text) ?? 0,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+}
+
+class _SheetScaffold extends StatelessWidget {
+  const _SheetScaffold({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+    child: SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.all(FlowSpacing.md),
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: FlowSpacing.md),
+          ...children,
+        ],
+      ),
+    ),
+  );
+}
+
+class _OptionSheet<T> extends StatelessWidget {
+  const _OptionSheet({
+    required this.title,
+    required this.items,
+    required this.labelOf,
+  });
+
+  final String title;
+  final List<T> items;
+  final String Function(T item) labelOf;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.all(FlowSpacing.md),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: FlowSpacing.sm),
+          for (final item in items)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(labelOf(item)),
+              onTap: () => Navigator.of(context).pop(item),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<Account?> _selectAccount(BuildContext context, List<Account> accounts) {
+  return showModalBottomSheet<Account>(
+    context: context,
+    builder: (_) => _OptionSheet<Account>(
+      title: 'Select account',
+      items: accounts,
+      labelOf: (account) => account.name,
+    ),
+  );
+}

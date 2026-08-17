@@ -43,3 +43,15 @@ final hideBalanceProvider = Provider<bool>((ref) {
 final currencyProvider = Provider<String>((ref) {
   return ref.watch(flowStateProvider)?.currency ?? 'IDR';
 });
+
+final recurringTemplatesProvider = Provider<List<RecurringTemplate>>((ref) {
+  return ref.watch(flowStateProvider)?.recurringTemplates ?? const [];
+});
+
+final monthlyBudgetsProvider = Provider<List<MonthlyBudget>>((ref) {
+  return ref.watch(flowStateProvider)?.monthlyBudgets ?? const [];
+});
+
+final savingsGoalsProvider = Provider<List<SavingsGoal>>((ref) {
+  return ref.watch(flowStateProvider)?.savingsGoals ?? const [];
+});

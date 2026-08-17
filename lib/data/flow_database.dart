@@ -5,7 +5,7 @@ import 'default_category_seeder.dart';
 class FlowDatabase {
   FlowDatabase._(this._database);
 
-  static const version = 1;
+  static const version = 2;
   final Database _database;
 
   Database get database => _database;
@@ -36,6 +36,7 @@ class FlowDatabase {
 
   static final Map<int, Future<void> Function(Database)> _migrations = {
     1: _createSchema,
+    2: (database) => _createPlanningSchema(database),
   };
 
   static Future<void> _createSchema(Database database) async {
@@ -104,6 +105,65 @@ class FlowDatabase {
       await transaction.execute(
         'CREATE INDEX transactions_category_id_idx ON transactions(category_id)',
       );
+      await _createPlanningSchema(transaction);
     });
+  }
+
+  static Future<void> _createPlanningSchema(DatabaseExecutor database) async {
+    await database.execute('''
+      CREATE TABLE recurring_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        transaction_type TEXT NOT NULL,
+        amount INTEGER NOT NULL CHECK (amount >= 0),
+        account_id INTEGER NOT NULL,
+        destination_account_id INTEGER,
+        category_id INTEGER,
+        note TEXT,
+        frequency TEXT NOT NULL,
+        day_of_month INTEGER,
+        weekday INTEGER,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE RESTRICT,
+        FOREIGN KEY (destination_account_id) REFERENCES accounts(id) ON DELETE RESTRICT,
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+      )
+    ''');
+    await database.execute('''
+      CREATE TABLE monthly_budgets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category_id INTEGER,
+        month TEXT NOT NULL,
+        amount INTEGER NOT NULL CHECK (amount >= 0),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE (category_id, month),
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+      )
+    ''');
+    await database.execute('''
+      CREATE TABLE savings_goals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        target_amount INTEGER NOT NULL CHECK (target_amount > 0),
+        account_id INTEGER,
+        manual_contribution INTEGER NOT NULL DEFAULT 0 CHECK (manual_contribution >= 0),
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE SET NULL
+      )
+    ''');
+    await database.execute(
+      'CREATE INDEX recurring_templates_account_idx ON recurring_templates(account_id)',
+    );
+    await database.execute(
+      'CREATE INDEX monthly_budgets_month_idx ON monthly_budgets(month)',
+    );
+    await database.execute(
+      'CREATE INDEX savings_goals_account_idx ON savings_goals(account_id)',
+    );
   }
 }

@@ -38,6 +38,9 @@ void main() {
       ),
     );
     final category = (await firstStore.load()).categories.first;
+    final expenseCategory = (await firstStore.load())
+        .categories
+        .firstWhere((item) => item.transactionType == TransactionType.expense);
     final transaction = await firstStore.saveTransaction(
       Transaction(
         type: TransactionType.income,
@@ -57,6 +60,38 @@ void main() {
         hideBalance: true,
       ),
     );
+    final template = await firstStore.saveRecurringTemplate(
+      RecurringTemplate(
+        name: 'Weekly groceries',
+        type: TransactionType.expense,
+        amount: 150000,
+        accountId: account.id!,
+        categoryId: expenseCategory.id,
+        frequency: RecurringFrequency.weekly,
+        weekday: 6,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+    final budget = await firstStore.saveMonthlyBudget(
+      MonthlyBudget(
+        categoryId: expenseCategory.id,
+        month: DateTime(2026, 8),
+        amount: 1200000,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+    final goal = await firstStore.saveSavingsGoal(
+      SavingsGoal(
+        name: 'Holiday',
+        targetAmount: 10000000,
+        accountId: account.id,
+        manualContribution: 500000,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
     await firstStore.close();
 
     final reopenedStore = await SqliteFlowStore.open(path: databasePath);
@@ -68,12 +103,22 @@ void main() {
     expect(snapshot.settings.currency, 'USD');
     expect(snapshot.settings.themeMode, ThemeModeSetting.dark);
     expect(snapshot.settings.hideBalance, isTrue);
+    expect(snapshot.recurringTemplates.single.id, template.id);
+    expect(snapshot.monthlyBudgets.single.id, budget.id);
+    expect(snapshot.savingsGoals.single.id, goal.id);
 
     await reopenedStore.deleteTransaction(transaction.id!);
+    await reopenedStore.deleteRecurringTemplate(template.id!);
+    await reopenedStore.deleteMonthlyBudget(budget.id!);
+    await reopenedStore.deleteSavingsGoal(goal.id!);
     await reopenedStore.close();
 
     final afterDeleteStore = await SqliteFlowStore.open(path: databasePath);
-    expect((await afterDeleteStore.load()).transactions, isEmpty);
+    final afterDeleteSnapshot = await afterDeleteStore.load();
+    expect(afterDeleteSnapshot.transactions, isEmpty);
+    expect(afterDeleteSnapshot.recurringTemplates, isEmpty);
+    expect(afterDeleteSnapshot.monthlyBudgets, isEmpty);
+    expect(afterDeleteSnapshot.savingsGoals, isEmpty);
     await afterDeleteStore.close();
   });
 }

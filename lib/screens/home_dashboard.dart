@@ -11,6 +11,8 @@ class HomeDashboard extends StatefulWidget {
     required this.accounts,
     this.transactions = const [],
     this.categories = const [],
+    this.recurringTemplates = const [],
+    this.monthlyBudgets = const [],
     this.currency = 'IDR',
     this.hideBalance = false,
     this.onHideBalanceChanged,
@@ -19,6 +21,8 @@ class HomeDashboard extends StatefulWidget {
   final List<Account> accounts;
   final List<Transaction> transactions;
   final List<Category> categories;
+  final List<RecurringTemplate> recurringTemplates;
+  final List<MonthlyBudget> monthlyBudgets;
   final String currency;
   final bool hideBalance;
   final ValueChanged<bool>? onHideBalanceChanged;
@@ -172,6 +176,21 @@ class _HomeDashboardState extends State<HomeDashboard> {
           transactions: monthTransactions.toList(growable: false),
           currency: widget.currency,
         ),
+        if (widget.monthlyBudgets.isNotEmpty) ...[
+          const SizedBox(height: FlowSpacing.gapSection),
+          _HomeBudgetCard(
+            budgets: widget.monthlyBudgets,
+            transactions: widget.transactions,
+            categories: widget.categories,
+            currency: widget.currency,
+          ),
+        ],
+        if (widget.recurringTemplates
+            .where((template) => !template.isArchived)
+            .isNotEmpty) ...[
+          const SizedBox(height: FlowSpacing.gapSection),
+          _RecurringReminderCard(templates: widget.recurringTemplates),
+        ],
         const SizedBox(height: FlowSpacing.gapSection),
         _RecentTransactionsCard(
           transactions: widget.transactions,
@@ -215,6 +234,97 @@ class _HomeDashboardState extends State<HomeDashboard> {
             TransactionType.transfer => sum - transaction.amount,
           };
         });
+  }
+}
+
+class _HomeBudgetCard extends StatelessWidget {
+  const _HomeBudgetCard({
+    required this.budgets,
+    required this.transactions,
+    required this.categories,
+    required this.currency,
+  });
+
+  final List<MonthlyBudget> budgets;
+  final List<Transaction> transactions;
+  final List<Category> categories;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final currentBudgets = budgets
+        .where(
+          (budget) => budget.month.year == now.year && budget.month.month == now.month,
+        )
+        .toList();
+    if (currentBudgets.isEmpty) return const SizedBox.shrink();
+    final budget = currentBudgets.first;
+    final spent = transactions.where((transaction) {
+      return transaction.type == TransactionType.expense &&
+          transaction.categoryId == budget.categoryId &&
+          transaction.occurredAt.year == now.year &&
+          transaction.occurredAt.month == now.month;
+    }).fold<int>(0, (sum, transaction) => sum + transaction.amount);
+    final matchingCategory = categories.where(
+      (category) => category.id == budget.categoryId,
+    );
+    final categoryName = matchingCategory.isEmpty
+        ? 'Budget'
+        : matchingCategory.first.name;
+    return FlowCard(
+      density: FlowCardDensity.compact,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Budget progress', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: FlowSpacing.gapGroup),
+          Text(categoryName, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: FlowSpacing.gapGroup),
+          LinearProgressIndicator(
+            value: budget.amount == 0 ? 0 : (spent / budget.amount).clamp(0, 1).toDouble(),
+          ),
+          const SizedBox(height: FlowSpacing.gapGroup),
+          Text(
+            '${formatCurrency(spent, currency)} of ${formatCurrency(budget.amount, currency)}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecurringReminderCard extends StatelessWidget {
+  const _RecurringReminderCard({required this.templates});
+
+  final List<RecurringTemplate> templates;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = templates.where((template) => !template.isArchived).length;
+    return FlowCard(
+      density: FlowCardDensity.compact,
+      child: Row(
+        children: [
+          const FlowIconContainer(icon: Icons.event_repeat_outlined),
+          const SizedBox(width: FlowSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Recurring reminders', style: Theme.of(context).textTheme.bodyLarge),
+                const SizedBox(height: FlowSpacing.xxs),
+                Text(
+                  '$active template${active == 1 ? '' : 's'} ready to review in Plans.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

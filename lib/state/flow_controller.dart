@@ -202,6 +202,117 @@ class FlowController extends StateNotifier<AsyncValue<FlowState>> {
     return importedCount;
   }
 
+  Future<String> exportBackup() async {
+    final snapshot = await _store.load();
+    final file = await FlowBackupCodec.write(snapshot);
+    return file.path;
+  }
+
+  Future<FlowBackupPreview> previewBackupRestore(String json) async {
+    return FlowBackupCodec.preview(json);
+  }
+
+  Future<void> restoreBackup(String json) async {
+    await _guardMutation(() async {
+      final snapshot = FlowBackupCodec.decode(json);
+      await _store.replaceSnapshot(snapshot);
+      state = AsyncValue.data(FlowState.fromSnapshot(snapshot));
+    });
+  }
+
+  Future<void> saveRecurringTemplate(RecurringTemplate template) async {
+    await _guardMutation(() async {
+      final current = _currentState();
+      final saved = await _store.saveRecurringTemplate(template);
+      state = AsyncValue.data(
+        current.copyWith(
+          recurringTemplates: _replaceOrAdd<RecurringTemplate>(
+            current.recurringTemplates,
+            saved,
+            (item) => item.id == saved.id,
+          ),
+        ),
+      );
+    });
+  }
+
+  Future<void> deleteRecurringTemplate(int id) async {
+    await _guardMutation(() async {
+      final current = _currentState();
+      await _store.deleteRecurringTemplate(id);
+      state = AsyncValue.data(
+        current.copyWith(
+          recurringTemplates: [
+            for (final template in current.recurringTemplates)
+              if (template.id != id) template,
+          ],
+        ),
+      );
+    });
+  }
+
+  Future<void> saveMonthlyBudget(MonthlyBudget budget) async {
+    await _guardMutation(() async {
+      final current = _currentState();
+      final saved = await _store.saveMonthlyBudget(budget);
+      state = AsyncValue.data(
+        current.copyWith(
+          monthlyBudgets: _replaceOrAdd<MonthlyBudget>(
+            current.monthlyBudgets,
+            saved,
+            (item) => item.id == saved.id,
+          ),
+        ),
+      );
+    });
+  }
+
+  Future<void> deleteMonthlyBudget(int id) async {
+    await _guardMutation(() async {
+      final current = _currentState();
+      await _store.deleteMonthlyBudget(id);
+      state = AsyncValue.data(
+        current.copyWith(
+          monthlyBudgets: [
+            for (final budget in current.monthlyBudgets)
+              if (budget.id != id) budget,
+          ],
+        ),
+      );
+    });
+  }
+
+  Future<void> saveSavingsGoal(SavingsGoal goal) async {
+    await _guardMutation(() async {
+      final current = _currentState();
+      final saved = await _store.saveSavingsGoal(goal);
+      state = AsyncValue.data(
+        current.copyWith(
+          savingsGoals: _replaceOrAdd<SavingsGoal>(
+            current.savingsGoals,
+            saved,
+            (item) => item.id == saved.id,
+          ),
+        ),
+      );
+    });
+  }
+
+  Future<void> deleteSavingsGoal(int id) async {
+    await _guardMutation(() async {
+      final current = _currentState();
+      await _store.deleteSavingsGoal(id);
+      state = AsyncValue.data(
+        current.copyWith(
+          savingsGoals: [
+            for (final goal in current.savingsGoals)
+              if (goal.id != id) goal,
+          ],
+        ),
+      );
+    });
+  }
+
   Future<void> closeStore() => _store.close();
 
   Future<void> _saveSettings(AppSettings Function(AppSettings) update) async {
