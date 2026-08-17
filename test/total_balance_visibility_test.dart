@@ -82,8 +82,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Rp -••••••'), findsOneWidget);
-    expect(find.text('Income'), findsOneWidget);
-    expect(find.text('Expense'), findsOneWidget);
+    expect(find.text('Income'), findsWidgets);
+    expect(find.text('Expense'), findsWidgets);
   });
 
   testWidgets('restores and persists the balance visibility setting', (

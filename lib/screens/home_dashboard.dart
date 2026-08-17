@@ -1,7 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../components/flow_components.dart';
 import '../data/models/models.dart';
+import '../theme/flow_colors.dart';
 import '../theme/flow_tokens.dart';
 import '../utils/flow_format.dart';
 
@@ -410,87 +413,260 @@ class _CashFlowCard extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: FlowSpacing.gapBlock),
-          FlowApexChart(
-            height: 132,
-            options: _cashFlowOptions(context, incomeByWeek, expenseByWeek),
+          _CashFlowMiniChart(
+            incomeByWeek: incomeByWeek,
+            expenseByWeek: expenseByWeek,
+            currency: currency,
           ),
         ],
       ),
     );
   }
+}
 
-  Map<String, dynamic> _cashFlowOptions(
-    BuildContext context,
-    List<int> incomeByWeek,
-    List<int> expenseByWeek,
-  ) {
-    final symbol = currencySymbol(currency);
+class _CashFlowMiniChart extends StatelessWidget {
+  const _CashFlowMiniChart({
+    required this.incomeByWeek,
+    required this.expenseByWeek,
+    required this.currency,
+  });
+
+  final List<int> incomeByWeek;
+  final List<int> expenseByWeek;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final labelColor = isDark
-        ? '#FFFFFF'
-        : flowChartColorHex(Theme.of(context).colorScheme.onSurface);
-    final gridColor = flowChartColorHex(Theme.of(context).colorScheme.outline);
-    return {
-      'chart': {
-        'type': 'bar',
-        'fontFamily': 'Montserrat',
-        'foreColor': labelColor,
-        'toolbar': {'show': false},
-        'animations': {'enabled': true, 'speed': 360},
-      },
-      'series': [
-        {'name': 'Income', 'data': incomeByWeek},
-        {'name': 'Expense', 'data': expenseByWeek},
+        ? Colors.white
+        : Theme.of(context).colorScheme.onSurface;
+    return Column(
+      children: [
+        SizedBox(
+          height: 132,
+          width: double.infinity,
+          child: CustomPaint(
+            painter: _CashFlowChartPainter(
+              incomeByWeek: incomeByWeek,
+              expenseByWeek: expenseByWeek,
+              currency: currency,
+              incomeColor: FlowColors.income,
+              expenseColor: FlowColors.expense,
+              labelColor: labelColor,
+              gridColor: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+        ),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _CashFlowLegendItem(
+              label: 'Income',
+              color: FlowColors.income,
+              textColor: labelColor,
+            ),
+            const SizedBox(width: FlowSpacing.md),
+            _CashFlowLegendItem(
+              label: 'Expense',
+              color: FlowColors.expense,
+              textColor: labelColor,
+            ),
+          ],
+        ),
       ],
-      'colors': [
-        flowChartColorHex(Theme.of(context).colorScheme.primary),
-        flowChartColorHex(Theme.of(context).colorScheme.error),
-      ],
-      'xaxis': {
-        'categories': const ['W1', 'W2', 'W3', 'W4', 'W5'],
-        'tickAmount': 5,
-        'axisBorder': {'color': gridColor},
-        'axisTicks': {'color': gridColor},
-        'labels': {
-          'style': {
-            'colors': List<String>.filled(5, labelColor),
-            'fontSize': '10px',
-          },
-        },
-      },
-      'yaxis': {
-        'labels': {
-          'prefix': '$symbol ',
-          'decimals': 0,
-          'style': {
-            'colors': [labelColor],
-            'fontSize': '10px',
-          },
-        },
-      },
-      'plotOptions': {
-        'bar': {'columnWidth': '52%', 'borderRadius': 8},
-      },
-      'dataLabels': {'enabled': false},
-      'legend': {
-        'show': true,
-        'position': 'bottom',
-        'horizontalAlign': 'center',
-        'fontSize': '11px',
-        'fontWeight': 600,
-        'itemMargin': {'horizontal': 8, 'vertical': 0},
-        'markers': {
-          'width': 10,
-          'height': 10,
-          'radius': 2,
-          'offsetY': 1,
-        },
-        'labels': {'colors': labelColor},
-      },
-      'tooltip': {
-        'y': {'prefix': '$symbol ', 'decimals': 0},
-      },
-    };
+    );
+  }
+}
+
+class _CashFlowLegendItem extends StatelessWidget {
+  const _CashFlowLegendItem({
+    required this.label,
+    required this.color,
+    required this.textColor,
+  });
+
+  final String label;
+  final Color color;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      const SizedBox(width: FlowSpacing.xs),
+      Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w600,
+          height: 1,
+        ),
+      ),
+    ],
+  );
+}
+
+class _CashFlowChartPainter extends CustomPainter {
+  const _CashFlowChartPainter({
+    required this.incomeByWeek,
+    required this.expenseByWeek,
+    required this.currency,
+    required this.incomeColor,
+    required this.expenseColor,
+    required this.labelColor,
+    required this.gridColor,
+  });
+
+  final List<int> incomeByWeek;
+  final List<int> expenseByWeek;
+  final String currency;
+  final Color incomeColor;
+  final Color expenseColor;
+  final Color labelColor;
+  final Color gridColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final maxValue = math.max(
+      1,
+      [
+        ...incomeByWeek,
+        ...expenseByWeek,
+      ].fold<int>(0, (current, value) => math.max(current, value)),
+    );
+    final left = 44.0;
+    final right = 4.0;
+    final top = 8.0;
+    final bottom = 22.0;
+    final chartRect = Rect.fromLTWH(
+      left,
+      top,
+      size.width - left - right,
+      size.height - top - bottom,
+    );
+    final gridPaint = Paint()
+      ..color = gridColor.withValues(alpha: 0.42)
+      ..strokeWidth = 1;
+
+    for (final ratio in [0.0, 0.5, 1.0]) {
+      final y = chartRect.bottom - chartRect.height * ratio;
+      canvas.drawLine(Offset(chartRect.left, y), Offset(chartRect.right, y), gridPaint);
+      _drawText(
+        canvas,
+        _axisLabel((maxValue * ratio).round()),
+        Offset(0, y - 6),
+        maxWidth: left - 6,
+        color: labelColor,
+        align: TextAlign.right,
+      );
+    }
+
+    final groupWidth = chartRect.width / 5;
+    final barWidth = math.min(12.0, groupWidth * 0.22);
+    for (var index = 0; index < 5; index++) {
+      final centerX = chartRect.left + groupWidth * (index + 0.5);
+      _drawBar(
+        canvas,
+        centerX - barWidth - 2,
+        chartRect,
+        barWidth,
+        incomeByWeek[index],
+        maxValue,
+        incomeColor,
+      );
+      _drawBar(
+        canvas,
+        centerX + 2,
+        chartRect,
+        barWidth,
+        expenseByWeek[index],
+        maxValue,
+        expenseColor,
+      );
+      _drawText(
+        canvas,
+        'W${index + 1}',
+        Offset(centerX - groupWidth / 2, chartRect.bottom + 6),
+        maxWidth: groupWidth,
+        color: labelColor,
+        align: TextAlign.center,
+      );
+    }
+  }
+
+  void _drawBar(
+    Canvas canvas,
+    double x,
+    Rect chartRect,
+    double width,
+    int value,
+    int maxValue,
+    Color color,
+  ) {
+    final height = value == 0
+        ? 2.0
+        : math.max(3.0, chartRect.height * (value / maxValue));
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(x, chartRect.bottom - height, width, height),
+      const Radius.circular(4),
+    );
+    canvas.drawRRect(rect, Paint()..color = color);
+  }
+
+  void _drawText(
+    Canvas canvas,
+    String text,
+    Offset offset, {
+    required double maxWidth,
+    required Color color,
+    required TextAlign align,
+  }) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Montserrat',
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '',
+      textAlign: align,
+    )..layout(maxWidth: maxWidth);
+    painter.paint(canvas, offset);
+  }
+
+  String _axisLabel(int amount) {
+    final symbol = currencySymbol(currency);
+    if (amount >= 1000000) {
+      return '$symbol ${(amount / 1000000).toStringAsFixed(1)} jt';
+    }
+    if (amount >= 1000) return '$symbol ${(amount / 1000).round()} rb';
+    return '$symbol $amount';
+  }
+
+  @override
+  bool shouldRepaint(covariant _CashFlowChartPainter oldDelegate) {
+    return oldDelegate.incomeByWeek != incomeByWeek ||
+        oldDelegate.expenseByWeek != expenseByWeek ||
+        oldDelegate.currency != currency ||
+        oldDelegate.labelColor != labelColor ||
+        oldDelegate.gridColor != gridColor;
   }
 }
 
