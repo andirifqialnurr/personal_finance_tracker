@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../components/flow_apex_chart.dart';
@@ -645,23 +647,33 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
 
     return Column(
       children: [
-        LayoutBuilder(
-          builder: (context, constraints) => GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapUp: widget.points.isEmpty
-                ? null
-                : (details) => _selectPoint(
-                    details.localPosition.dx,
-                    constraints.maxWidth,
-                  ),
-            child: FlowApexChart(
-              key: const Key('statistics-line-chart'),
-              height: 196,
-              options: _trendOptions(context),
+        SizedBox(
+          key: const Key('statistics-line-chart'),
+          height: 196,
+          child: LayoutBuilder(
+            builder: (context, constraints) => GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapUp: widget.points.isEmpty
+                  ? null
+                  : (details) => _selectPoint(
+                      details.localPosition.dx,
+                      constraints.maxWidth,
+                    ),
+              child: CustomPaint(
+                painter: _SpendingTrendPainter(
+                  points: widget.points,
+                  currency: widget.currency,
+                  lineColor: Theme.of(context).colorScheme.primary,
+                  gridColor: Theme.of(context).colorScheme.outline,
+                  labelColor: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+                size: Size.infinite,
+              ),
             ),
           ),
         ),
-        _TrendAxisLabels(points: widget.points),
         if (selectedPoint != null) ...[
           const SizedBox(height: FlowSpacing.xs),
           Text(
@@ -686,88 +698,160 @@ class _SpendingTrendChartState extends State<_SpendingTrendChart> {
         : (normalizedX * (widget.points.length - 1)).round();
     setState(() => _selectedIndex = index);
   }
-
-  Map<String, dynamic> _trendOptions(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final outline = Theme.of(context).colorScheme.outline;
-    final symbol = currencySymbol(widget.currency);
-    final maxAmount = widget.points.fold<int>(
-      0,
-      (value, point) => point.amount > value ? point.amount : value,
-    );
-    final axisUnit = _compactAxisUnit(maxAmount);
-    final scaledAmounts = [
-      for (final point in widget.points)
-        _scaledChartValue(point.amount, axisUnit.suffix),
-    ];
-    return {
-      'chart': {
-        'type': 'area',
-        'fontFamily': 'Montserrat',
-        'toolbar': {'show': false},
-        'zoom': {'enabled': false},
-        'animations': {'enabled': true, 'speed': 420},
-      },
-      'series': [
-        {'name': 'Expense', 'data': scaledAmounts},
-      ],
-      'colors': [flowChartColorHex(primary)],
-      'stroke': {'curve': 'smooth', 'width': 3},
-      'markers': {'size': 4},
-      'dataLabels': {'enabled': false},
-      'legend': {'show': false},
-      'fill': {
-        'type': 'gradient',
-        'gradient': {'opacityFrom': 0.28, 'opacityTo': 0.02},
-      },
-      'xaxis': {
-        'categories': [for (final point in widget.points) point.label],
-        'tickAmount': widget.points.length <= 7 ? widget.points.length : 6,
-        'labels': {
-          'hideOverlappingLabels': true,
-          'trim': true,
-          'style': {'fontSize': '10px'},
-        },
-      },
-      'yaxis': {
-        'labels': {
-          'prefix': '$symbol ',
-          'suffix': axisUnit.suffix,
-          'decimals': axisUnit.decimals,
-        },
-      },
-      'tooltip': {
-        'y': {
-          'prefix': '$symbol ',
-          'suffix': axisUnit.suffix,
-          'decimals': axisUnit.decimals,
-        },
-      },
-      'grid': {'borderColor': flowChartColorHex(outline)},
-    };
-  }
 }
 
-class _TrendAxisLabels extends StatelessWidget {
-  const _TrendAxisLabels({required this.points});
+class _SpendingTrendPainter extends CustomPainter {
+  const _SpendingTrendPainter({
+    required this.points,
+    required this.currency,
+    required this.lineColor,
+    required this.gridColor,
+    required this.labelColor,
+  });
 
   final List<TrendPoint> points;
+  final String currency;
+  final Color lineColor;
+  final Color gridColor;
+  final Color labelColor;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      for (final index in _visibleTrendIndexes(points.length))
-        Expanded(
-          child: Text(
-            points[index].label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
+  void paint(Canvas canvas, Size size) {
+    if (points.isEmpty) return;
+    final maxAmount = math.max(
+      1,
+      points.fold<int>(0, (value, point) => math.max(value, point.amount)),
+    );
+    final axisUnit = _compactAxisUnit(maxAmount);
+    final scaledMax = math.max<num>(
+      1,
+      _scaledChartValue(maxAmount, axisUnit.suffix),
+    );
+    final left = 46.0;
+    final right = 8.0;
+    final top = 10.0;
+    final bottom = 28.0;
+    final chartRect = Rect.fromLTWH(
+      left,
+      top,
+      size.width - left - right,
+      size.height - top - bottom,
+    );
+    final gridPaint = Paint()
+      ..color = gridColor.withValues(alpha: 0.42)
+      ..strokeWidth = 1;
+
+    for (final ratio in [0.0, 0.5, 1.0]) {
+      final y = chartRect.bottom - chartRect.height * ratio;
+      canvas.drawLine(
+        Offset(chartRect.left, y),
+        Offset(chartRect.right, y),
+        gridPaint,
+      );
+      _drawText(
+        canvas,
+        _axisLabel((scaledMax * ratio), axisUnit),
+        Offset(0, y - 6),
+        maxWidth: left - 6,
+        color: labelColor,
+        align: TextAlign.right,
+      );
+    }
+
+    final offsets = <Offset>[];
+    for (var index = 0; index < points.length; index++) {
+      final scaled = _scaledChartValue(points[index].amount, axisUnit.suffix);
+      final x = points.length == 1
+          ? chartRect.center.dx
+          : chartRect.left + chartRect.width * (index / (points.length - 1));
+      final y = chartRect.bottom - chartRect.height * (scaled / scaledMax);
+      offsets.add(Offset(x, y));
+    }
+
+    if (offsets.length == 1) {
+      canvas.drawCircle(offsets.single, 4, Paint()..color = lineColor);
+    } else {
+      final linePath = Path()..moveTo(offsets.first.dx, offsets.first.dy);
+      for (final offset in offsets.skip(1)) {
+        linePath.lineTo(offset.dx, offset.dy);
+      }
+      final fillPath = Path.from(linePath)
+        ..lineTo(offsets.last.dx, chartRect.bottom)
+        ..lineTo(offsets.first.dx, chartRect.bottom)
+        ..close();
+      canvas.drawPath(
+        fillPath,
+        Paint()..color = lineColor.withValues(alpha: 0.16),
+      );
+      canvas.drawPath(
+        linePath,
+        Paint()
+          ..color = lineColor
+          ..strokeWidth = 3
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round,
+      );
+      for (final offset in offsets) {
+        canvas.drawCircle(offset, 3.5, Paint()..color = lineColor);
+      }
+    }
+
+    for (final index in _visibleTrendIndexes(points.length)) {
+      final x = points.length == 1
+          ? chartRect.center.dx
+          : chartRect.left + chartRect.width * (index / (points.length - 1));
+      _drawText(
+        canvas,
+        points[index].label,
+        Offset(x - 24, chartRect.bottom + 10),
+        maxWidth: 48,
+        color: labelColor,
+        align: TextAlign.center,
+      );
+    }
+  }
+
+  void _drawText(
+    Canvas canvas,
+    String text,
+    Offset offset, {
+    required double maxWidth,
+    required Color color,
+    required TextAlign align,
+  }) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Montserrat',
         ),
-    ],
-  );
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '',
+      textAlign: align,
+    )..layout(maxWidth: maxWidth);
+    painter.paint(canvas, offset);
+  }
+
+  String _axisLabel(num scaledValue, ({String suffix, int decimals}) unit) {
+    final value = unit.decimals == 0
+        ? scaledValue.round().toString()
+        : _formatCompactDecimal(scaledValue);
+    return '${currencySymbol(currency)} $value${unit.suffix}';
+  }
+
+  @override
+  bool shouldRepaint(covariant _SpendingTrendPainter oldDelegate) {
+    return oldDelegate.points != points ||
+        oldDelegate.currency != currency ||
+        oldDelegate.lineColor != lineColor ||
+        oldDelegate.gridColor != gridColor ||
+        oldDelegate.labelColor != labelColor;
+  }
 }
 
 List<int> _visibleTrendIndexes(int length) {
