@@ -457,6 +457,40 @@ class _InlineEmpty extends StatelessWidget {
   );
 }
 
+class _PlanCardIconButton extends StatelessWidget {
+  const _PlanCardIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = IconButton(
+      onPressed: onPressed,
+      tooltip: tooltip,
+      constraints: const BoxConstraints.tightFor(width: 32, height: 36),
+      padding: EdgeInsets.zero,
+      visualDensity: VisualDensity.compact,
+      iconSize: 22,
+      icon: Icon(
+        icon,
+        color: destructive && onPressed != null
+            ? Theme.of(context).colorScheme.error
+            : null,
+      ),
+    );
+    if (!destructive) return button;
+    return Transform.translate(offset: const Offset(8, 0), child: button);
+  }
+}
+
 class _RecurringCard extends StatelessWidget {
   const _RecurringCard({
     required this.template,
@@ -495,16 +529,16 @@ class _RecurringCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
-            TextButton(onPressed: onUse, child: const Text('Review')),
-            IconButton(
+            _PlanCardIconButton(
+              onPressed: onUse,
+              tooltip: 'Review transaction',
+              icon: Icons.open_in_new,
+            ),
+            _PlanCardIconButton(
               onPressed: onDelete,
               tooltip: 'Delete template',
-              icon: Icon(
-                Icons.delete_outline,
-                color: onDelete == null
-                    ? null
-                    : Theme.of(context).colorScheme.error,
-              ),
+              icon: Icons.delete_outline,
+              destructive: true,
             ),
           ],
         ),
@@ -668,15 +702,11 @@ class _BudgetCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ),
-              IconButton(
+              _PlanCardIconButton(
                 onPressed: onDelete,
                 tooltip: 'Delete budget',
-                icon: Icon(
-                  Icons.delete_outline,
-                  color: onDelete == null
-                      ? null
-                      : Theme.of(context).colorScheme.error,
-                ),
+                icon: Icons.delete_outline,
+                destructive: true,
               ),
             ],
           ),
@@ -826,15 +856,11 @@ class _SavingsGoalCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ),
-              IconButton(
+              _PlanCardIconButton(
                 onPressed: onDelete,
                 tooltip: 'Delete goal',
-                icon: Icon(
-                  Icons.delete_outline,
-                  color: onDelete == null
-                      ? null
-                      : Theme.of(context).colorScheme.error,
-                ),
+                icon: Icons.delete_outline,
+                destructive: true,
               ),
             ],
           ),

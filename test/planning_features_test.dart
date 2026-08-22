@@ -354,6 +354,11 @@ void main() {
       deleteIcon.color,
       Theme.of(tester.element(deleteButton)).colorScheme.error,
     );
+    final deleteRect = tester.getRect(deleteButton);
+    final progressRect = tester.getRect(
+      find.byKey(const Key('monthly-budget-card-progress')),
+    );
+    expect(deleteRect.right, progressRect.right);
 
     await tester.tap(deleteButton);
     await tester.pumpAndSettle();
@@ -369,6 +374,73 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(deletedBudgetId, 41);
+  });
+
+  testWidgets('recurring card uses compact icon review action', (tester) async {
+    final now = DateTime.utc(2026, 8, 17);
+    var reviewCount = 0;
+    final template = RecurringTemplate(
+      id: 31,
+      name: 'Internet bill',
+      type: TransactionType.expense,
+      amount: 350000,
+      accountId: 7,
+      categoryId: 11,
+      frequency: RecurringFrequency.monthly,
+      dayOfMonth: 10,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlansPage(
+            section: PlansPageSection.recurringTemplates,
+            accounts: [
+              Account(
+                id: 7,
+                name: 'Cash',
+                type: AccountType.cash,
+                openingBalance: 0,
+                icon: 'wallet',
+                color: '#168C78',
+                createdAt: now,
+                updatedAt: now,
+              ),
+            ],
+            categories: const [
+              Category(
+                id: 11,
+                name: 'Bills',
+                transactionType: TransactionType.expense,
+                icon: 'receipt',
+                color: '#C96B6B',
+              ),
+            ],
+            transactions: const [],
+            recurringTemplates: [template],
+            monthlyBudgets: const [],
+            savingsGoals: const [],
+            currency: 'IDR',
+            onSaveRecurringTemplate: (_) {},
+            onDeleteRecurringTemplate: (_) {},
+            onUseRecurringTemplate: (_) => reviewCount += 1,
+            onSaveMonthlyBudget: (_) {},
+            onDeleteMonthlyBudget: (_) {},
+            onSaveSavingsGoal: (_) {},
+            onDeleteSavingsGoal: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Review'), findsNothing);
+
+    await tester.tap(find.byTooltip('Review transaction'));
+    await tester.pumpAndSettle();
+
+    expect(reviewCount, 1);
   });
 
   testWidgets('savings goal detail and contribution update manual amount', (
