@@ -332,12 +332,12 @@ Catatan arah produk: fitur import dan restore tidak menjadi menu utama. Fokus us
 ### 15.5 Savings goals dengan tambah nominal
 
 - [x] Pisahkan section savings goals dari `PlansPage` menjadi halaman/list khusus.
-- [ ] Detail goal menampilkan target, current amount, remaining amount, progress rounded, dan status selesai bila target tercapai.
+- [x] Detail goal menampilkan target, current amount, remaining amount, progress rounded, dan status selesai bila target tercapai.
 - [x] Tambahkan aksi `Add contribution` untuk menambah nominal ke goal yang sudah ada.
 - [x] Untuk tahap awal, contribution boleh menambah `manualContribution`; untuk riwayat yang rapi, tambahkan model/table kontribusi goal sebelum menampilkan list kontribusi.
 - [x] Jika goal terhubung ke akun, pastikan copy UI membedakan saldo akun dan kontribusi manual agar progress tidak terasa seperti transaksi ganda.
-- [ ] Detail goal menampilkan list kontribusi/aktivitas yang tercatat setelah struktur datanya tersedia.
-- [ ] Tambahkan test untuk create goal, add contribution, progress, goal linked account, dan archive/delete behavior.
+- [x] Detail goal menampilkan list kontribusi/aktivitas yang tercatat setelah struktur datanya tersedia.
+- [x] Tambahkan test untuk create goal, add contribution, progress, goal linked account, dan archive/delete behavior.
 
 ### 15.6 Reports
 

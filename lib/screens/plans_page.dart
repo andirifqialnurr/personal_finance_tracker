@@ -147,8 +147,10 @@ class PlansPage extends StatelessWidget {
                 accountName: goal.accountId == null
                     ? null
                     : _accountName(goal.accountId!),
+                linkedBalance: _linkedGoalBalance(goal),
                 currentAmount: _currentGoalAmount(goal),
                 currency: currency,
+                onOpenDetails: () => _openGoalDetails(context, goal),
                 onAddContribution: () => _openContributionForm(context, goal),
                 onDelete: goal.id == null
                     ? null
@@ -210,12 +212,14 @@ class PlansPage extends StatelessWidget {
   }
 
   int _currentGoalAmount(SavingsGoal goal) {
-    final linkedBalance = goal.accountId == null
-        ? 0
-        : accounts
-              .where((account) => account.id == goal.accountId)
-              .fold<int>(0, (sum, account) => sum + _balanceFor(account));
-    return linkedBalance + goal.manualContribution;
+    return _linkedGoalBalance(goal) + goal.manualContribution;
+  }
+
+  int _linkedGoalBalance(SavingsGoal goal) {
+    if (goal.accountId == null) return 0;
+    return accounts
+        .where((account) => account.id == goal.accountId)
+        .fold<int>(0, (sum, account) => sum + _balanceFor(account));
   }
 
   int _balanceFor(Account account) {
@@ -319,6 +323,26 @@ class PlansPage extends StatelessWidget {
       ),
     );
     if (goal != null) onSaveSavingsGoal(goal);
+  }
+
+  Future<void> _openGoalDetails(BuildContext context, SavingsGoal goal) async {
+    final accountName = goal.accountId == null ? null : _accountName(goal.accountId!);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _GoalDetailsSheet(
+        goal: goal,
+        accountName: accountName,
+        linkedBalance: _linkedGoalBalance(goal),
+        currentAmount: _currentGoalAmount(goal),
+        currency: currency,
+        onAddContribution: () {
+          Navigator.of(context).pop();
+          _openContributionForm(context, goal);
+        },
+      ),
+    );
   }
 
   Future<void> _openContributionForm(
@@ -709,16 +733,20 @@ class _SavingsGoalCard extends StatelessWidget {
   const _SavingsGoalCard({
     required this.goal,
     required this.accountName,
+    required this.linkedBalance,
     required this.currentAmount,
     required this.currency,
+    required this.onOpenDetails,
     required this.onAddContribution,
     required this.onDelete,
   });
 
   final SavingsGoal goal;
   final String? accountName;
+  final int linkedBalance;
   final int currentAmount;
   final String currency;
+  final VoidCallback onOpenDetails;
   final VoidCallback onAddContribution;
   final VoidCallback? onDelete;
 
@@ -728,7 +756,10 @@ class _SavingsGoalCard extends StatelessWidget {
     final sourceLabel = accountName == null
         ? 'Manual contributions'
         : '$accountName + manual contributions';
-    return FlowCard(
+    return InkWell(
+      onTap: onOpenDetails,
+      borderRadius: BorderRadius.circular(FlowRadii.card),
+      child: FlowCard(
       density: FlowCardDensity.standard,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -758,6 +789,13 @@ class _SavingsGoalCard extends StatelessWidget {
             '${formatCurrency(currentAmount, currency)} of ${formatCurrency(goal.targetAmount, currency)}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
+          if (accountName != null) ...[
+            const SizedBox(height: FlowSpacing.gapGroup),
+            Text(
+              'Linked balance ${formatCurrency(linkedBalance, currency)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: FlowSpacing.gapGroup),
           Align(
             alignment: Alignment.centerRight,
@@ -769,6 +807,74 @@ class _SavingsGoalCard extends StatelessWidget {
           ),
         ],
       ),
+      ),
+    );
+  }
+}
+
+class _GoalDetailsSheet extends StatelessWidget {
+  const _GoalDetailsSheet({
+    required this.goal,
+    required this.accountName,
+    required this.linkedBalance,
+    required this.currentAmount,
+    required this.currency,
+    required this.onAddContribution,
+  });
+
+  final SavingsGoal goal;
+  final String? accountName;
+  final int linkedBalance;
+  final int currentAmount;
+  final String currency;
+  final VoidCallback onAddContribution;
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = goal.targetAmount - currentAmount;
+    final complete = currentAmount >= goal.targetAmount;
+    final ratio = (currentAmount / goal.targetAmount).clamp(0, 1).toDouble();
+    return _SheetScaffold(
+      title: goal.name,
+      children: [
+        _DetailRow(label: 'Status', value: complete ? 'Completed' : 'In progress'),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(label: 'Target', value: formatCurrency(goal.targetAmount, currency)),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(label: 'Current', value: formatCurrency(currentAmount, currency)),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(
+          label: complete ? 'Surplus' : 'Remaining',
+          value: formatCurrency(remaining.abs(), currency),
+        ),
+        const SizedBox(height: FlowSpacing.gapBlock),
+        FlowProgressBar(value: ratio, color: FlowColors.income),
+        const SizedBox(height: FlowSpacing.gapSection),
+        Text('Activity', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(
+          label: 'Manual',
+          value: formatCurrency(goal.manualContribution, currency),
+        ),
+        if (accountName != null) ...[
+          const SizedBox(height: FlowSpacing.gapGroup),
+          _DetailRow(
+            label: 'Account',
+            value: '$accountName (${formatCurrency(linkedBalance, currency)})',
+          ),
+        ],
+        const SizedBox(height: FlowSpacing.gapBlock),
+        Text(
+          'Per-contribution history needs a dedicated contribution table. Until then, this goal tracks the current manual contribution total.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: FlowSpacing.lg),
+        FlowButton(
+          label: 'Add contribution',
+          icon: Icons.add,
+          onPressed: onAddContribution,
+        ),
+      ],
     );
   }
 }

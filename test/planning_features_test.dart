@@ -240,4 +240,68 @@ void main() {
     expect(find.text('Lunch'), findsOneWidget);
     expect(find.text('Next month'), findsNothing);
   });
+
+  testWidgets('savings goal detail and contribution update manual amount', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 8, 17);
+    SavingsGoal? savedGoal;
+    final goal = SavingsGoal(
+      id: 51,
+      name: 'Emergency fund',
+      targetAmount: 1200000,
+      accountId: 7,
+      manualContribution: 250000,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlansPage(
+            section: PlansPageSection.savingsGoals,
+            accounts: [
+              Account(
+                id: 7,
+                name: 'Savings',
+                type: AccountType.bank,
+                openingBalance: 1000000,
+                icon: 'bank',
+                color: '#168C78',
+                createdAt: now,
+                updatedAt: now,
+              ),
+            ],
+            categories: const [],
+            transactions: const [],
+            recurringTemplates: const [],
+            monthlyBudgets: const [],
+            savingsGoals: [goal],
+            currency: 'IDR',
+            onSaveRecurringTemplate: (_) {},
+            onDeleteRecurringTemplate: (_) {},
+            onUseRecurringTemplate: (_) {},
+            onSaveMonthlyBudget: (_) {},
+            onDeleteMonthlyBudget: (_) {},
+            onSaveSavingsGoal: (value) => savedGoal = value,
+            onDeleteSavingsGoal: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Emergency fund'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Completed'), findsOneWidget);
+    expect(find.text('Savings (Rp 1.000.000)'), findsOneWidget);
+    await tester.tap(find.text('Add contribution').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, '50000');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add contribution').last);
+    await tester.pumpAndSettle();
+
+    expect(savedGoal?.manualContribution, 300000);
+  });
 }
