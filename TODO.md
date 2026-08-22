@@ -362,7 +362,7 @@ Catatan arah produk: fitur import dan restore tidak menjadi menu utama. Fokus us
 - [x] Hapus atau sembunyikan `Import CSV` dari menu utama Settings.
 - [x] Hapus atau sembunyikan `Restore local backup` dari menu utama Settings, atau pindahkan ke area advanced/danger bila masih ingin dipertahankan untuk recovery.
 - [x] Kurangi Settings menjadi pengaturan aplikasi: theme, currency, categories, dan danger zone.
-- [ ] Update README agar alur export laporan dan backup sesuai struktur baru.
+- [x] Update README agar alur export laporan dan backup sesuai struktur baru.
 
 ### 15.9 Validasi akhir batch
 
