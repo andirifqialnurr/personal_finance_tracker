@@ -55,6 +55,19 @@ class FlowCsvExporter {
     return rows.map((row) => row.map(_escape).join(',')).join('\r\n');
   }
 
+  static String buildMonthly({
+    required DateTime month,
+    required List<Transaction> transactions,
+    required List<Account> accounts,
+    required List<Category> categories,
+  }) {
+    return build(
+      transactions: _filterMonth(transactions, month),
+      accounts: accounts,
+      categories: categories,
+    );
+  }
+
   static Future<File> write({
     required List<Transaction> transactions,
     required List<Account> accounts,
@@ -73,6 +86,45 @@ class FlowCsvExporter {
         categories: categories,
       ),
     );
+  }
+
+  static Future<File> writeMonthly({
+    required DateTime month,
+    required List<Transaction> transactions,
+    required List<Account> accounts,
+    required List<Category> categories,
+  }) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final period =
+        '${month.year.toString().padLeft(4, '0')}-${month.month.toString().padLeft(2, '0')}';
+    final timestamp = DateTime.now().toUtc().toIso8601String().replaceAll(
+      ':',
+      '-',
+    );
+    final file = File(
+      '${directory.path}/flow-report-$period-$timestamp.csv',
+    );
+    return file.writeAsString(
+      buildMonthly(
+        month: month,
+        transactions: transactions,
+        accounts: accounts,
+        categories: categories,
+      ),
+    );
+  }
+
+  static List<Transaction> _filterMonth(
+    List<Transaction> transactions,
+    DateTime month,
+  ) {
+    return transactions
+        .where(
+          (transaction) =>
+              transaction.occurredAt.year == month.year &&
+              transaction.occurredAt.month == month.month,
+        )
+        .toList(growable: false);
   }
 
   static String _escape(String value) {

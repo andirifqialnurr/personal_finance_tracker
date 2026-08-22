@@ -170,6 +170,17 @@ class FlowController extends StateNotifier<AsyncValue<FlowState>> {
     return file.path;
   }
 
+  Future<String> exportMonthlyCsv(DateTime month) async {
+    final current = _currentState();
+    final file = await FlowCsvExporter.writeMonthly(
+      month: month,
+      transactions: current.transactions,
+      accounts: current.accounts,
+      categories: current.categories,
+    );
+    return file.path;
+  }
+
   Future<FlowCsvImportPreview> previewCsvImport(String csv) async {
     final current = _currentState();
     return FlowCsvImporter.preview(

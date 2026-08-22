@@ -9,14 +9,16 @@ class ReportsPage extends StatefulWidget {
   const ReportsPage({
     super.key,
     required this.transactions,
+    required this.categories,
     required this.currency,
-    required this.onExportCsv,
+    required this.onExportMonthlyCsv,
     required this.onExportBackup,
   });
 
   final List<Transaction> transactions;
+  final List<Category> categories;
   final String currency;
-  final Future<String> Function() onExportCsv;
+  final Future<String> Function(DateTime month) onExportMonthlyCsv;
   final Future<String> Function() onExportBackup;
 
   @override
@@ -26,14 +28,21 @@ class ReportsPage extends StatefulWidget {
 class _ReportsPageState extends State<ReportsPage> {
   var _isExportingCsv = false;
   var _isExportingBackup = false;
+  late DateTime _selectedMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedMonth = DateTime(now.year, now.month);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
     final monthTransactions = widget.transactions.where(
       (transaction) =>
-          transaction.occurredAt.year == now.year &&
-          transaction.occurredAt.month == now.month,
+          transaction.occurredAt.year == _selectedMonth.year &&
+          transaction.occurredAt.month == _selectedMonth.month,
     );
     final income = monthTransactions
         .where((transaction) => transaction.type == TransactionType.income)
@@ -44,14 +53,35 @@ class _ReportsPageState extends State<ReportsPage> {
     final transfers = monthTransactions
         .where((transaction) => transaction.type == TransactionType.transfer)
         .fold<int>(0, (sum, transaction) => sum + transaction.amount);
+    final transactionCount = monthTransactions.length;
+    final topCategory = _topExpenseCategory(monthTransactions);
 
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.md),
       children: [
         const SizedBox(height: FlowSpacing.gapSection),
-        Text(
-          '${_monthName(now.month)} ${now.year}',
-          style: Theme.of(context).textTheme.titleMedium,
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => _moveMonth(-1),
+              tooltip: 'Previous month',
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Expanded(
+              child: Text(
+                '${_monthName(_selectedMonth.month)} ${_selectedMonth.year}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            IconButton(
+              onPressed: () => _moveMonth(1),
+              tooltip: 'Next month',
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ],
         ),
         const SizedBox(height: FlowSpacing.sm),
         FlowCard(
@@ -76,6 +106,16 @@ class _ReportsPageState extends State<ReportsPage> {
               _ReportMetric(
                 label: 'Transfers',
                 value: formatCurrency(transfers, widget.currency),
+              ),
+              const SizedBox(height: FlowSpacing.gapGroup),
+              _ReportMetric(
+                label: 'Transactions',
+                value: '$transactionCount',
+              ),
+              const SizedBox(height: FlowSpacing.gapGroup),
+              _ReportMetric(
+                label: 'Top expense',
+                value: topCategory,
               ),
             ],
           ),
@@ -119,7 +159,7 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _exportCsv() async {
     setState(() => _isExportingCsv = true);
     try {
-      final path = await widget.onExportCsv();
+      final path = await widget.onExportMonthlyCsv(_selectedMonth);
       _showMessage('CSV exported to $path');
     } catch (error) {
       _showMessage('CSV export failed: $error');
@@ -145,6 +185,39 @@ class _ReportsPageState extends State<ReportsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  void _moveMonth(int offset) {
+    setState(() {
+      _selectedMonth = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month + offset,
+      );
+    });
+  }
+
+  String _topExpenseCategory(Iterable<Transaction> monthTransactions) {
+    final categoryTotals = <int, int>{};
+    for (final transaction in monthTransactions) {
+      final categoryId = transaction.categoryId;
+      if (transaction.type != TransactionType.expense || categoryId == null) {
+        continue;
+      }
+      categoryTotals[categoryId] =
+          (categoryTotals[categoryId] ?? 0) + transaction.amount;
+    }
+    if (categoryTotals.isEmpty) return 'None';
+    final top = categoryTotals.entries.reduce(
+      (current, next) => next.value > current.value ? next : current,
+    );
+    String? categoryName;
+    for (final category in widget.categories) {
+      if (category.id == top.key) {
+        categoryName = category.name;
+        break;
+      }
+    }
+    return '${categoryName ?? 'Category ${top.key}'} (${formatCurrency(top.value, widget.currency)})';
   }
 
   static String _monthName(int month) => const [

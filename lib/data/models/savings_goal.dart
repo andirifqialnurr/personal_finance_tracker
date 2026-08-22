@@ -19,6 +19,26 @@ class SavingsGoal {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  SavingsGoal copyWith({
+    int? id,
+    String? name,
+    int? targetAmount,
+    int? accountId,
+    int? manualContribution,
+    bool? isArchived,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => SavingsGoal(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    targetAmount: targetAmount ?? this.targetAmount,
+    accountId: accountId ?? this.accountId,
+    manualContribution: manualContribution ?? this.manualContribution,
+    isArchived: isArchived ?? this.isArchived,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+
   factory SavingsGoal.fromMap(Map<String, Object?> map) => SavingsGoal(
     id: map['id'] as int?,
     name: map['name'] as String,

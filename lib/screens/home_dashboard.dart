@@ -307,8 +307,13 @@ class _HomeBudgetCard extends StatelessWidget {
           const SizedBox(height: FlowSpacing.gapGroup),
           Text(categoryName, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: FlowSpacing.gapGroup),
-          LinearProgressIndicator(
-            value: budget.amount == 0 ? 0 : (spent / budget.amount).clamp(0, 1).toDouble(),
+          FlowProgressBar(
+            value: budget.amount == 0 ? 0 : spent / budget.amount,
+            color: spent > budget.amount
+                ? FlowColors.income
+                : spent > budget.amount * 0.8
+                ? FlowColors.chartAmber
+                : FlowColors.income,
           ),
           const SizedBox(height: FlowSpacing.gapGroup),
           Text(

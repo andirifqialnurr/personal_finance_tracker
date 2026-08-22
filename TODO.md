@@ -314,37 +314,37 @@ Catatan arah produk: fitur import dan restore tidak menjadi menu utama. Fokus us
 
 ### 15.3 Recurring templates sebagai halaman khusus
 
-- [ ] Pisahkan section recurring dari `PlansPage` menjadi halaman/list khusus.
+- [x] Pisahkan section recurring dari `PlansPage` menjadi halaman/list khusus.
 - [ ] Jelaskan alur produk sebagai template transaksi rutin, bukan transaksi otomatis yang langsung mengubah saldo.
-- [ ] Pertahankan aksi `Review`/buat transaksi dari template supaya transaksi tetap dikonfirmasi user sebelum masuk income/expense/transfer.
+- [x] Pertahankan aksi `Review`/buat transaksi dari template supaya transaksi tetap dikonfirmasi user sebelum masuk income/expense/transfer.
 - [ ] Tambahkan detail item recurring yang menampilkan metadata template dan riwayat transaksi yang dibuat dari template bila sudah tersedia penanda relasi.
 - [ ] Jika belum ada field relasi template di transaksi, tentukan migration/model yang aman sebelum menampilkan riwayat berbasis relasi.
 
 ### 15.4 Monthly budgets sebagai halaman khusus
 
-- [ ] Pisahkan section monthly budgets dari `PlansPage` menjadi halaman/list khusus.
+- [x] Pisahkan section monthly budgets dari `PlansPage` menjadi halaman/list khusus.
 - [ ] Detail budget menampilkan kategori, bulan, limit, spent, remaining/over, dan list transaksi expense yang masuk kategori/bulan tersebut.
-- [ ] Perbaiki progress bar budget: track abu-abu, progress hijau, rounded kiri-kanan.
-- [ ] Saat spent melewati budget, tampilkan bagian over budget berwarna merah di atas progress penuh hijau atau dengan indikator merah yang jelas.
-- [ ] Pastikan budget tetap read-only terhadap saldo: budget hanya membaca transaksi expense, tidak membuat/mengubah transaksi.
+- [x] Perbaiki progress bar budget: track abu-abu, progress hijau, rounded kiri-kanan.
+- [x] Saat spent melewati budget, tampilkan bagian over budget berwarna merah di atas progress penuh hijau atau dengan indikator merah yang jelas.
+- [x] Pastikan budget tetap read-only terhadap saldo: budget hanya membaca transaksi expense, tidak membuat/mengubah transaksi.
 - [ ] Tambahkan test kalkulasi spent, remaining, over budget, dan progress rendering state normal/over.
 
 ### 15.5 Savings goals dengan tambah nominal
 
-- [ ] Pisahkan section savings goals dari `PlansPage` menjadi halaman/list khusus.
+- [x] Pisahkan section savings goals dari `PlansPage` menjadi halaman/list khusus.
 - [ ] Detail goal menampilkan target, current amount, remaining amount, progress rounded, dan status selesai bila target tercapai.
-- [ ] Tambahkan aksi `Add contribution` untuk menambah nominal ke goal yang sudah ada.
-- [ ] Untuk tahap awal, contribution boleh menambah `manualContribution`; untuk riwayat yang rapi, tambahkan model/table kontribusi goal sebelum menampilkan list kontribusi.
-- [ ] Jika goal terhubung ke akun, pastikan copy UI membedakan saldo akun dan kontribusi manual agar progress tidak terasa seperti transaksi ganda.
+- [x] Tambahkan aksi `Add contribution` untuk menambah nominal ke goal yang sudah ada.
+- [x] Untuk tahap awal, contribution boleh menambah `manualContribution`; untuk riwayat yang rapi, tambahkan model/table kontribusi goal sebelum menampilkan list kontribusi.
+- [x] Jika goal terhubung ke akun, pastikan copy UI membedakan saldo akun dan kontribusi manual agar progress tidak terasa seperti transaksi ganda.
 - [ ] Detail goal menampilkan list kontribusi/aktivitas yang tercatat setelah struktur datanya tersedia.
 - [ ] Tambahkan test untuk create goal, add contribution, progress, goal linked account, dan archive/delete behavior.
 
 ### 15.6 Reports
 
-- [ ] Buat halaman `Reports` dari quick menu Home.
-- [ ] Tambahkan filter bulan/tahun sebagai periode laporan default.
-- [ ] Tampilkan ringkasan sebelum download: total income, total expense, net cash flow, transfer count/amount, top expense categories, dan jumlah transaksi.
-- [ ] Sediakan export CSV bulanan yang rapi dengan header konsisten, transaksi terurut, escaping koma/kutip/newline, dan nama file berisi periode.
+- [x] Buat halaman `Reports` dari quick menu Home.
+- [x] Tambahkan filter bulan/tahun sebagai periode laporan default.
+- [x] Tampilkan ringkasan sebelum download: total income, total expense, net cash flow, transfer count/amount, top expense categories, dan jumlah transaksi.
+- [x] Sediakan export CSV bulanan yang rapi dengan header konsisten, transaksi terurut, escaping koma/kutip/newline, dan nama file berisi periode.
 - [ ] Sediakan export PDF bulanan yang rapi dan mudah dibaca: judul laporan, periode, ringkasan, tabel transaksi, dan footer tanggal export.
 - [ ] Pastikan PDF aman untuk nominal panjang, kategori/note panjang, multi-page, Light/Dark source data, dan data kosong.
 - [ ] Tambahkan test unit untuk builder data laporan, CSV output, dan minimal golden/source check untuk PDF bila tooling tersedia.
@@ -366,10 +366,10 @@ Catatan arah produk: fitur import dan restore tidak menjadi menu utama. Fokus us
 
 ### 15.9 Validasi akhir batch
 
-- [ ] Jalankan `flutter analyze`.
-- [ ] Jalankan test terkait planning, laporan, CSV, backup, dan widget navigation.
-- [ ] Jalankan `flutter test --concurrency=1` bila environment memungkinkan.
-- [ ] Jalankan `flutter build apk --debug`.
+- [x] Jalankan `flutter analyze`.
+- [x] Jalankan test terkait planning, laporan, CSV, backup, dan widget navigation.
+- [x] Jalankan `flutter test --concurrency=1` bila environment memungkinkan.
+- [x] Jalankan `flutter build apk --debug`.
 - [ ] Lakukan visual pass pada Home grid, halaman detail planning, progress bar, laporan PDF/CSV, dan judul menu di Light/Dark serta layar kecil.
 
 ## 16. Fitur tambahan tanpa menambah bottom navigation

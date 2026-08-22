@@ -55,4 +55,24 @@ void main() {
     });
     expect(settings.themeMode, ThemeModeSetting.system);
   });
+
+  test('savings goal copyWith can add manual contribution', () {
+    final goal = SavingsGoal(
+      name: 'Emergency fund',
+      targetAmount: 5000000,
+      manualContribution: 1000000,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    );
+
+    final updated = goal.copyWith(
+      manualContribution: goal.manualContribution + 250000,
+      updatedAt: timestamp.add(const Duration(days: 1)),
+    );
+
+    expect(updated.name, goal.name);
+    expect(updated.targetAmount, goal.targetAmount);
+    expect(updated.manualContribution, 1250000);
+    expect(updated.updatedAt, isNot(goal.updatedAt));
+  });
 }

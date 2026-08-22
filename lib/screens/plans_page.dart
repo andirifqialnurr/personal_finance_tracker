@@ -147,6 +147,7 @@ class PlansPage extends StatelessWidget {
                     : _accountName(goal.accountId!),
                 currentAmount: _currentGoalAmount(goal),
                 currency: currency,
+                onAddContribution: () => _openContributionForm(context, goal),
                 onDelete: goal.id == null
                     ? null
                     : () => onDeleteSavingsGoal(goal.id!),
@@ -265,6 +266,26 @@ class PlansPage extends StatelessWidget {
       ),
     );
     if (goal != null) onSaveSavingsGoal(goal);
+  }
+
+  Future<void> _openContributionForm(
+    BuildContext context,
+    SavingsGoal goal,
+  ) async {
+    final amount = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const _ContributionSheet(),
+    );
+    if (amount == null || amount <= 0) return;
+    final now = DateTime.now().toUtc();
+    onSaveSavingsGoal(
+      goal.copyWith(
+        manualContribution: goal.manualContribution + amount,
+        updatedAt: now,
+      ),
+    );
   }
 }
 
@@ -443,7 +464,7 @@ class _BudgetCard extends StatelessWidget {
               ),
             ],
           ),
-          LinearProgressIndicator(value: ratio, color: color),
+          FlowProgressBar(value: ratio, color: color),
           const SizedBox(height: FlowSpacing.gapGroup),
           Text(
             '${formatCurrency(spent, currency)} of ${formatCurrency(budget.amount, currency)}',
@@ -461,6 +482,7 @@ class _SavingsGoalCard extends StatelessWidget {
     required this.accountName,
     required this.currentAmount,
     required this.currency,
+    required this.onAddContribution,
     required this.onDelete,
   });
 
@@ -468,11 +490,15 @@ class _SavingsGoalCard extends StatelessWidget {
   final String? accountName;
   final int currentAmount;
   final String currency;
+  final VoidCallback onAddContribution;
   final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final ratio = (currentAmount / goal.targetAmount).clamp(0, 1).toDouble();
+    final sourceLabel = accountName == null
+        ? 'Manual contributions'
+        : '$accountName + manual contributions';
     return FlowCard(
       density: FlowCardDensity.standard,
       child: Column(
@@ -495,14 +521,22 @@ class _SavingsGoalCard extends StatelessWidget {
               ),
             ],
           ),
-          if (accountName != null)
-            Text(accountName!, style: Theme.of(context).textTheme.bodySmall),
+          Text(sourceLabel, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: FlowSpacing.gapGroup),
-          LinearProgressIndicator(value: ratio),
+          FlowProgressBar(value: ratio, color: FlowColors.income),
           const SizedBox(height: FlowSpacing.gapGroup),
           Text(
             '${formatCurrency(currentAmount, currency)} of ${formatCurrency(goal.targetAmount, currency)}',
             style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: FlowSpacing.gapGroup),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: onAddContribution,
+              icon: const Icon(Icons.add),
+              label: const Text('Add contribution'),
+            ),
           ),
         ],
       ),
@@ -837,6 +871,48 @@ class _SavingsGoalSheetState extends State<_SavingsGoalSheet> {
         updatedAt: now,
       ),
     );
+  }
+}
+
+class _ContributionSheet extends StatefulWidget {
+  const _ContributionSheet();
+
+  @override
+  State<_ContributionSheet> createState() => _ContributionSheetState();
+}
+
+class _ContributionSheetState extends State<_ContributionSheet> {
+  final _amountController = TextEditingController();
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => _SheetScaffold(
+    title: 'Add contribution',
+    children: [
+      TextField(
+        controller: _amountController,
+        inputFormatters: const [FlowCurrencyInputFormatter()],
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(labelText: 'Contribution amount'),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: FlowSpacing.lg),
+      FlowButton(
+        label: 'Add contribution',
+        onPressed: _canSave ? _save : null,
+      ),
+    ],
+  );
+
+  bool get _canSave => (parseCurrencyInput(_amountController.text) ?? 0) > 0;
+
+  void _save() {
+    Navigator.of(context).pop(parseCurrencyInput(_amountController.text));
   }
 }
 

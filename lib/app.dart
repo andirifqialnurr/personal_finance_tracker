@@ -573,8 +573,9 @@ class _ReportsContent extends ConsumerWidget {
     final controller = ref.read(flowControllerProvider.notifier);
     return ReportsPage(
       transactions: ref.watch(transactionsProvider),
+      categories: ref.watch(categoriesProvider),
       currency: ref.watch(currencyProvider),
-      onExportCsv: controller.exportCsv,
+      onExportMonthlyCsv: controller.exportMonthlyCsv,
       onExportBackup: controller.exportBackup,
     );
   }
