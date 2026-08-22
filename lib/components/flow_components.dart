@@ -1,5 +1,6 @@
 export 'flow_amount_text.dart';
 export 'flow_apex_chart.dart';
+export 'flow_budget_progress_value.dart';
 export 'flow_button.dart';
 export 'flow_card.dart';
 export 'flow_confirmation_sheet.dart';

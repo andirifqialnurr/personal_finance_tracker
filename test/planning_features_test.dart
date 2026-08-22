@@ -264,6 +264,11 @@ void main() {
       ),
     );
 
+    expect(
+      find.text('Rp 50.000 of Rp 300.000 (16.7%)', findRichText: true),
+      findsOneWidget,
+    );
+
     await tester.tap(find.text('Food'));
     await tester.pumpAndSettle();
 
@@ -271,6 +276,10 @@ void main() {
     expect(find.text('Remaining'), findsOneWidget);
     expect(find.text('Lunch'), findsOneWidget);
     expect(find.text('Next month'), findsNothing);
+    expect(
+      find.text('Rp 50.000 of Rp 300.000 (16.7%)', findRichText: true),
+      findsWidgets,
+    );
   });
 
   testWidgets('savings goal detail and contribution update manual amount', (

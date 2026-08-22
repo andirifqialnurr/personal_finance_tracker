@@ -57,6 +57,16 @@ void main() {
             accounts: [account],
             transactions: [transaction],
             categories: const [category],
+            monthlyBudgets: [
+              MonthlyBudget(
+                id: 1,
+                categoryId: 1,
+                month: DateTime(timestamp.year, timestamp.month),
+                amount: 1500000,
+                createdAt: timestamp,
+                updatedAt: timestamp,
+              ),
+            ],
             onAddTransaction: () {},
             onOpenRecurringTemplates: () {},
             onOpenMonthlyBudgets: () {},
@@ -75,6 +85,7 @@ void main() {
       }
 
       expect(find.text('Recent transactions'), findsOneWidget);
+      expect(find.text('Budget progress'), findsNothing);
       expect(find.textContaining('Food'), findsOneWidget);
       final grid = tester.widget<GridView>(find.byType(GridView).first);
       final delegate =

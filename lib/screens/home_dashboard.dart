@@ -186,15 +186,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
           transactions: monthTransactions.toList(growable: false),
           currency: widget.currency,
         ),
-        if (widget.monthlyBudgets.isNotEmpty) ...[
-          const SizedBox(height: FlowSpacing.gapSection),
-          _HomeBudgetCard(
-            budgets: widget.monthlyBudgets,
-            transactions: widget.transactions,
-            categories: widget.categories,
-            currency: widget.currency,
-          ),
-        ],
         if (widget.recurringTemplates
             .where((template) => !template.isArchived)
             .isNotEmpty) ...[
@@ -244,65 +235,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
             TransactionType.transfer => sum - transaction.amount,
           };
         });
-  }
-}
-
-class _HomeBudgetCard extends StatelessWidget {
-  const _HomeBudgetCard({
-    required this.budgets,
-    required this.transactions,
-    required this.categories,
-    required this.currency,
-  });
-
-  final List<MonthlyBudget> budgets;
-  final List<Transaction> transactions;
-  final List<Category> categories;
-  final String currency;
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final currentBudgets = budgets
-        .where(
-          (budget) => budget.month.year == now.year && budget.month.month == now.month,
-        )
-        .toList();
-    if (currentBudgets.isEmpty) return const SizedBox.shrink();
-    final budget = currentBudgets.first;
-    final spent = transactions.where((transaction) {
-      return transaction.type == TransactionType.expense &&
-          transaction.categoryId == budget.categoryId &&
-          transaction.occurredAt.year == now.year &&
-          transaction.occurredAt.month == now.month;
-    }).fold<int>(0, (sum, transaction) => sum + transaction.amount);
-    final matchingCategory = categories.where(
-      (category) => category.id == budget.categoryId,
-    );
-    final categoryName = matchingCategory.isEmpty
-        ? 'Budget'
-        : matchingCategory.first.name;
-    return FlowCard(
-      density: FlowCardDensity.compact,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Budget progress', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: FlowSpacing.gapGroup),
-          Text(categoryName, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: FlowSpacing.gapGroup),
-          FlowProgressBar(
-            value: budget.amount == 0 ? 0 : spent / budget.amount,
-            color: FlowColors.income,
-          ),
-          const SizedBox(height: FlowSpacing.gapGroup),
-          Text(
-            '${formatCurrency(spent, currency)} of ${formatCurrency(budget.amount, currency)}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
-      ),
-    );
   }
 }
 

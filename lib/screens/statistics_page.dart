@@ -3,8 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../components/flow_apex_chart.dart';
+import '../components/flow_budget_progress_value.dart';
 import '../components/flow_card.dart';
 import '../components/flow_empty_state.dart';
+import '../components/flow_progress_bar.dart';
 import '../components/flow_segmented_control.dart';
 import '../data/models/models.dart';
 import '../theme/flow_colors.dart';
@@ -99,12 +101,12 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ),
           if (widget.monthlyBudgets.isNotEmpty) ...[
             const SizedBox(height: FlowSpacing.md),
-            const _SectionHeading(title: 'Budget status'),
+            const _SectionHeading(title: 'Budget progress'),
             const SizedBox(height: FlowSpacing.sm),
             FlowCard(
               variant: FlowCardVariant.summary,
               density: FlowCardDensity.standard,
-              child: _BudgetStatusList(
+              child: _BudgetProgressList(
                 budgets: widget.monthlyBudgets,
                 transactions: widget.transactions,
                 categories: widget.categories,
@@ -157,8 +159,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 }
 
-class _BudgetStatusList extends StatelessWidget {
-  const _BudgetStatusList({
+class _BudgetProgressList extends StatelessWidget {
+  const _BudgetProgressList({
     required this.budgets,
     required this.transactions,
     required this.categories,
@@ -189,7 +191,7 @@ class _BudgetStatusList extends StatelessWidget {
     return Column(
       children: [
         for (final budget in currentBudgets) ...[
-          _BudgetStatusRow(
+          _BudgetProgressRow(
             label: _categoryName(budget.categoryId),
             spent: _spent(budget),
             limit: budget.amount,
@@ -218,8 +220,8 @@ class _BudgetStatusList extends StatelessWidget {
   }
 }
 
-class _BudgetStatusRow extends StatelessWidget {
-  const _BudgetStatusRow({
+class _BudgetProgressRow extends StatelessWidget {
+  const _BudgetProgressRow({
     required this.label,
     required this.spent,
     required this.limit,
@@ -233,16 +235,12 @@ class _BudgetStatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ratio = limit == 0 ? 0.0 : (spent / limit).clamp(0, 1).toDouble();
-    final statusColor = spent > limit
-        ? FlowColors.expense
-        : spent > limit * 0.8
-        ? FlowColors.chartAmber
-        : FlowColors.income;
+    final ratio = limit == 0 ? 0.0 : spent / limit;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Text(
@@ -252,21 +250,19 @@ class _BudgetStatusRow extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
-            Text(
-              spent > limit ? 'Over' : spent > limit * 0.8 ? 'Watch' : 'Safe',
-              style: Theme.of(
-                context,
-              ).textTheme.labelMedium?.copyWith(color: statusColor),
+            const SizedBox(width: FlowSpacing.sm),
+            Flexible(
+              child: FlowBudgetProgressValue(
+                spent: spent,
+                limit: limit,
+                currency: currency,
+                textAlign: TextAlign.end,
+              ),
             ),
           ],
         ),
         const SizedBox(height: FlowSpacing.gapGroup),
-        LinearProgressIndicator(value: ratio, color: statusColor),
-        const SizedBox(height: FlowSpacing.gapGroup),
-        Text(
-          '${formatCurrency(spent, currency)} of ${formatCurrency(limit, currency)}',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        FlowProgressBar(value: ratio, color: FlowColors.income),
       ],
     );
   }
