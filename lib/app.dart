@@ -576,6 +576,7 @@ class _ReportsContent extends ConsumerWidget {
       categories: ref.watch(categoriesProvider),
       currency: ref.watch(currencyProvider),
       onExportMonthlyCsv: controller.exportMonthlyCsv,
+      onExportMonthlyPdf: controller.exportMonthlyPdf,
       onExportBackup: controller.exportBackup,
     );
   }

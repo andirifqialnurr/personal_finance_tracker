@@ -12,6 +12,7 @@ class ReportsPage extends StatefulWidget {
     required this.categories,
     required this.currency,
     required this.onExportMonthlyCsv,
+    required this.onExportMonthlyPdf,
     required this.onExportBackup,
   });
 
@@ -19,6 +20,7 @@ class ReportsPage extends StatefulWidget {
   final List<Category> categories;
   final String currency;
   final Future<String> Function(DateTime month) onExportMonthlyCsv;
+  final Future<String> Function(DateTime month) onExportMonthlyPdf;
   final Future<String> Function() onExportBackup;
 
   @override
@@ -27,6 +29,7 @@ class ReportsPage extends StatefulWidget {
 
 class _ReportsPageState extends State<ReportsPage> {
   var _isExportingCsv = false;
+  var _isExportingPdf = false;
   var _isExportingBackup = false;
   late DateTime _selectedMonth;
 
@@ -131,10 +134,10 @@ class _ReportsPageState extends State<ReportsPage> {
         ),
         const SizedBox(height: FlowSpacing.gapGroup),
         FlowButton(
-          label: 'Export monthly PDF',
+          label: _isExportingPdf ? 'Exporting PDF...' : 'Export monthly PDF',
           variant: FlowButtonVariant.secondary,
           icon: Icons.picture_as_pdf_outlined,
-          onPressed: () => _showMessage('PDF export is scheduled for the next reports batch.'),
+          onPressed: _isExportingPdf ? null : _exportPdf,
         ),
         const SizedBox(height: FlowSpacing.gapSection),
         Text('Backup', style: Theme.of(context).textTheme.titleMedium),
@@ -165,6 +168,18 @@ class _ReportsPageState extends State<ReportsPage> {
       _showMessage('CSV export failed: $error');
     } finally {
       if (mounted) setState(() => _isExportingCsv = false);
+    }
+  }
+
+  Future<void> _exportPdf() async {
+    setState(() => _isExportingPdf = true);
+    try {
+      final path = await widget.onExportMonthlyPdf(_selectedMonth);
+      _showMessage('PDF exported to $path');
+    } catch (error) {
+      _showMessage('PDF export failed: $error');
+    } finally {
+      if (mounted) setState(() => _isExportingPdf = false);
     }
   }
 

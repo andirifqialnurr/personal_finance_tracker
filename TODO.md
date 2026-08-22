@@ -345,9 +345,9 @@ Catatan arah produk: fitur import dan restore tidak menjadi menu utama. Fokus us
 - [x] Tambahkan filter bulan/tahun sebagai periode laporan default.
 - [x] Tampilkan ringkasan sebelum download: total income, total expense, net cash flow, transfer count/amount, top expense categories, dan jumlah transaksi.
 - [x] Sediakan export CSV bulanan yang rapi dengan header konsisten, transaksi terurut, escaping koma/kutip/newline, dan nama file berisi periode.
-- [ ] Sediakan export PDF bulanan yang rapi dan mudah dibaca: judul laporan, periode, ringkasan, tabel transaksi, dan footer tanggal export.
-- [ ] Pastikan PDF aman untuk nominal panjang, kategori/note panjang, multi-page, Light/Dark source data, dan data kosong.
-- [ ] Tambahkan test unit untuk builder data laporan, CSV output, dan minimal golden/source check untuk PDF bila tooling tersedia.
+- [x] Sediakan export PDF bulanan yang rapi dan mudah dibaca: judul laporan, periode, ringkasan, tabel transaksi, dan footer tanggal export.
+- [x] Pastikan PDF aman untuk nominal panjang, kategori/note panjang, multi-page, Light/Dark source data, dan data kosong.
+- [x] Tambahkan test unit untuk builder data laporan, CSV output, dan minimal golden/source check untuk PDF bila tooling tersedia.
 
 ### 15.7 Backup export-only
 
