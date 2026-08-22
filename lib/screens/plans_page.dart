@@ -47,6 +47,7 @@ class PlansPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showSectionHeaders = section == PlansPageSection.all;
     final showRecurring =
         section == PlansPageSection.all ||
         section == PlansPageSection.recurringTemplates;
@@ -58,14 +59,18 @@ class PlansPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.md),
       children: [
-        const SizedBox(height: FlowSpacing.gapSection),
+        SizedBox(
+          height: showSectionHeaders ? FlowSpacing.gapSection : FlowSpacing.sm,
+        ),
         if (showRecurring) ...[
-          _SectionHeader(
-            title: 'Recurring templates',
-            icon: Icons.event_repeat_outlined,
-            onAdd: () => _openRecurringForm(context),
-          ),
-          const SizedBox(height: FlowSpacing.sm),
+          if (showSectionHeaders) ...[
+            _SectionHeader(
+              title: 'Recurring templates',
+              icon: Icons.event_repeat_outlined,
+              onAdd: () => _openRecurringForm(context),
+            ),
+            const SizedBox(height: FlowSpacing.sm),
+          ],
           if (recurringTemplates.where((item) => !item.isArchived).isEmpty)
             const _InlineEmpty(
               message:
@@ -100,12 +105,14 @@ class PlansPage extends StatelessWidget {
         ],
         if (showBudgets) ...[
           if (showRecurring) const SizedBox(height: FlowSpacing.gapSection),
-          _SectionHeader(
-            title: 'Monthly budgets',
-            icon: Icons.pie_chart_outline,
-            onAdd: () => _openBudgetForm(context),
-          ),
-          const SizedBox(height: FlowSpacing.sm),
+          if (showSectionHeaders) ...[
+            _SectionHeader(
+              title: 'Monthly budgets',
+              icon: Icons.pie_chart_outline,
+              onAdd: () => _openBudgetForm(context),
+            ),
+            const SizedBox(height: FlowSpacing.sm),
+          ],
           if (monthlyBudgets.isEmpty)
             const _InlineEmpty(
               message:
@@ -139,12 +146,14 @@ class PlansPage extends StatelessWidget {
         if (showGoals) ...[
           if (showRecurring || showBudgets)
             const SizedBox(height: FlowSpacing.gapSection),
-          _SectionHeader(
-            title: 'Savings goals',
-            icon: Icons.savings_outlined,
-            onAdd: () => _openGoalForm(context),
-          ),
-          const SizedBox(height: FlowSpacing.sm),
+          if (showSectionHeaders) ...[
+            _SectionHeader(
+              title: 'Savings goals',
+              icon: Icons.savings_outlined,
+              onAdd: () => _openGoalForm(context),
+            ),
+            const SizedBox(height: FlowSpacing.sm),
+          ],
           if (savingsGoals.where((item) => !item.isArchived).isEmpty)
             const _InlineEmpty(
               message:
@@ -155,14 +164,9 @@ class PlansPage extends StatelessWidget {
                 in savingsGoals.where((item) => !item.isArchived)) ...[
               _SavingsGoalCard(
                 goal: goal,
-                accountName: goal.accountId == null
-                    ? null
-                    : _accountName(goal.accountId!),
-                linkedBalance: _linkedGoalBalance(goal),
                 currentAmount: _currentGoalAmount(goal),
                 currency: currency,
                 onOpenDetails: () => _openGoalDetails(context, goal),
-                onAddContribution: () => _openContributionForm(context, goal),
                 onDelete: goal.id == null
                     ? null
                     : () => _confirmDelete(
@@ -282,15 +286,51 @@ class PlansPage extends StatelessWidget {
         });
   }
 
-  Future<void> _openRecurringForm(BuildContext context) async {
-    final template = await showModalBottomSheet<RecurringTemplate>(
+  static Future<RecurringTemplate?> showRecurringTemplateForm(
+    BuildContext context, {
+    required List<Account> accounts,
+    required List<Category> categories,
+  }) {
+    return showModalBottomSheet<RecurringTemplate>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => _RecurringTemplateSheet(
-        accounts: accounts.where((account) => !account.isArchived).toList(),
-        categories: categories.where((category) => !category.isArchived).toList(),
+        accounts: accounts,
+        categories: categories,
       ),
+    );
+  }
+
+  static Future<MonthlyBudget?> showMonthlyBudgetForm(
+    BuildContext context, {
+    required List<Category> categories,
+  }) {
+    return showModalBottomSheet<MonthlyBudget>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _BudgetSheet(categories: categories),
+    );
+  }
+
+  static Future<SavingsGoal?> showSavingsGoalForm(
+    BuildContext context, {
+    required List<Account> accounts,
+  }) {
+    return showModalBottomSheet<SavingsGoal>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _SavingsGoalSheet(accounts: accounts),
+    );
+  }
+
+  Future<void> _openRecurringForm(BuildContext context) async {
+    final template = await showRecurringTemplateForm(
+      context,
+      accounts: accounts.where((account) => !account.isArchived).toList(),
+      categories: categories.where((category) => !category.isArchived).toList(),
     );
     if (template != null) onSaveRecurringTemplate(template);
   }
@@ -320,19 +360,15 @@ class PlansPage extends StatelessWidget {
 
 
   Future<void> _openBudgetForm(BuildContext context) async {
-    final budget = await showModalBottomSheet<MonthlyBudget>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _BudgetSheet(
-        categories: categories
-            .where(
-              (category) =>
-                  !category.isArchived &&
-                  category.transactionType == TransactionType.expense,
-            )
-            .toList(),
-      ),
+    final budget = await showMonthlyBudgetForm(
+      context,
+      categories: categories
+          .where(
+            (category) =>
+                !category.isArchived &&
+                category.transactionType == TransactionType.expense,
+          )
+          .toList(),
     );
     if (budget != null) onSaveMonthlyBudget(budget);
   }
@@ -358,13 +394,9 @@ class PlansPage extends StatelessWidget {
   }
 
   Future<void> _openGoalForm(BuildContext context) async {
-    final goal = await showModalBottomSheet<SavingsGoal>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _SavingsGoalSheet(
-        accounts: accounts.where((account) => !account.isArchived).toList(),
-      ),
+    final goal = await showSavingsGoalForm(
+      context,
+      accounts: accounts.where((account) => !account.isArchived).toList(),
     );
     if (goal != null) onSaveSavingsGoal(goal);
   }
@@ -819,30 +851,21 @@ class _BudgetDetailsSheet extends StatelessWidget {
 class _SavingsGoalCard extends StatelessWidget {
   const _SavingsGoalCard({
     required this.goal,
-    required this.accountName,
-    required this.linkedBalance,
     required this.currentAmount,
     required this.currency,
     required this.onOpenDetails,
-    required this.onAddContribution,
     required this.onDelete,
   });
 
   final SavingsGoal goal;
-  final String? accountName;
-  final int linkedBalance;
   final int currentAmount;
   final String currency;
   final VoidCallback onOpenDetails;
-  final VoidCallback onAddContribution;
   final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final ratio = (currentAmount / goal.targetAmount).clamp(0, 1).toDouble();
-    final sourceLabel = accountName == null
-        ? 'Manual contributions'
-        : '$accountName + manual contributions';
     return InkWell(
       onTap: onOpenDetails,
       borderRadius: BorderRadius.circular(FlowRadii.card),
@@ -869,33 +892,57 @@ class _SavingsGoalCard extends StatelessWidget {
               ),
             ],
           ),
-          Text(sourceLabel, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: FlowSpacing.gapGroup),
           FlowProgressBar(value: ratio, color: FlowColors.income),
           const SizedBox(height: FlowSpacing.gapGroup),
-          Text(
-            '${formatCurrency(currentAmount, currency)} of ${formatCurrency(goal.targetAmount, currency)}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          if (accountName != null) ...[
-            const SizedBox(height: FlowSpacing.gapGroup),
-            Text(
-              'Linked balance ${formatCurrency(linkedBalance, currency)}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-          const SizedBox(height: FlowSpacing.gapGroup),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: onAddContribution,
-              icon: const Icon(Icons.add),
-              label: const Text('Add contribution'),
-            ),
+          _GoalProgressValue(
+            currentAmount: currentAmount,
+            targetAmount: goal.targetAmount,
+            currency: currency,
           ),
         ],
       ),
       ),
+    );
+  }
+}
+
+class _GoalProgressValue extends StatelessWidget {
+  const _GoalProgressValue({
+    required this.currentAmount,
+    required this.targetAmount,
+    required this.currency,
+  });
+
+  final int currentAmount;
+  final int targetAmount;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = targetAmount == 0 ? 0.0 : currentAmount / targetAmount * 100;
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
+      fontSize: 11,
+      height: 1.15,
+    );
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            '${formatCurrency(currentAmount, currency)} of ${formatCurrency(targetAmount, currency)}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          ),
+        ),
+        const SizedBox(width: FlowSpacing.sm),
+        Text(
+          '(${percent.toStringAsFixed(1)}%)',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.end,
+          style: style?.copyWith(fontWeight: FontWeight.w700),
+        ),
+      ],
     );
   }
 }

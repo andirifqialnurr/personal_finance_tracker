@@ -184,6 +184,7 @@ void main() {
     );
 
     expect(find.textContaining('No recurring templates yet'), findsOneWidget);
+    expect(find.text('Recurring templates'), findsNothing);
     expect(find.byType(FlowCard), findsNothing);
   });
 
@@ -495,6 +496,11 @@ void main() {
         ),
       ),
     );
+
+    expect(find.text('Manual contributions'), findsNothing);
+    expect(find.text('Add contribution'), findsNothing);
+    expect(find.text('Rp 1.250.000 of Rp 1.200.000'), findsOneWidget);
+    expect(find.text('(104.2%)'), findsOneWidget);
 
     await tester.tap(find.text('Emergency fund'));
     await tester.pumpAndSettle();

@@ -464,6 +464,7 @@ class _FlowShellState extends ConsumerState<FlowShell> {
       MaterialPageRoute<void>(
         builder: (_) => _StandaloneFlowPage(
           title: title,
+          actions: [_PlansSectionAddAction(section: section)],
           child: _PlansSectionContent(
             section: section,
             onUseRecurringTemplate: (template) =>
@@ -591,10 +592,15 @@ class _FlowTabPage extends StatelessWidget {
 }
 
 class _StandaloneFlowPage extends StatelessWidget {
-  const _StandaloneFlowPage({required this.title, required this.child});
+  const _StandaloneFlowPage({
+    required this.title,
+    required this.child,
+    this.actions,
+  });
 
   final String title;
   final Widget child;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -604,9 +610,79 @@ class _StandaloneFlowPage extends StatelessWidget {
         title,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
       ),
+      actions: actions,
     ),
     body: SafeArea(top: false, child: child),
   );
+}
+
+class _PlansSectionAddAction extends ConsumerWidget {
+  const _PlansSectionAddAction({required this.section});
+
+  final PlansPageSection section;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => IconButton(
+    tooltip: _tooltip,
+    onPressed: () => unawaited(_openForm(context, ref)),
+    icon: const Icon(Icons.add),
+  );
+
+  String get _tooltip => switch (section) {
+    PlansPageSection.recurringTemplates => 'Add recurring template',
+    PlansPageSection.monthlyBudgets => 'Add monthly budget',
+    PlansPageSection.savingsGoals => 'Add savings goal',
+    PlansPageSection.all => 'Add',
+  };
+
+  Future<void> _openForm(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(flowControllerProvider.notifier);
+    switch (section) {
+      case PlansPageSection.recurringTemplates:
+        final template = await PlansPage.showRecurringTemplateForm(
+          context,
+          accounts: ref
+              .read(accountsProvider)
+              .where((account) => !account.isArchived)
+              .toList(),
+          categories: ref
+              .read(categoriesProvider)
+              .where((category) => !category.isArchived)
+              .toList(),
+        );
+        if (template != null) {
+          await controller.saveRecurringTemplate(template);
+        }
+      case PlansPageSection.monthlyBudgets:
+        final budget = await PlansPage.showMonthlyBudgetForm(
+          context,
+          categories: ref
+              .read(categoriesProvider)
+              .where(
+                (category) =>
+                    !category.isArchived &&
+                    category.transactionType == TransactionType.expense,
+              )
+              .toList(),
+        );
+        if (budget != null) {
+          await controller.saveMonthlyBudget(budget);
+        }
+      case PlansPageSection.savingsGoals:
+        final goal = await PlansPage.showSavingsGoalForm(
+          context,
+          accounts: ref
+              .read(accountsProvider)
+              .where((account) => !account.isArchived)
+              .toList(),
+        );
+        if (goal != null) {
+          await controller.saveSavingsGoal(goal);
+        }
+      case PlansPageSection.all:
+        break;
+    }
+  }
 }
 
 class _FlowPageTitle extends StatelessWidget {
