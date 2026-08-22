@@ -436,6 +436,10 @@ void main() {
     );
 
     expect(find.text('Review'), findsNothing);
+    final reviewRect = tester.getRect(find.byTooltip('Review transaction'));
+    final deleteRect = tester.getRect(find.byTooltip('Delete template'));
+    expect(reviewRect.size, deleteRect.size);
+    expect(deleteRect.left - reviewRect.right, inInclusiveRange(0, 4));
 
     await tester.tap(find.byTooltip('Review transaction'));
     await tester.pumpAndSettle();

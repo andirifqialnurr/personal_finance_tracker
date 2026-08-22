@@ -463,32 +463,36 @@ class _PlanCardIconButton extends StatelessWidget {
     required this.tooltip,
     required this.onPressed,
     this.destructive = false,
+    this.iconSize = 22,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;
   final bool destructive;
+  final double iconSize;
 
   @override
-  Widget build(BuildContext context) {
-    final button = IconButton(
-      onPressed: onPressed,
-      tooltip: tooltip,
-      constraints: const BoxConstraints.tightFor(width: 32, height: 36),
-      padding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
-      iconSize: 22,
-      icon: Icon(
-        icon,
-        color: destructive && onPressed != null
-            ? Theme.of(context).colorScheme.error
-            : null,
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: SizedBox(
+      width: 32,
+      height: 36,
+      child: InkResponse(
+        onTap: onPressed,
+        radius: 18,
+        child: Center(
+          child: Icon(
+            icon,
+            size: iconSize,
+            color: destructive && onPressed != null
+                ? Theme.of(context).colorScheme.error
+                : null,
+          ),
+        ),
       ),
-    );
-    if (!destructive) return button;
-    return Transform.translate(offset: const Offset(8, 0), child: button);
-  }
+    ),
+  );
 }
 
 class _RecurringCard extends StatelessWidget {
@@ -533,6 +537,7 @@ class _RecurringCard extends StatelessWidget {
               onPressed: onUse,
               tooltip: 'Review transaction',
               icon: Icons.open_in_new,
+              iconSize: 20,
             ),
             _PlanCardIconButton(
               onPressed: onDelete,
