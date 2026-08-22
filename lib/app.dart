@@ -11,6 +11,7 @@ import 'screens/accounts_page.dart';
 import 'screens/add_transaction_page.dart';
 import 'screens/settings_page.dart';
 import 'screens/plans_page.dart';
+import 'screens/reports_page.dart';
 import 'screens/statistics_page.dart';
 import 'screens/transactions_page.dart';
 import 'screens/transaction_detail_page.dart';
@@ -288,7 +289,6 @@ class _FlowShellState extends ConsumerState<FlowShell> {
     _FlowPageData('Transactions', Icons.receipt_long_outlined),
     _FlowPageData('Statistics', Icons.show_chart_outlined),
     _FlowPageData('Accounts', Icons.account_balance_wallet_outlined),
-    _FlowPageData('Plans', Icons.flag_outlined),
     _FlowPageData('Settings', Icons.settings_outlined),
   ];
 
@@ -323,85 +323,86 @@ class _FlowShellState extends ConsumerState<FlowShell> {
               categories: categories,
               recurringTemplates: recurringTemplates,
               monthlyBudgets: monthlyBudgets,
+              savingsGoals: savingsGoals,
               currency: currency,
               hideBalance: hideBalance,
               onHideBalanceChanged: (value) =>
                   unawaited(controller.changeHideBalance(value)),
               onAddTransaction: widget.onAddTransaction,
+              onOpenRecurringTemplates: () => _openPlansSection(
+                title: 'Recurring templates',
+                section: PlansPageSection.recurringTemplates,
+              ),
+              onOpenMonthlyBudgets: () => _openPlansSection(
+                title: 'Monthly budgets',
+                section: PlansPageSection.monthlyBudgets,
+              ),
+              onOpenSavingsGoals: () => _openPlansSection(
+                title: 'Savings goals',
+                section: PlansPageSection.savingsGoals,
+              ),
+              onOpenReports: _openReports,
             ),
-            TransactionsPage(
-              transactions: transactions,
-              accounts: accounts,
-              categories: categories,
-              currency: currency,
-              onOpenDetail: widget.onOpenTransactionDetail,
+            _FlowTabPage(
+              title: 'Transactions',
+              child: TransactionsPage(
+                transactions: transactions,
+                accounts: accounts,
+                categories: categories,
+                currency: currency,
+                onOpenDetail: widget.onOpenTransactionDetail,
+              ),
             ),
-            StatisticsPage(
-              transactions: transactions,
-              categories: categories,
-              monthlyBudgets: monthlyBudgets,
-              currency: currency,
+            _FlowTabPage(
+              title: 'Statistics',
+              child: StatisticsPage(
+                transactions: transactions,
+                categories: categories,
+                monthlyBudgets: monthlyBudgets,
+                currency: currency,
+              ),
             ),
-            AccountsPage(
-              accounts: accounts,
-              onAdd: widget.onAddAccount,
-              onEdit: widget.onEditAccount,
-              onArchive: (account) =>
-                  unawaited(controller.archiveAccount(account)),
-              onRestore: (account) =>
-                  unawaited(controller.restoreAccount(account)),
-              transactions: transactions,
-              currency: currency,
-              onOpenDetail: widget.onOpenAccountDetail,
+            _FlowTabPage(
+              title: 'Accounts',
+              child: AccountsPage(
+                accounts: accounts,
+                onAdd: widget.onAddAccount,
+                onEdit: widget.onEditAccount,
+                onArchive: (account) =>
+                    unawaited(controller.archiveAccount(account)),
+                onRestore: (account) =>
+                    unawaited(controller.restoreAccount(account)),
+                transactions: transactions,
+                currency: currency,
+                onOpenDetail: widget.onOpenAccountDetail,
+              ),
             ),
-            PlansPage(
-              accounts: accounts,
-              categories: categories,
-              transactions: transactions,
-              recurringTemplates: recurringTemplates,
-              monthlyBudgets: monthlyBudgets,
-              savingsGoals: savingsGoals,
-              currency: currency,
-              onSaveRecurringTemplate: (template) =>
-                  unawaited(controller.saveRecurringTemplate(template)),
-              onDeleteRecurringTemplate: (id) =>
-                  unawaited(controller.deleteRecurringTemplate(id)),
-              onUseRecurringTemplate: (template) =>
-                  widget.onOpenPrefilledTransaction(_fromTemplate(template)),
-              onSaveMonthlyBudget: (budget) =>
-                  unawaited(controller.saveMonthlyBudget(budget)),
-              onDeleteMonthlyBudget: (id) =>
-                  unawaited(controller.deleteMonthlyBudget(id)),
-              onSaveSavingsGoal: (goal) =>
-                  unawaited(controller.saveSavingsGoal(goal)),
-              onDeleteSavingsGoal: (id) =>
-                  unawaited(controller.deleteSavingsGoal(id)),
-            ),
-            FlowSettingsPage(
-              initialThemeMode: themeMode,
-              onThemeModeChanged: (mode) =>
-                  unawaited(controller.changeThemeMode(mode)),
-              currency: currency,
-              onCurrencyChanged: (value) =>
-                  unawaited(controller.changeCurrency(value)),
-              categories: categories,
-              onCategoriesChanged: (value) =>
-                  unawaited(controller.saveCategories(value)),
-              onExportCsv: controller.exportCsv,
-              onPreviewImportCsv: controller.previewCsvImport,
-              onImportCsv: controller.importCsv,
-              onExportBackup: controller.exportBackup,
-              onPreviewBackupRestore: controller.previewBackupRestore,
-              onRestoreBackup: controller.restoreBackup,
-              onDeleteAll: () => unawaited(controller.deleteAllData()),
-              showAppBar: false,
+            _FlowTabPage(
+              title: 'Settings',
+              child: FlowSettingsPage(
+                initialThemeMode: themeMode,
+                onThemeModeChanged: (mode) =>
+                    unawaited(controller.changeThemeMode(mode)),
+                currency: currency,
+                onCurrencyChanged: (value) =>
+                    unawaited(controller.changeCurrency(value)),
+                categories: categories,
+                onCategoriesChanged: (value) =>
+                    unawaited(controller.saveCategories(value)),
+                onExportCsv: controller.exportCsv,
+                onPreviewImportCsv: controller.previewCsvImport,
+                onImportCsv: controller.importCsv,
+                onExportBackup: controller.exportBackup,
+                onPreviewBackupRestore: controller.previewBackupRestore,
+                onRestoreBackup: controller.restoreBackup,
+                onDeleteAll: () => unawaited(controller.deleteAllData()),
+                showAppBar: false,
+              ),
             ),
           ],
         ),
       ),
-      floatingActionButton: _selectedIndex == 2 ||
-              _selectedIndex == 4 ||
-              _selectedIndex == 5
+      floatingActionButton: _selectedIndex == 2 || _selectedIndex == 4
           ? null
           : FloatingActionButton(
               onPressed: widget.onAddTransaction,
@@ -461,6 +462,35 @@ class _FlowShellState extends ConsumerState<FlowShell> {
       ),
     );
   }
+
+  void _openPlansSection({
+    required String title,
+    required PlansPageSection section,
+  }) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => _StandaloneFlowPage(
+          title: title,
+          child: _PlansSectionContent(
+            section: section,
+            onUseRecurringTemplate: (template) =>
+                widget.onOpenPrefilledTransaction(_fromTemplate(template)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openReports() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => _StandaloneFlowPage(
+          title: 'Reports',
+          child: const _ReportsContent(),
+        ),
+      ),
+    );
+  }
 }
 
 Transaction _fromTemplate(RecurringTemplate template) {
@@ -497,4 +527,113 @@ class _FlowPageData {
 
   final String title;
   final IconData icon;
+}
+
+class _PlansSectionContent extends ConsumerWidget {
+  const _PlansSectionContent({
+    required this.section,
+    required this.onUseRecurringTemplate,
+  });
+
+  final PlansPageSection section;
+  final ValueChanged<RecurringTemplate> onUseRecurringTemplate;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.read(flowControllerProvider.notifier);
+    return PlansPage(
+      section: section,
+      accounts: ref.watch(accountsProvider),
+      categories: ref.watch(categoriesProvider),
+      transactions: ref.watch(transactionsProvider),
+      recurringTemplates: ref.watch(recurringTemplatesProvider),
+      monthlyBudgets: ref.watch(monthlyBudgetsProvider),
+      savingsGoals: ref.watch(savingsGoalsProvider),
+      currency: ref.watch(currencyProvider),
+      onSaveRecurringTemplate: (template) =>
+          unawaited(controller.saveRecurringTemplate(template)),
+      onDeleteRecurringTemplate: (id) =>
+          unawaited(controller.deleteRecurringTemplate(id)),
+      onUseRecurringTemplate: onUseRecurringTemplate,
+      onSaveMonthlyBudget: (budget) =>
+          unawaited(controller.saveMonthlyBudget(budget)),
+      onDeleteMonthlyBudget: (id) =>
+          unawaited(controller.deleteMonthlyBudget(id)),
+      onSaveSavingsGoal: (goal) => unawaited(controller.saveSavingsGoal(goal)),
+      onDeleteSavingsGoal: (id) => unawaited(controller.deleteSavingsGoal(id)),
+    );
+  }
+}
+
+class _ReportsContent extends ConsumerWidget {
+  const _ReportsContent();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.read(flowControllerProvider.notifier);
+    return ReportsPage(
+      transactions: ref.watch(transactionsProvider),
+      currency: ref.watch(currencyProvider),
+      onExportCsv: controller.exportCsv,
+      onExportBackup: controller.exportBackup,
+    );
+  }
+}
+
+class _FlowTabPage extends StatelessWidget {
+  const _FlowTabPage({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      _FlowPageTitle(title: title),
+      Expanded(child: child),
+    ],
+  );
+}
+
+class _StandaloneFlowPage extends StatelessWidget {
+  const _StandaloneFlowPage({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      centerTitle: true,
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
+      ),
+    ),
+    body: SafeArea(top: false, child: child),
+  );
+}
+
+class _FlowPageTitle extends StatelessWidget {
+  const _FlowPageTitle({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(
+      FlowSpacing.md,
+      FlowSpacing.sm,
+      FlowSpacing.md,
+      FlowSpacing.xs,
+    ),
+    child: Center(
+      child: Text(
+        title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
+      ),
+    ),
+  );
 }

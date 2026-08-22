@@ -287,6 +287,144 @@ Catatan: section ini adalah backlog baru setelah seluruh task sebelumnya selesai
 - [x] Tampilkan progress berdasarkan saldo akun yang dipilih atau input kontribusi manual.
 - [x] Jaga scope tetap personal tracking, bukan investasi atau payment flow.
 
+## 15. Redesign planning, laporan, dan backup export (request baru)
+
+Catatan arah produk: fitur import dan restore tidak menjadi menu utama. Fokus user-facing adalah export laporan dan export backup. Import/restore boleh tetap ada sebagai utilitas internal/lanjutan bila dibutuhkan, tetapi jangan ditonjolkan di Home atau alur utama karena dapat membingungkan dan restore berisiko menimpa data.
+
+### 15.1 Top title / appbar ringan
+
+- [x] Tambahkan judul kecil di tengah/top appbar untuk semua menu utama kecuali Home.
+- [x] Pertahankan Home tanpa appbar karena sudah memiliki greeting dan identitas dashboard sendiri.
+- [x] Pastikan ukuran font title tidak terlalu besar dan konsisten dengan typography scale di `design-system.md`.
+- [x] Cek safe area, bottom navigation, dan scroll padding agar judul tidak menimpa konten pada layar kecil.
+- [x] Batasi bottom navigation menjadi 5 item: `Home`, `Transactions`, `Statistics`, `Accounts`, dan `Settings`.
+- [x] Hapus item bottom navigation `Plans` karena `Recurring templates`, `Monthly budgets`, dan `Savings goals` sudah keluar menjadi halaman sendiri dari Home quick menu.
+- [x] Jangan tambahkan bottom navigation baru untuk `Reports`, bills, debt/receivables, tags, atau budget alerts.
+
+### 15.2 Home quick menu grid 4
+
+- [x] Hapus total card ringkasan Income dan Expense dari Home.
+- [x] Tambahkan grid 4 kotak menu tambahan di Home: `Recurring templates`, `Monthly budgets`, `Savings goals`, dan `Reports`.
+- [x] Setiap kotak harus memakai icon, label pendek, dan state count/progress ringkas bila relevan tanpa membuat Home terlalu ramai.
+- [x] Klik `Recurring templates` membuka halaman khusus template transaksi rutin.
+- [x] Klik `Monthly budgets` membuka halaman khusus budget bulanan.
+- [x] Klik `Savings goals` membuka halaman khusus target tabungan.
+- [x] Klik `Reports` membuka halaman laporan dan export.
+- [x] Verifikasi grid tetap rapi pada small/medium/large phone widths dan Light/Dark.
+
+### 15.3 Recurring templates sebagai halaman khusus
+
+- [ ] Pisahkan section recurring dari `PlansPage` menjadi halaman/list khusus.
+- [ ] Jelaskan alur produk sebagai template transaksi rutin, bukan transaksi otomatis yang langsung mengubah saldo.
+- [ ] Pertahankan aksi `Review`/buat transaksi dari template supaya transaksi tetap dikonfirmasi user sebelum masuk income/expense/transfer.
+- [ ] Tambahkan detail item recurring yang menampilkan metadata template dan riwayat transaksi yang dibuat dari template bila sudah tersedia penanda relasi.
+- [ ] Jika belum ada field relasi template di transaksi, tentukan migration/model yang aman sebelum menampilkan riwayat berbasis relasi.
+
+### 15.4 Monthly budgets sebagai halaman khusus
+
+- [ ] Pisahkan section monthly budgets dari `PlansPage` menjadi halaman/list khusus.
+- [ ] Detail budget menampilkan kategori, bulan, limit, spent, remaining/over, dan list transaksi expense yang masuk kategori/bulan tersebut.
+- [ ] Perbaiki progress bar budget: track abu-abu, progress hijau, rounded kiri-kanan.
+- [ ] Saat spent melewati budget, tampilkan bagian over budget berwarna merah di atas progress penuh hijau atau dengan indikator merah yang jelas.
+- [ ] Pastikan budget tetap read-only terhadap saldo: budget hanya membaca transaksi expense, tidak membuat/mengubah transaksi.
+- [ ] Tambahkan test kalkulasi spent, remaining, over budget, dan progress rendering state normal/over.
+
+### 15.5 Savings goals dengan tambah nominal
+
+- [ ] Pisahkan section savings goals dari `PlansPage` menjadi halaman/list khusus.
+- [ ] Detail goal menampilkan target, current amount, remaining amount, progress rounded, dan status selesai bila target tercapai.
+- [ ] Tambahkan aksi `Add contribution` untuk menambah nominal ke goal yang sudah ada.
+- [ ] Untuk tahap awal, contribution boleh menambah `manualContribution`; untuk riwayat yang rapi, tambahkan model/table kontribusi goal sebelum menampilkan list kontribusi.
+- [ ] Jika goal terhubung ke akun, pastikan copy UI membedakan saldo akun dan kontribusi manual agar progress tidak terasa seperti transaksi ganda.
+- [ ] Detail goal menampilkan list kontribusi/aktivitas yang tercatat setelah struktur datanya tersedia.
+- [ ] Tambahkan test untuk create goal, add contribution, progress, goal linked account, dan archive/delete behavior.
+
+### 15.6 Reports
+
+- [ ] Buat halaman `Reports` dari quick menu Home.
+- [ ] Tambahkan filter bulan/tahun sebagai periode laporan default.
+- [ ] Tampilkan ringkasan sebelum download: total income, total expense, net cash flow, transfer count/amount, top expense categories, dan jumlah transaksi.
+- [ ] Sediakan export CSV bulanan yang rapi dengan header konsisten, transaksi terurut, escaping koma/kutip/newline, dan nama file berisi periode.
+- [ ] Sediakan export PDF bulanan yang rapi dan mudah dibaca: judul laporan, periode, ringkasan, tabel transaksi, dan footer tanggal export.
+- [ ] Pastikan PDF aman untuk nominal panjang, kategori/note panjang, multi-page, Light/Dark source data, dan data kosong.
+- [ ] Tambahkan test unit untuk builder data laporan, CSV output, dan minimal golden/source check untuk PDF bila tooling tersedia.
+
+### 15.7 Backup export-only
+
+- [x] Pindahkan `Export local backup` ke halaman `Reports` dalam section berbeda bernama backup/cadangan data.
+- [x] Jangan tampilkan `Restore local backup` sebagai aksi utama di Home atau laporan.
+- [x] Pertahankan format backup sebagai cadangan seluruh data lokal, berbeda dari CSV laporan transaksi.
+- [x] Tampilkan copy singkat bahwa backup dipakai untuk menyimpan cadangan data aplikasi, bukan laporan keuangan.
+- [x] Pastikan nama file backup jelas dan berisi timestamp.
+
+### 15.8 Settings cleanup
+
+- [ ] Hapus atau sembunyikan `Import CSV` dari menu utama Settings.
+- [ ] Hapus atau sembunyikan `Restore local backup` dari menu utama Settings, atau pindahkan ke area advanced/danger bila masih ingin dipertahankan untuk recovery.
+- [ ] Kurangi Settings menjadi pengaturan aplikasi: theme, currency, categories, dan danger zone.
+- [ ] Update README agar alur export laporan dan backup sesuai struktur baru.
+
+### 15.9 Validasi akhir batch
+
+- [ ] Jalankan `flutter analyze`.
+- [ ] Jalankan test terkait planning, laporan, CSV, backup, dan widget navigation.
+- [ ] Jalankan `flutter test --concurrency=1` bila environment memungkinkan.
+- [ ] Jalankan `flutter build apk --debug`.
+- [ ] Lakukan visual pass pada Home grid, halaman detail planning, progress bar, laporan PDF/CSV, dan judul menu di Light/Dark serta layar kecil.
+
+## 16. Fitur tambahan tanpa menambah bottom navigation
+
+Catatan arah UX: fitur tambahan ini harus masuk sebagai bagian dari alur yang sudah ada, bukan sebagai tab bottom navigation baru. Entry point utama tetap melalui Home, Transactions, Monthly budgets, Recurring templates, Savings goals, Reports, atau Settings sesuai konteksnya.
+
+### 16.1 Bills / Upcoming
+
+- [ ] Buat surface `Upcoming` yang menampilkan transaksi rutin yang akan jatuh tempo dari `Recurring templates`.
+- [ ] Entry point utama berasal dari Home sebagai ringkasan kecil atau dari halaman `Recurring templates`, bukan bottom navigation baru.
+- [ ] Tampilkan item upcoming dengan nama, tipe, nominal, akun, kategori/tujuan transfer, tanggal jatuh tempo, dan status due/overdue.
+- [ ] Sediakan aksi `Review transaction` untuk membuat transaksi dari template; saldo tetap tidak berubah sebelum user menyimpan transaksi.
+- [ ] Hindari istilah yang mengesankan auto-debit penuh bila sistem masih meminta konfirmasi manual.
+- [ ] Tambahkan state empty, due soon, overdue, dan completed/created bila relasi transaksi-template sudah tersedia.
+- [ ] Pastikan card upcoming compact, mudah dipindai, dan tidak membuat Home kembali ramai.
+
+### 16.2 Debt & Receivables
+
+- [ ] Tambahkan model sederhana untuk hutang/piutang: nama pihak, tipe `Debt`/`Receivable`, nominal awal, nominal terbayar, due date opsional, note, status, createdAt, updatedAt.
+- [ ] Letakkan entry point di Home sebagai shortcut sekunder atau di Reports/Transactions context, bukan bottom navigation baru.
+- [ ] Buat halaman list dengan filter `All`, `Debt`, `Receivable`, `Open`, dan `Settled`.
+- [ ] Detail item menampilkan progress pembayaran, sisa nominal, timeline pembayaran, dan aksi `Add payment`.
+- [ ] Saat `Add payment`, tentukan jelas apakah hanya mencatat progress manual atau juga membuat transaksi expense/income/transfer; jangan membuat transaksi ganda tanpa konfirmasi user.
+- [ ] Tampilkan warning/copy singkat bahwa fitur ini adalah pencatatan pribadi, bukan pinjaman/investasi/payment gateway.
+- [ ] Tambahkan test untuk create, add payment, settle, overdue, dan kalkulasi remaining.
+
+### 16.3 Notes / Tags
+
+- [ ] Tambahkan dukungan tag ringan pada transaksi tanpa mengubah kategori utama.
+- [ ] Sediakan input tag di Add/Edit Transaction dengan chip sederhana dan validasi panjang nama tag.
+- [ ] Tampilkan tag di Transaction detail dan optional chip kecil di list bila ruang cukup.
+- [ ] Tambahkan filter tag di modal filter Transactions.
+- [ ] Reports CSV/PDF harus menyertakan kolom/area tags agar hasil export tetap lengkap.
+- [ ] Pastikan tag tidak menggantikan kategori dan tidak mengubah kalkulasi income/expense/budget.
+- [ ] Tambahkan test untuk create/edit transaction dengan tags, filter tags, export CSV, dan backup.
+
+### 16.4 Budget Alerts
+
+- [ ] Tambahkan alert budget lokal untuk threshold 80%, 100%, dan over budget.
+- [ ] Entry point konfigurasi alert berada di detail `Monthly budgets` atau Settings advanced, bukan bottom navigation baru.
+- [ ] Tampilkan alert secara visual di Home/Monthly budgets dengan state attention/over memakai warna semantic yang sudah ada.
+- [ ] Jika memakai notifikasi device, minta permission secara eksplisit dan tetap sediakan fallback in-app alert bila permission ditolak.
+- [ ] Hindari spam: satu alert per budget per threshold per bulan kecuali user mengubah budget/transaksi.
+- [ ] Pastikan alert tidak mengubah transaksi, saldo, atau budget; alert hanya membaca progress.
+- [ ] Tambahkan test untuk threshold 80%, 100%, over budget, reset bulan baru, dan perubahan budget.
+
+### 16.5 UX/UI guardrail fitur tambahan
+
+- [ ] Semua fitur tambahan harus memakai component existing (`FlowCard`, `FlowButton`, `FlowSelector`, `FlowSegmentedControl`, `FlowTransactionTile`) sebelum membuat component baru.
+- [ ] Gunakan appbar/title kecil yang konsisten untuk halaman fitur baru.
+- [ ] Jangan memakai card bertingkat; halaman list memakai item card tunggal atau section datar.
+- [ ] Pastikan copy tetap pendek, action jelas, dan empty state memberi next action yang relevan.
+- [ ] Verifikasi Light/Dark, small/medium/large widths, long names, large amounts, keyboard, dan scroll safe area.
+- [ ] Update README dan test coverage setelah fitur tambahan dipilih untuk implementasi.
+
 ## Di luar scope prototype awal
 
 - Budget, recurring transactions, saving goals, receipt attachment, backup/restore, biometric lock, multi-currency conversion, dan cloud sync.

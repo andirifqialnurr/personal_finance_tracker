@@ -75,6 +75,10 @@ void main() {
             ],
             hideBalance: true,
             onAddTransaction: () {},
+            onOpenRecurringTemplates: () {},
+            onOpenMonthlyBudgets: () {},
+            onOpenSavingsGoals: () {},
+            onOpenReports: () {},
           ),
         ),
       ),
@@ -82,8 +86,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Rp -••••••'), findsOneWidget);
-    expect(find.text('Income'), findsWidgets);
-    expect(find.text('Expense'), findsWidgets);
+    expect(find.text('Recurring'), findsOneWidget);
+    expect(find.text('Reports'), findsOneWidget);
   });
 
   testWidgets('restores and persists the balance visibility setting', (
@@ -125,6 +129,10 @@ class _BalanceVisibilityHarnessState extends State<_BalanceVisibilityHarness> {
       hideBalance: _hideBalance,
       onHideBalanceChanged: (value) => setState(() => _hideBalance = value),
       onAddTransaction: () {},
+      onOpenRecurringTemplates: () {},
+      onOpenMonthlyBudgets: () {},
+      onOpenSavingsGoals: () {},
+      onOpenReports: () {},
     );
   }
 }

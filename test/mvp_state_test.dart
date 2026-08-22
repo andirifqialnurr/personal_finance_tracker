@@ -58,6 +58,10 @@ void main() {
             transactions: [transaction],
             categories: const [category],
             onAddTransaction: () {},
+            onOpenRecurringTemplates: () {},
+            onOpenMonthlyBudgets: () {},
+            onOpenSavingsGoals: () {},
+            onOpenReports: () {},
           ),
         ),
       );

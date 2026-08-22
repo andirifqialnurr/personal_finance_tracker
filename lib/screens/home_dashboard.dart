@@ -16,20 +16,30 @@ class HomeDashboard extends StatefulWidget {
     this.categories = const [],
     this.recurringTemplates = const [],
     this.monthlyBudgets = const [],
+    this.savingsGoals = const [],
     this.currency = 'IDR',
     this.hideBalance = false,
     this.onHideBalanceChanged,
     required this.onAddTransaction,
+    required this.onOpenRecurringTemplates,
+    required this.onOpenMonthlyBudgets,
+    required this.onOpenSavingsGoals,
+    required this.onOpenReports,
   });
   final List<Account> accounts;
   final List<Transaction> transactions;
   final List<Category> categories;
   final List<RecurringTemplate> recurringTemplates;
   final List<MonthlyBudget> monthlyBudgets;
+  final List<SavingsGoal> savingsGoals;
   final String currency;
   final bool hideBalance;
   final ValueChanged<bool>? onHideBalanceChanged;
   final VoidCallback onAddTransaction;
+  final VoidCallback onOpenRecurringTemplates;
+  final VoidCallback onOpenMonthlyBudgets;
+  final VoidCallback onOpenSavingsGoals;
+  final VoidCallback onOpenReports;
 
   @override
   State<HomeDashboard> createState() => _HomeDashboardState();
@@ -56,12 +66,18 @@ class _HomeDashboardState extends State<HomeDashboard> {
           transaction.occurredAt.year == now.year &&
           transaction.occurredAt.month == now.month,
     );
-    final income = monthTransactions
-        .where((transaction) => transaction.type == TransactionType.income)
-        .fold<int>(0, (sum, transaction) => sum + transaction.amount);
-    final expense = monthTransactions
-        .where((transaction) => transaction.type == TransactionType.expense)
-        .fold<int>(0, (sum, transaction) => sum + transaction.amount);
+    final activeRecurring = widget.recurringTemplates
+        .where((template) => !template.isArchived)
+        .length;
+    final currentBudgets = widget.monthlyBudgets
+        .where(
+          (budget) =>
+              budget.month.year == now.year && budget.month.month == now.month,
+        )
+        .length;
+    final activeGoals = widget.savingsGoals
+        .where((goal) => !goal.isArchived)
+        .length;
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.md),
       children: [
@@ -153,24 +169,31 @@ class _HomeDashboardState extends State<HomeDashboard> {
         ),
         const SizedBox(height: FlowSpacing.gapSection),
 
-        Row(
-          children: [
-            Expanded(
-              child: _SummaryCard(
-                label: 'Income',
-                amount: formatCurrency(income, widget.currency),
-                variant: FlowAmountVariant.income,
-                icon: Icons.arrow_downward,
-              ),
+        _QuickMenuGrid(
+          items: [
+            _QuickMenuItem(
+              title: 'Recurring',
+              subtitle: '$activeRecurring active',
+              icon: Icons.event_repeat_outlined,
+              onTap: widget.onOpenRecurringTemplates,
             ),
-            const SizedBox(width: FlowSpacing.sm),
-            Expanded(
-              child: _SummaryCard(
-                label: 'Expense',
-                amount: formatCurrency(expense, widget.currency),
-                variant: FlowAmountVariant.expense,
-                icon: Icons.arrow_upward,
-              ),
+            _QuickMenuItem(
+              title: 'Budgets',
+              subtitle: '$currentBudgets this month',
+              icon: Icons.pie_chart_outline,
+              onTap: widget.onOpenMonthlyBudgets,
+            ),
+            _QuickMenuItem(
+              title: 'Goals',
+              subtitle: '$activeGoals active',
+              icon: Icons.savings_outlined,
+              onTap: widget.onOpenSavingsGoals,
+            ),
+            _QuickMenuItem(
+              title: 'Reports',
+              subtitle: _monthName(now.month),
+              icon: Icons.summarize_outlined,
+              onTap: widget.onOpenReports,
             ),
           ],
         ),
@@ -319,7 +342,7 @@ class _RecurringReminderCard extends StatelessWidget {
                 Text('Recurring reminders', style: Theme.of(context).textTheme.bodyLarge),
                 const SizedBox(height: FlowSpacing.xxs),
                 Text(
-                  '$active template${active == 1 ? '' : 's'} ready to review in Plans.',
+                  '$active template${active == 1 ? '' : 's'} ready to review.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -331,50 +354,77 @@ class _RecurringReminderCard extends StatelessWidget {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.label,
-    required this.amount,
-    required this.variant,
-    required this.icon,
-  });
-  final String label;
-  final String amount;
-  final FlowAmountVariant variant;
-  final IconData icon;
+class _QuickMenuGrid extends StatelessWidget {
+  const _QuickMenuGrid({required this.items});
+
+  final List<_QuickMenuItem> items;
 
   @override
-  Widget build(BuildContext context) => FlowCard(
-    variant: FlowCardVariant.summary,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            FlowIconContainer(
-              icon: icon,
-              variant: variant == FlowAmountVariant.income
-                  ? FlowIconContainerVariant.income
-                  : FlowIconContainerVariant.expense,
+  Widget build(BuildContext context) => GridView.count(
+    crossAxisCount: 2,
+    childAspectRatio: 1.72,
+    crossAxisSpacing: FlowSpacing.sm,
+    mainAxisSpacing: FlowSpacing.sm,
+    physics: const NeverScrollableScrollPhysics(),
+    shrinkWrap: true,
+    children: [
+      for (final item in items) _QuickMenuCard(item: item),
+    ],
+  );
+}
+
+class _QuickMenuItem {
+  const _QuickMenuItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+}
+
+class _QuickMenuCard extends StatelessWidget {
+  const _QuickMenuCard({required this.item});
+
+  final _QuickMenuItem item;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: item.onTap,
+    borderRadius: BorderRadius.circular(FlowRadii.card),
+    child: FlowCard(
+      variant: FlowCardVariant.action,
+      child: Row(
+        children: [
+          FlowIconContainer(icon: item.icon),
+          const SizedBox(width: FlowSpacing.sm),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: FlowSpacing.xxs),
+                Text(
+                  item.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ),
-            const SizedBox(width: FlowSpacing.xs),
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: FlowSpacing.gapGroup),
-        FlowAmountText(
-          amount: amount,
-          variant: variant,
-          style: const TextStyle(fontSize: 16),
-        ),
-      ],
+          ),
+        ],
+      ),
     ),
   );
 }

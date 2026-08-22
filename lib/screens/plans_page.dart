@@ -7,9 +7,12 @@ import '../theme/flow_tokens.dart';
 import '../utils/flow_currency_input_formatter.dart';
 import '../utils/flow_format.dart';
 
+enum PlansPageSection { all, recurringTemplates, monthlyBudgets, savingsGoals }
+
 class PlansPage extends StatelessWidget {
   const PlansPage({
     super.key,
+    this.section = PlansPageSection.all,
     required this.accounts,
     required this.categories,
     required this.transactions,
@@ -26,6 +29,7 @@ class PlansPage extends StatelessWidget {
     required this.onDeleteSavingsGoal,
   });
 
+  final PlansPageSection section;
   final List<Account> accounts;
   final List<Category> categories;
   final List<Transaction> transactions;
@@ -43,99 +47,116 @@ class PlansPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showRecurring =
+        section == PlansPageSection.all ||
+        section == PlansPageSection.recurringTemplates;
+    final showBudgets =
+        section == PlansPageSection.all ||
+        section == PlansPageSection.monthlyBudgets;
+    final showGoals =
+        section == PlansPageSection.all || section == PlansPageSection.savingsGoals;
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.md),
       children: [
         const SizedBox(height: FlowSpacing.gapSection),
-        _SectionHeader(
-          title: 'Recurring templates',
-          icon: Icons.event_repeat_outlined,
-          onAdd: () => _openRecurringForm(context),
-        ),
-        const SizedBox(height: FlowSpacing.sm),
-        if (recurringTemplates.where((item) => !item.isArchived).isEmpty)
-          const _InlineEmpty(
+        if (showRecurring) ...[
+          _SectionHeader(
+            title: 'Recurring templates',
             icon: Icons.event_repeat_outlined,
-            title: 'No recurring templates',
-            message: 'Create one for salary, bills, subscriptions, or routine transfers.',
-          )
-        else
-          for (final template
-              in recurringTemplates.where((item) => !item.isArchived)) ...[
-            _RecurringCard(
-              template: template,
-              accountName: _accountName(template.accountId),
-              categoryName: template.categoryId == null
-                  ? null
-                  : _categoryName(template.categoryId!),
-              currency: currency,
-              onUse: () => onUseRecurringTemplate(template),
-              onDelete: template.id == null
-                  ? null
-                  : () => onDeleteRecurringTemplate(template.id!),
-            ),
-            const SizedBox(height: FlowSpacing.sm),
-          ],
-        const SizedBox(height: FlowSpacing.gapSection),
-        _SectionHeader(
-          title: 'Monthly budgets',
-          icon: Icons.pie_chart_outline,
-          onAdd: () => _openBudgetForm(context),
-        ),
-        const SizedBox(height: FlowSpacing.sm),
-        if (monthlyBudgets.isEmpty)
-          const _InlineEmpty(
+            onAdd: () => _openRecurringForm(context),
+          ),
+          const SizedBox(height: FlowSpacing.sm),
+          if (recurringTemplates.where((item) => !item.isArchived).isEmpty)
+            const _InlineEmpty(
+              icon: Icons.event_repeat_outlined,
+              title: 'No recurring templates',
+              message:
+                  'Create one for salary, bills, subscriptions, or routine transfers.',
+            )
+          else
+            for (final template
+                in recurringTemplates.where((item) => !item.isArchived)) ...[
+              _RecurringCard(
+                template: template,
+                accountName: _accountName(template.accountId),
+                categoryName: template.categoryId == null
+                    ? null
+                    : _categoryName(template.categoryId!),
+                currency: currency,
+                onUse: () => onUseRecurringTemplate(template),
+                onDelete: template.id == null
+                    ? null
+                    : () => onDeleteRecurringTemplate(template.id!),
+              ),
+              const SizedBox(height: FlowSpacing.sm),
+            ],
+        ],
+        if (showBudgets) ...[
+          if (showRecurring) const SizedBox(height: FlowSpacing.gapSection),
+          _SectionHeader(
+            title: 'Monthly budgets',
             icon: Icons.pie_chart_outline,
-            title: 'No monthly budgets',
-            message: 'Set optional limits for expense categories without changing balances.',
-          )
-        else
-          for (final budget in monthlyBudgets) ...[
-            _BudgetCard(
-              budget: budget,
-              categoryName: budget.categoryId == null
-                  ? 'Uncategorized'
-                  : _categoryName(budget.categoryId!),
-              spent: _spentForBudget(budget),
-              currency: currency,
-              onDelete: budget.id == null
-                  ? null
-                  : () => onDeleteMonthlyBudget(budget.id!),
-            ),
-            const SizedBox(height: FlowSpacing.sm),
-          ],
-        const SizedBox(height: FlowSpacing.gapSection),
-        _SectionHeader(
-          title: 'Savings goals',
-          icon: Icons.savings_outlined,
-          onAdd: () => _openGoalForm(context),
-        ),
-        const SizedBox(height: FlowSpacing.sm),
-        if (savingsGoals.where((item) => !item.isArchived).isEmpty)
-          const _InlineEmpty(
+            onAdd: () => _openBudgetForm(context),
+          ),
+          const SizedBox(height: FlowSpacing.sm),
+          if (monthlyBudgets.isEmpty)
+            const _InlineEmpty(
+              icon: Icons.pie_chart_outline,
+              title: 'No monthly budgets',
+              message:
+                  'Set optional limits for expense categories without changing balances.',
+            )
+          else
+            for (final budget in monthlyBudgets) ...[
+              _BudgetCard(
+                budget: budget,
+                categoryName: budget.categoryId == null
+                    ? 'Uncategorized'
+                    : _categoryName(budget.categoryId!),
+                spent: _spentForBudget(budget),
+                currency: currency,
+                onDelete: budget.id == null
+                    ? null
+                    : () => onDeleteMonthlyBudget(budget.id!),
+              ),
+              const SizedBox(height: FlowSpacing.sm),
+            ],
+        ],
+        if (showGoals) ...[
+          if (showRecurring || showBudgets)
+            const SizedBox(height: FlowSpacing.gapSection),
+          _SectionHeader(
+            title: 'Savings goals',
             icon: Icons.savings_outlined,
-            title: 'No savings goals',
-            message: 'Track a target manually or link it to an existing account.',
-          )
-        else
-          for (final goal in savingsGoals.where((item) => !item.isArchived)) ...[
-            _SavingsGoalCard(
-              goal: goal,
-              accountName: goal.accountId == null
-                  ? null
-                  : _accountName(goal.accountId!),
-              currentAmount: _currentGoalAmount(goal),
-              currency: currency,
-              onDelete: goal.id == null
-                  ? null
-                  : () => onDeleteSavingsGoal(goal.id!),
-            ),
-            const SizedBox(height: FlowSpacing.sm),
-          ],
+            onAdd: () => _openGoalForm(context),
+          ),
+          const SizedBox(height: FlowSpacing.sm),
+          if (savingsGoals.where((item) => !item.isArchived).isEmpty)
+            const _InlineEmpty(
+              icon: Icons.savings_outlined,
+              title: 'No savings goals',
+              message: 'Track a target manually or link it to an existing account.',
+            )
+          else
+            for (final goal
+                in savingsGoals.where((item) => !item.isArchived)) ...[
+              _SavingsGoalCard(
+                goal: goal,
+                accountName: goal.accountId == null
+                    ? null
+                    : _accountName(goal.accountId!),
+                currentAmount: _currentGoalAmount(goal),
+                currency: currency,
+                onDelete: goal.id == null
+                    ? null
+                    : () => onDeleteSavingsGoal(goal.id!),
+              ),
+              const SizedBox(height: FlowSpacing.sm),
+            ],
+        ],
       ],
     );
   }
-
   String _accountName(int id) {
     return accounts
         .firstWhere(

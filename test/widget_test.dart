@@ -18,7 +18,7 @@ Future<void> tapShellTab(WidgetTester tester, int index) async {
     find.byKey(const Key('flow-floating-navigation')),
   );
   await tester.tapAt(
-    Offset(navRect.left + navRect.width * ((index + .5) / 6), navRect.center.dy),
+    Offset(navRect.left + navRect.width * ((index + .5) / 5), navRect.center.dy),
   );
   await tester.pumpAndSettle();
 }
@@ -92,7 +92,7 @@ void main() {
   ) async {
     await pumpWithFirstAccount(tester);
 
-    await tapShellTab(tester, 5);
+    await tapShellTab(tester, 4);
     expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('System'), findsNothing);
 
