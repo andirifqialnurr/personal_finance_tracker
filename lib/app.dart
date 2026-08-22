@@ -389,12 +389,6 @@ class _FlowShellState extends ConsumerState<FlowShell> {
                 categories: categories,
                 onCategoriesChanged: (value) =>
                     unawaited(controller.saveCategories(value)),
-                onExportCsv: controller.exportCsv,
-                onPreviewImportCsv: controller.previewCsvImport,
-                onImportCsv: controller.importCsv,
-                onExportBackup: controller.exportBackup,
-                onPreviewBackupRestore: controller.previewBackupRestore,
-                onRestoreBackup: controller.restoreBackup,
                 onDeleteAll: () => unawaited(controller.deleteAllData()),
                 showAppBar: false,
               ),
