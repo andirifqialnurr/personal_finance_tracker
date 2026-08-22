@@ -370,7 +370,7 @@ Catatan arah produk: fitur import dan restore tidak menjadi menu utama. Fokus us
 - [x] Jalankan test terkait planning, laporan, CSV, backup, dan widget navigation.
 - [x] Jalankan `flutter test --concurrency=1` bila environment memungkinkan.
 - [x] Jalankan `flutter build apk --debug`.
-- [ ] Lakukan visual pass pada Home grid, halaman detail planning, progress bar, laporan PDF/CSV, dan judul menu di Light/Dark serta layar kecil.
+- [x] Lakukan visual pass pada Home grid, halaman detail planning, progress bar, laporan PDF/CSV, dan judul menu di Light/Dark serta layar kecil.
 
 ## 16. Fitur tambahan tanpa menambah bottom navigation
 
