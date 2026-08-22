@@ -66,18 +66,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
           transaction.occurredAt.year == now.year &&
           transaction.occurredAt.month == now.month,
     );
-    final activeRecurring = widget.recurringTemplates
-        .where((template) => !template.isArchived)
-        .length;
-    final currentBudgets = widget.monthlyBudgets
-        .where(
-          (budget) =>
-              budget.month.year == now.year && budget.month.month == now.month,
-        )
-        .length;
-    final activeGoals = widget.savingsGoals
-        .where((goal) => !goal.isArchived)
-        .length;
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.md),
       children: [
@@ -173,25 +161,21 @@ class _HomeDashboardState extends State<HomeDashboard> {
           items: [
             _QuickMenuItem(
               title: 'Recurring',
-              subtitle: '$activeRecurring active',
               icon: Icons.event_repeat_outlined,
               onTap: widget.onOpenRecurringTemplates,
             ),
             _QuickMenuItem(
               title: 'Budgets',
-              subtitle: '$currentBudgets this month',
               icon: Icons.pie_chart_outline,
               onTap: widget.onOpenMonthlyBudgets,
             ),
             _QuickMenuItem(
               title: 'Goals',
-              subtitle: '$activeGoals active',
               icon: Icons.savings_outlined,
               onTap: widget.onOpenSavingsGoals,
             ),
             _QuickMenuItem(
               title: 'Reports',
-              subtitle: _monthName(now.month),
               icon: Icons.summarize_outlined,
               onTap: widget.onOpenReports,
             ),
@@ -366,10 +350,10 @@ class _QuickMenuGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GridView.count(
-    crossAxisCount: 2,
-    childAspectRatio: 1.72,
-    crossAxisSpacing: FlowSpacing.sm,
-    mainAxisSpacing: FlowSpacing.sm,
+    crossAxisCount: 4,
+    childAspectRatio: 0.78,
+    crossAxisSpacing: FlowSpacing.xs,
+    mainAxisSpacing: FlowSpacing.xs,
     physics: const NeverScrollableScrollPhysics(),
     shrinkWrap: true,
     children: [
@@ -381,13 +365,11 @@ class _QuickMenuGrid extends StatelessWidget {
 class _QuickMenuItem {
   const _QuickMenuItem({
     required this.title,
-    required this.subtitle,
     required this.icon,
     required this.onTap,
   });
 
   final String title;
-  final String subtitle;
   final IconData icon;
   final VoidCallback onTap;
 }
@@ -400,35 +382,38 @@ class _QuickMenuCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: item.onTap,
-    borderRadius: BorderRadius.circular(FlowRadii.card),
-    child: FlowCard(
-      variant: FlowCardVariant.action,
-      child: Row(
-        children: [
-          FlowIconContainer(icon: item.icon),
-          const SizedBox(width: FlowSpacing.sm),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: FlowSpacing.xxs),
-                Text(
-                  item.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+    borderRadius: BorderRadius.circular(FlowRadii.input),
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(FlowRadii.input),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.72),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: FlowSpacing.xs,
+          vertical: FlowSpacing.xs,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              item.icon,
+              size: 20,
+              color: Theme.of(context).colorScheme.primary,
             ),
-          ),
-        ],
+            const SizedBox(height: FlowSpacing.xs),
+            Text(
+              item.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ],
+        ),
       ),
     ),
   );

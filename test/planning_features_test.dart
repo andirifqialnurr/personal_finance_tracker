@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:personal_finance_tracker/components/flow_components.dart';
 import 'package:personal_finance_tracker/data/data.dart';
 import 'package:personal_finance_tracker/screens/plans_page.dart';
 
@@ -153,6 +154,37 @@ void main() {
     expect(decoded.recurringTemplates.single.name, 'Rent');
     expect(decoded.monthlyBudgets.single.amount, 3000000);
     expect(decoded.savingsGoals.single.targetAmount, 12000000);
+  });
+
+  testWidgets('planning empty states render as centered text without cards', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlansPage(
+            section: PlansPageSection.recurringTemplates,
+            accounts: const [],
+            categories: const [],
+            transactions: const [],
+            recurringTemplates: const [],
+            monthlyBudgets: const [],
+            savingsGoals: const [],
+            currency: 'IDR',
+            onSaveRecurringTemplate: (_) {},
+            onDeleteRecurringTemplate: (_) {},
+            onUseRecurringTemplate: (_) {},
+            onSaveMonthlyBudget: (_) {},
+            onDeleteMonthlyBudget: (_) {},
+            onSaveSavingsGoal: (_) {},
+            onDeleteSavingsGoal: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('No recurring templates yet'), findsOneWidget);
+    expect(find.byType(FlowCard), findsNothing);
   });
 
   testWidgets('budget detail shows matching monthly transactions', (

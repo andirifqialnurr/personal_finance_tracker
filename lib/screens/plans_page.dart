@@ -68,10 +68,8 @@ class PlansPage extends StatelessWidget {
           const SizedBox(height: FlowSpacing.sm),
           if (recurringTemplates.where((item) => !item.isArchived).isEmpty)
             const _InlineEmpty(
-              icon: Icons.event_repeat_outlined,
-              title: 'No recurring templates',
               message:
-                  'Create one for salary, bills, subscriptions, or routine transfers.',
+                  'No recurring templates yet. Create one for salary, bills, subscriptions, or routine transfers.',
             )
           else
             for (final template
@@ -102,10 +100,8 @@ class PlansPage extends StatelessWidget {
           const SizedBox(height: FlowSpacing.sm),
           if (monthlyBudgets.isEmpty)
             const _InlineEmpty(
-              icon: Icons.pie_chart_outline,
-              title: 'No monthly budgets',
               message:
-                  'Set optional limits for expense categories without changing balances.',
+                  'No monthly budgets yet. Set optional limits for expense categories without changing balances.',
             )
           else
             for (final budget in monthlyBudgets) ...[
@@ -135,9 +131,8 @@ class PlansPage extends StatelessWidget {
           const SizedBox(height: FlowSpacing.sm),
           if (savingsGoals.where((item) => !item.isArchived).isEmpty)
             const _InlineEmpty(
-              icon: Icons.savings_outlined,
-              title: 'No savings goals',
-              message: 'Track a target manually or link it to an existing account.',
+              message:
+                  'No savings goals yet. Track a target manually or link it to an existing account.',
             )
           else
             for (final goal
@@ -392,33 +387,23 @@ class _SectionHeader extends StatelessWidget {
 
 class _InlineEmpty extends StatelessWidget {
   const _InlineEmpty({
-    required this.icon,
-    required this.title,
     required this.message,
   });
 
-  final IconData icon;
-  final String title;
   final String message;
 
   @override
-  Widget build(BuildContext context) => FlowCard(
-    density: FlowCardDensity.compact,
-    child: Row(
-      children: [
-        FlowIconContainer(icon: icon),
-        const SizedBox(width: FlowSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: FlowSpacing.xxs),
-              Text(message, style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ),
+  Widget build(BuildContext context) => SizedBox(
+    height: 136,
+    child: Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: FlowSpacing.lg),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall,
         ),
-      ],
+      ),
     ),
   );
 }
@@ -706,9 +691,8 @@ class _BudgetDetailsSheet extends StatelessWidget {
         const SizedBox(height: FlowSpacing.gapGroup),
         if (sorted.isEmpty)
           const _InlineEmpty(
-            icon: Icons.receipt_long_outlined,
-            title: 'No transactions',
-            message: 'Expense transactions for this category and month appear here.',
+            message:
+                'No transactions yet. Expense transactions for this category and month appear here.',
           )
         else
           for (final transaction in sorted) ...[

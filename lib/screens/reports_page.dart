@@ -46,7 +46,7 @@ class _ReportsPageState extends State<ReportsPage> {
       (transaction) =>
           transaction.occurredAt.year == _selectedMonth.year &&
           transaction.occurredAt.month == _selectedMonth.month,
-    );
+    ).toList(growable: false);
     final income = monthTransactions
         .where((transaction) => transaction.type == TransactionType.income)
         .fold<int>(0, (sum, transaction) => sum + transaction.amount);
@@ -58,6 +58,7 @@ class _ReportsPageState extends State<ReportsPage> {
         .fold<int>(0, (sum, transaction) => sum + transaction.amount);
     final transactionCount = monthTransactions.length;
     final topCategory = _topExpenseCategory(monthTransactions);
+    final hasReportData = monthTransactions.isNotEmpty;
 
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.md),
@@ -87,42 +88,48 @@ class _ReportsPageState extends State<ReportsPage> {
           ],
         ),
         const SizedBox(height: FlowSpacing.sm),
-        FlowCard(
-          density: FlowCardDensity.standard,
-          child: Column(
-            children: [
-              _ReportMetric(
-                label: 'Income',
-                value: formatCurrency(income, widget.currency),
-              ),
-              const SizedBox(height: FlowSpacing.gapGroup),
-              _ReportMetric(
-                label: 'Expense',
-                value: formatCurrency(expense, widget.currency),
-              ),
-              const SizedBox(height: FlowSpacing.gapGroup),
-              _ReportMetric(
-                label: 'Net cash flow',
-                value: formatCurrency(income - expense, widget.currency),
-              ),
-              const SizedBox(height: FlowSpacing.gapGroup),
-              _ReportMetric(
-                label: 'Transfers',
-                value: formatCurrency(transfers, widget.currency),
-              ),
-              const SizedBox(height: FlowSpacing.gapGroup),
-              _ReportMetric(
-                label: 'Transactions',
-                value: '$transactionCount',
-              ),
-              const SizedBox(height: FlowSpacing.gapGroup),
-              _ReportMetric(
-                label: 'Top expense',
-                value: topCategory,
-              ),
-            ],
+        if (!hasReportData)
+          const _CenteredEmptyText(
+            message:
+                'No report data for this month yet. Add income, expense, or transfer transactions to build a monthly report.',
+          )
+        else
+          FlowCard(
+            density: FlowCardDensity.standard,
+            child: Column(
+              children: [
+                _ReportMetric(
+                  label: 'Income',
+                  value: formatCurrency(income, widget.currency),
+                ),
+                const SizedBox(height: FlowSpacing.gapGroup),
+                _ReportMetric(
+                  label: 'Expense',
+                  value: formatCurrency(expense, widget.currency),
+                ),
+                const SizedBox(height: FlowSpacing.gapGroup),
+                _ReportMetric(
+                  label: 'Net cash flow',
+                  value: formatCurrency(income - expense, widget.currency),
+                ),
+                const SizedBox(height: FlowSpacing.gapGroup),
+                _ReportMetric(
+                  label: 'Transfers',
+                  value: formatCurrency(transfers, widget.currency),
+                ),
+                const SizedBox(height: FlowSpacing.gapGroup),
+                _ReportMetric(
+                  label: 'Transactions',
+                  value: '$transactionCount',
+                ),
+                const SizedBox(height: FlowSpacing.gapGroup),
+                _ReportMetric(
+                  label: 'Top expense',
+                  value: topCategory,
+                ),
+              ],
+            ),
           ),
-        ),
         const SizedBox(height: FlowSpacing.gapSection),
         Text('Exports', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: FlowSpacing.gapBlock),
@@ -250,6 +257,27 @@ class _ReportsPageState extends State<ReportsPage> {
     'November',
     'December',
   ][month];
+}
+
+class _CenteredEmptyText extends StatelessWidget {
+  const _CenteredEmptyText({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 136,
+    child: Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: FlowSpacing.lg),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ),
+    ),
+  );
 }
 
 class _ReportMetric extends StatelessWidget {

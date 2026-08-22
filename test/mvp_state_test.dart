@@ -76,6 +76,10 @@ void main() {
 
       expect(find.text('Recent transactions'), findsOneWidget);
       expect(find.textContaining('Food'), findsOneWidget);
+      final grid = tester.widget<GridView>(find.byType(GridView).first);
+      final delegate =
+          grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+      expect(delegate.crossAxisCount, 4);
       expect(tester.takeException(), isNull);
     }
     addTearDown(() => tester.binding.setSurfaceSize(null));
