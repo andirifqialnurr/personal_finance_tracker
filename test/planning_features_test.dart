@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:personal_finance_tracker/data/data.dart';
+import 'package:personal_finance_tracker/screens/plans_page.dart';
 
 void main() {
   test('Memory store persists planning data in snapshots', () async {
@@ -151,5 +153,91 @@ void main() {
     expect(decoded.recurringTemplates.single.name, 'Rent');
     expect(decoded.monthlyBudgets.single.amount, 3000000);
     expect(decoded.savingsGoals.single.targetAmount, 12000000);
+  });
+
+  testWidgets('budget detail shows matching monthly transactions', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 8, 17);
+    const category = Category(
+      id: 11,
+      name: 'Food',
+      transactionType: TransactionType.expense,
+      icon: 'restaurant',
+      color: '#C96B6B',
+    );
+    final budget = MonthlyBudget(
+      id: 41,
+      categoryId: 11,
+      month: DateTime(2026, 8),
+      amount: 300000,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlansPage(
+            section: PlansPageSection.monthlyBudgets,
+            accounts: [
+              Account(
+                id: 7,
+                name: 'Cash',
+                type: AccountType.cash,
+                openingBalance: 0,
+                icon: 'wallet',
+                color: '#168C78',
+                createdAt: now,
+                updatedAt: now,
+              ),
+            ],
+            categories: const [category],
+            transactions: [
+              Transaction(
+                id: 21,
+                type: TransactionType.expense,
+                amount: 50000,
+                accountId: 7,
+                categoryId: 11,
+                note: 'Lunch',
+                occurredAt: now,
+                createdAt: now,
+                updatedAt: now,
+              ),
+              Transaction(
+                id: 22,
+                type: TransactionType.expense,
+                amount: 75000,
+                accountId: 7,
+                categoryId: 11,
+                note: 'Next month',
+                occurredAt: DateTime.utc(2026, 9, 1),
+                createdAt: now,
+                updatedAt: now,
+              ),
+            ],
+            recurringTemplates: const [],
+            monthlyBudgets: [budget],
+            savingsGoals: const [],
+            currency: 'IDR',
+            onSaveRecurringTemplate: (_) {},
+            onDeleteRecurringTemplate: (_) {},
+            onUseRecurringTemplate: (_) {},
+            onSaveMonthlyBudget: (_) {},
+            onDeleteMonthlyBudget: (_) {},
+            onSaveSavingsGoal: (_) {},
+            onDeleteSavingsGoal: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Food'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Spent'), findsOneWidget);
+    expect(find.text('Remaining'), findsOneWidget);
+    expect(find.text('Lunch'), findsOneWidget);
+    expect(find.text('Next month'), findsNothing);
   });
 }

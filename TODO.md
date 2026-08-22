@@ -323,11 +323,11 @@ Catatan arah produk: fitur import dan restore tidak menjadi menu utama. Fokus us
 ### 15.4 Monthly budgets sebagai halaman khusus
 
 - [x] Pisahkan section monthly budgets dari `PlansPage` menjadi halaman/list khusus.
-- [ ] Detail budget menampilkan kategori, bulan, limit, spent, remaining/over, dan list transaksi expense yang masuk kategori/bulan tersebut.
+- [x] Detail budget menampilkan kategori, bulan, limit, spent, remaining/over, dan list transaksi expense yang masuk kategori/bulan tersebut.
 - [x] Perbaiki progress bar budget: track abu-abu, progress hijau, rounded kiri-kanan.
 - [x] Saat spent melewati budget, tampilkan bagian over budget berwarna merah di atas progress penuh hijau atau dengan indikator merah yang jelas.
 - [x] Pastikan budget tetap read-only terhadap saldo: budget hanya membaca transaksi expense, tidak membuat/mengubah transaksi.
-- [ ] Tambahkan test kalkulasi spent, remaining, over budget, dan progress rendering state normal/over.
+- [x] Tambahkan test kalkulasi spent, remaining, over budget, dan progress rendering state normal/over.
 
 ### 15.5 Savings goals dengan tambah nominal
 

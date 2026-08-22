@@ -116,6 +116,7 @@ class PlansPage extends StatelessWidget {
                     : _categoryName(budget.categoryId!),
                 spent: _spentForBudget(budget),
                 currency: currency,
+                onOpenDetails: () => _openBudgetDetails(context, budget),
                 onDelete: budget.id == null
                     ? null
                     : () => onDeleteMonthlyBudget(budget.id!),
@@ -193,12 +194,19 @@ class PlansPage extends StatelessWidget {
   }
 
   int _spentForBudget(MonthlyBudget budget) {
+    return _transactionsForBudget(budget).fold<int>(
+      0,
+      (sum, transaction) => sum + transaction.amount,
+    );
+  }
+
+  List<Transaction> _transactionsForBudget(MonthlyBudget budget) {
     return transactions.where((transaction) {
       return transaction.type == TransactionType.expense &&
           transaction.categoryId == budget.categoryId &&
           transaction.occurredAt.year == budget.month.year &&
           transaction.occurredAt.month == budget.month.month;
-    }).fold<int>(0, (sum, transaction) => sum + transaction.amount);
+    }).toList(growable: false);
   }
 
   int _currentGoalAmount(SavingsGoal goal) {
@@ -279,6 +287,26 @@ class PlansPage extends StatelessWidget {
       ),
     );
     if (budget != null) onSaveMonthlyBudget(budget);
+  }
+
+  Future<void> _openBudgetDetails(
+    BuildContext context,
+    MonthlyBudget budget,
+  ) async {
+    final categoryName = budget.categoryId == null
+        ? 'Uncategorized'
+        : _categoryName(budget.categoryId!);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _BudgetDetailsSheet(
+        budget: budget,
+        categoryName: categoryName,
+        transactions: _transactionsForBudget(budget),
+        currency: currency,
+      ),
+    );
   }
 
   Future<void> _openGoalForm(BuildContext context) async {
@@ -545,6 +573,7 @@ class _BudgetCard extends StatelessWidget {
     required this.categoryName,
     required this.spent,
     required this.currency,
+    required this.onOpenDetails,
     required this.onDelete,
   });
 
@@ -552,17 +581,21 @@ class _BudgetCard extends StatelessWidget {
   final String categoryName;
   final int spent;
   final String currency;
+  final VoidCallback onOpenDetails;
   final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
-    final ratio = budget.amount == 0 ? 0.0 : (spent / budget.amount).clamp(0, 1).toDouble();
+    final ratio = budget.amount == 0 ? 0.0 : spent / budget.amount;
     final color = spent > budget.amount
         ? FlowColors.expense
         : spent > budget.amount * 0.8
         ? FlowColors.chartAmber
         : FlowColors.income;
-    return FlowCard(
+    return InkWell(
+      onTap: onOpenDetails,
+      borderRadius: BorderRadius.circular(FlowRadii.card),
+      child: FlowCard(
       density: FlowCardDensity.compact,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -592,6 +625,82 @@ class _BudgetCard extends StatelessWidget {
           ),
         ],
       ),
+      ),
+    );
+  }
+}
+
+class _BudgetDetailsSheet extends StatelessWidget {
+  const _BudgetDetailsSheet({
+    required this.budget,
+    required this.categoryName,
+    required this.transactions,
+    required this.currency,
+  });
+
+  final MonthlyBudget budget;
+  final String categoryName;
+  final List<Transaction> transactions;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final spent = transactions.fold<int>(
+      0,
+      (sum, transaction) => sum + transaction.amount,
+    );
+    final remaining = budget.amount - spent;
+    final ratio = budget.amount == 0 ? 0.0 : spent / budget.amount;
+    final color = spent > budget.amount
+        ? FlowColors.income
+        : spent > budget.amount * 0.8
+        ? FlowColors.chartAmber
+        : FlowColors.income;
+    final sorted = transactions.toList()
+      ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    return _SheetScaffold(
+      title: categoryName,
+      children: [
+        _DetailRow(
+          label: 'Month',
+          value:
+              '${budget.month.year}-${budget.month.month.toString().padLeft(2, '0')}',
+        ),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(label: 'Budget', value: formatCurrency(budget.amount, currency)),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(label: 'Spent', value: formatCurrency(spent, currency)),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(
+          label: remaining >= 0 ? 'Remaining' : 'Over',
+          value: formatCurrency(remaining.abs(), currency),
+        ),
+        const SizedBox(height: FlowSpacing.gapBlock),
+        FlowProgressBar(value: ratio, color: color),
+        const SizedBox(height: FlowSpacing.gapSection),
+        Text('Transactions', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: FlowSpacing.gapGroup),
+        if (sorted.isEmpty)
+          const _InlineEmpty(
+            icon: Icons.receipt_long_outlined,
+            title: 'No transactions',
+            message: 'Expense transactions for this category and month appear here.',
+          )
+        else
+          for (final transaction in sorted) ...[
+            FlowTransactionTile(
+              title: transaction.note?.isNotEmpty == true
+                  ? transaction.note!
+                  : 'Expense',
+              subtitle:
+                  '${transaction.occurredAt.year}-${transaction.occurredAt.month.toString().padLeft(2, '0')}-${transaction.occurredAt.day.toString().padLeft(2, '0')}',
+              amount: '- ${formatCurrency(transaction.amount, currency)}',
+              icon: Icons.arrow_upward,
+              amountVariant: FlowAmountVariant.expense,
+            ),
+            const SizedBox(height: FlowSpacing.gapGroup),
+          ],
+      ],
     );
   }
 }
