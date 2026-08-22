@@ -283,6 +283,7 @@ class FlowShell extends ConsumerStatefulWidget {
 
 class _FlowShellState extends ConsumerState<FlowShell> {
   int _selectedIndex = 0;
+  AccountType? _accountsFilterType;
 
   static const _pages = <_FlowPageData>[
     _FlowPageData('Home', Icons.home_outlined),
@@ -363,6 +364,22 @@ class _FlowShellState extends ConsumerState<FlowShell> {
             ),
             _FlowTabPage(
               title: 'Accounts',
+              actions: [
+                IconButton(
+                  onPressed: () => _openAccountsFilter(context),
+                  tooltip: 'Filter accounts',
+                  icon: Icon(
+                    _accountsFilterType == null
+                        ? Icons.filter_list
+                        : Icons.filter_list_alt,
+                  ),
+                ),
+                IconButton(
+                  onPressed: widget.onAddAccount,
+                  tooltip: 'Add account',
+                  icon: const Icon(Icons.add),
+                ),
+              ],
               child: AccountsPage(
                 accounts: accounts,
                 onAdd: widget.onAddAccount,
@@ -374,6 +391,8 @@ class _FlowShellState extends ConsumerState<FlowShell> {
                 transactions: transactions,
                 currency: currency,
                 onOpenDetail: widget.onOpenAccountDetail,
+                filterType: _accountsFilterType,
+                onClearFilter: () => setState(() => _accountsFilterType = null),
               ),
             ),
             _FlowTabPage(
@@ -485,6 +504,17 @@ class _FlowShellState extends ConsumerState<FlowShell> {
       ),
     );
   }
+
+  Future<void> _openAccountsFilter(BuildContext context) {
+    return AccountsPage.showTypeFilter(
+      context: context,
+      selectedType: _accountsFilterType,
+      onSelected: (type) {
+        if (!mounted) return;
+        setState(() => _accountsFilterType = type);
+      },
+    );
+  }
 }
 
 Transaction _fromTemplate(RecurringTemplate template) {
@@ -577,15 +607,16 @@ class _ReportsContent extends ConsumerWidget {
 }
 
 class _FlowTabPage extends StatelessWidget {
-  const _FlowTabPage({required this.title, required this.child});
+  const _FlowTabPage({required this.title, required this.child, this.actions});
 
   final String title;
   final Widget child;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      _FlowPageTitle(title: title),
+      _FlowPageTitle(title: title, actions: actions),
       Expanded(child: child),
     ],
   );
@@ -689,9 +720,10 @@ class _PlansSectionAddAction extends ConsumerWidget {
 }
 
 class _FlowPageTitle extends StatelessWidget {
-  const _FlowPageTitle({required this.title});
+  const _FlowPageTitle({required this.title, this.actions});
 
   final String title;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -701,12 +733,27 @@ class _FlowPageTitle extends StatelessWidget {
       FlowSpacing.md,
       FlowSpacing.xs,
     ),
-    child: Center(
-      child: Text(
-        title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
+    child: SizedBox(
+      height: kToolbarHeight,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Center(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontSize: 15,
+              ),
+            ),
+          ),
+          if (actions?.isNotEmpty == true)
+            Align(
+              alignment: Alignment.centerRight,
+              child: Row(mainAxisSize: MainAxisSize.min, children: actions!),
+            ),
+        ],
       ),
     ),
   );

@@ -172,20 +172,48 @@ void main() {
       updatedAt: timestamp,
     );
 
+    AccountType? filterType;
     await tester.pumpWidget(
-      harness(
-        AccountsPage(
-          accounts: [account, savingsAccount],
-          transactions: const [],
-          onAdd: () {},
-          onEdit: (_) {},
-          onArchive: (_) {},
-          onRestore: (_) {},
-          onOpenDetail: (_) {},
+      MaterialApp(
+        theme: FlowTheme.light(),
+        home: StatefulBuilder(
+          builder: (context, setState) => Scaffold(
+            appBar: AppBar(
+              title: const Text('Accounts'),
+              actions: [
+                IconButton(
+                  tooltip: 'Filter accounts',
+                  onPressed: () => AccountsPage.showTypeFilter(
+                    context: context,
+                    selectedType: filterType,
+                    onSelected: (type) => setState(() => filterType = type),
+                  ),
+                  icon: const Icon(Icons.filter_list),
+                ),
+                IconButton(
+                  tooltip: 'Add account',
+                  onPressed: () {},
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            ),
+            body: AccountsPage(
+              accounts: [account, savingsAccount],
+              transactions: const [],
+              onAdd: () {},
+              onEdit: (_) {},
+              onArchive: (_) {},
+              onRestore: (_) {},
+              onOpenDetail: (_) {},
+              filterType: filterType,
+              onClearFilter: () => setState(() => filterType = null),
+            ),
+          ),
         ),
       ),
     );
 
+    expect(find.text('Your accounts'), findsNothing);
     await tester.tap(find.byTooltip('Filter accounts'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Savings').last);

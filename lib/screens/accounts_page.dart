@@ -5,7 +5,7 @@ import '../data/models/models.dart';
 import '../theme/flow_tokens.dart';
 import '../utils/flow_format.dart';
 
-class AccountsPage extends StatefulWidget {
+class AccountsPage extends StatelessWidget {
   const AccountsPage({
     super.key,
     required this.accounts,
@@ -16,6 +16,8 @@ class AccountsPage extends StatefulWidget {
     required this.transactions,
     required this.onOpenDetail,
     this.currency = 'IDR',
+    this.filterType,
+    this.onClearFilter,
   });
 
   final List<Account> accounts;
@@ -26,23 +28,18 @@ class AccountsPage extends StatefulWidget {
   final List<Transaction> transactions;
   final ValueChanged<Account> onOpenDetail;
   final String currency;
-
-  @override
-  State<AccountsPage> createState() => _AccountsPageState();
-}
-
-class _AccountsPageState extends State<AccountsPage> {
-  AccountType? _filterType;
+  final AccountType? filterType;
+  final VoidCallback? onClearFilter;
 
   @override
   Widget build(BuildContext context) {
-    final allActiveAccounts = widget.accounts
+    final allActiveAccounts = accounts
         .where((account) => !account.isArchived)
         .toList(growable: false);
     final activeAccounts = allActiveAccounts
         .where(_matchesFilter)
         .toList(growable: false);
-    final archivedAccounts = widget.accounts
+    final archivedAccounts = accounts
         .where((account) => account.isArchived)
         .where(_matchesFilter)
         .toList(growable: false);
@@ -51,42 +48,17 @@ class _AccountsPageState extends State<AccountsPage> {
       (sum, account) => sum + _balanceFor(account),
     );
     return ListView(
-      padding: const EdgeInsets.all(FlowSpacing.md),
+      padding: const EdgeInsets.fromLTRB(
+        FlowSpacing.md,
+        FlowSpacing.sm,
+        FlowSpacing.md,
+        FlowSpacing.md,
+      ),
       children: [
-        const SizedBox(height: FlowSpacing.gapSection),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Your accounts',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () => _openFilter(context),
-                  tooltip: 'Filter accounts',
-                  icon: Icon(
-                    _filterType == null
-                        ? Icons.filter_list
-                        : Icons.filter_list_alt,
-                  ),
-                ),
-                IconButton(
-                  onPressed: widget.onAdd,
-                  tooltip: 'Add account',
-                  icon: const Icon(Icons.add),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: FlowSpacing.xs),
-        if (_filterType != null) ...[
+        if (filterType != null) ...[
           _AccountFilterSummary(
-            label: _typeLabel(_filterType!),
-            onClear: () => setState(() => _filterType = null),
+            label: _typeLabel(filterType!),
+            onClear: onClearFilter ?? () {},
           ),
           const SizedBox(height: FlowSpacing.sm),
         ],
@@ -95,7 +67,7 @@ class _AccountsPageState extends State<AccountsPage> {
             icon: Icons.account_balance_wallet_outlined,
             title: 'No accounts yet',
             message: 'Create an account to start tracking your balance.',
-            action: FlowButton(label: 'Create account', onPressed: widget.onAdd),
+            action: FlowButton(label: 'Create account', onPressed: onAdd),
           )
         else if (activeAccounts.isEmpty)
           const _InlineAccountEmpty(
@@ -114,7 +86,7 @@ class _AccountsPageState extends State<AccountsPage> {
                 ),
                 const SizedBox(height: FlowSpacing.gapGroup),
                 FlowAmountText(
-                  amount: formatCurrency(totalBalance, widget.currency),
+                  amount: formatCurrency(totalBalance, currency),
                   style: const TextStyle(fontSize: 18),
                 ),
                 const SizedBox(height: FlowSpacing.gapTight),
@@ -132,8 +104,8 @@ class _AccountsPageState extends State<AccountsPage> {
             _AccountCard(
               account: account,
               balance: _balanceFor(account),
-              currency: widget.currency,
-              onTap: () => widget.onOpenDetail(account),
+              currency: currency,
+              onTap: () => onOpenDetail(account),
               trailing: IconButton(
                 onPressed: () => _confirmArchive(context, account),
                 tooltip: 'Archive account',
@@ -151,10 +123,10 @@ class _AccountsPageState extends State<AccountsPage> {
             _AccountCard(
               account: account,
               balance: _balanceFor(account),
-              currency: widget.currency,
-              onTap: () => widget.onOpenDetail(account),
+              currency: currency,
+              onTap: () => onOpenDetail(account),
               trailing: TextButton.icon(
-                onPressed: () => widget.onRestore(account),
+                onPressed: () => onRestore(account),
                 icon: const Icon(Icons.unarchive_outlined),
                 label: const Text('Restore'),
               ),
@@ -166,6 +138,22 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
+  static Future<void> showTypeFilter({
+    required BuildContext context,
+    required AccountType? selectedType,
+    required ValueChanged<AccountType?> onSelected,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _AccountTypeFilterSheet(
+        selectedType: selectedType,
+        onSelected: onSelected,
+      ),
+    );
+  }
+
   Future<void> _confirmArchive(BuildContext context, Account account) async {
     final confirmed = await FlowConfirmationSheet.show(
       context: context,
@@ -174,28 +162,15 @@ class _AccountsPageState extends State<AccountsPage> {
           'The account and its transaction history will stay safe but be hidden from active accounts.',
       confirmLabel: 'Archive account',
     );
-    if (confirmed == true) widget.onArchive(account);
-  }
-
-  Future<void> _openFilter(BuildContext context) async {
-    final selected = await showModalBottomSheet<Object?>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _AccountTypeFilterSheet(selectedType: _filterType),
-    );
-    if (!mounted || selected == null) return;
-    setState(() {
-      _filterType = selected is AccountType ? selected : null;
-    });
+    if (confirmed == true) onArchive(account);
   }
 
   bool _matchesFilter(Account account) =>
-      _filterType == null || account.type == _filterType;
+      filterType == null || account.type == filterType;
 
   int _balanceFor(Account account) =>
       account.openingBalance +
-      widget.transactions.fold<int>(0, (sum, transaction) {
+      transactions.fold<int>(0, (sum, transaction) {
         if (transaction.type == TransactionType.transfer &&
             transaction.destinationAccountId == account.id) {
           return sum + transaction.amount;
@@ -268,9 +243,13 @@ class _InlineAccountEmpty extends StatelessWidget {
 }
 
 class _AccountTypeFilterSheet extends StatelessWidget {
-  const _AccountTypeFilterSheet({required this.selectedType});
+  const _AccountTypeFilterSheet({
+    required this.selectedType,
+    required this.onSelected,
+  });
 
   final AccountType? selectedType;
+  final ValueChanged<AccountType?> onSelected;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -289,23 +268,27 @@ class _AccountTypeFilterSheet extends StatelessWidget {
             leading: const Icon(Icons.select_all),
             title: const Text('All accounts'),
             trailing: selectedType == null ? const Icon(Icons.check) : null,
-            onTap: () => Navigator.of(context).pop(_AccountFilterResult.all),
+            onTap: () {
+              Navigator.of(context).pop();
+              onSelected(null);
+            },
           ),
           for (final type in AccountType.values)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(_AccountsPageState._iconFor(type)),
-              title: Text(_AccountsPageState._typeLabel(type)),
+              leading: Icon(AccountsPage._iconFor(type)),
+              title: Text(AccountsPage._typeLabel(type)),
               trailing: selectedType == type ? const Icon(Icons.check) : null,
-              onTap: () => Navigator.of(context).pop(type),
+              onTap: () {
+                Navigator.of(context).pop();
+                onSelected(type);
+              },
             ),
         ],
       ),
     ),
   );
 }
-
-enum _AccountFilterResult { all }
 
 class _AccountCard extends StatelessWidget {
   const _AccountCard({
@@ -335,7 +318,7 @@ class _AccountCard extends StatelessWidget {
             Row(
               children: [
                 FlowIconContainer(
-                  icon: _AccountsPageState._iconFor(account.type),
+                  icon: AccountsPage._iconFor(account.type),
                   variant: FlowIconContainerVariant.account,
                 ),
                 const SizedBox(width: FlowSpacing.sm),
@@ -351,7 +334,7 @@ class _AccountCard extends StatelessWidget {
                       ),
                       const SizedBox(height: FlowSpacing.xxs),
                       Text(
-                        _AccountsPageState._typeLabel(account.type),
+                        AccountsPage._typeLabel(account.type),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall,
