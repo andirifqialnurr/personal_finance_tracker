@@ -293,11 +293,7 @@ class _HomeBudgetCard extends StatelessWidget {
           const SizedBox(height: FlowSpacing.gapGroup),
           FlowProgressBar(
             value: budget.amount == 0 ? 0 : spent / budget.amount,
-            color: spent > budget.amount
-                ? FlowColors.income
-                : spent > budget.amount * 0.8
-                ? FlowColors.chartAmber
-                : FlowColors.income,
+            color: FlowColors.income,
           ),
           const SizedBox(height: FlowSpacing.gapGroup),
           Text(

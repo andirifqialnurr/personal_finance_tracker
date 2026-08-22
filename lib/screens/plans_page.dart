@@ -596,11 +596,6 @@ class _BudgetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ratio = budget.amount == 0 ? 0.0 : spent / budget.amount;
-    final color = spent > budget.amount
-        ? FlowColors.expense
-        : spent > budget.amount * 0.8
-        ? FlowColors.chartAmber
-        : FlowColors.income;
     return InkWell(
       onTap: onOpenDetails,
       borderRadius: BorderRadius.circular(FlowRadii.card),
@@ -626,7 +621,7 @@ class _BudgetCard extends StatelessWidget {
               ),
             ],
           ),
-          FlowProgressBar(value: ratio, color: color),
+          FlowProgressBar(value: ratio, color: FlowColors.income),
           const SizedBox(height: FlowSpacing.gapGroup),
           Text(
             '${formatCurrency(spent, currency)} of ${formatCurrency(budget.amount, currency)}',
@@ -660,11 +655,6 @@ class _BudgetDetailsSheet extends StatelessWidget {
     );
     final remaining = budget.amount - spent;
     final ratio = budget.amount == 0 ? 0.0 : spent / budget.amount;
-    final color = spent > budget.amount
-        ? FlowColors.income
-        : spent > budget.amount * 0.8
-        ? FlowColors.chartAmber
-        : FlowColors.income;
     final sorted = transactions.toList()
       ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
     return _SheetScaffold(
@@ -685,7 +675,7 @@ class _BudgetDetailsSheet extends StatelessWidget {
           value: formatCurrency(remaining.abs(), currency),
         ),
         const SizedBox(height: FlowSpacing.gapBlock),
-        FlowProgressBar(value: ratio, color: color),
+        FlowProgressBar(value: ratio, color: FlowColors.income),
         const SizedBox(height: FlowSpacing.gapSection),
         Text('Transactions', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: FlowSpacing.gapGroup),
