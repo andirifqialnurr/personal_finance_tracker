@@ -119,7 +119,10 @@ void main() {
     await tapShellTab(tester, 3);
 
     expect(find.text('Total balance'), findsOneWidget);
-    expect(find.text('Your accounts'), findsOneWidget);
+    expect(find.text('Accounts'), findsWidgets);
+    expect(find.byTooltip('Filter accounts'), findsOneWidget);
+    expect(find.byTooltip('Add account'), findsOneWidget);
+    expect(find.text('Your accounts'), findsNothing);
     expect(find.text('Cash'), findsWidgets);
   });
 
