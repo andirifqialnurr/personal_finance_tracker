@@ -352,8 +352,8 @@ class _QuickMenuGrid extends StatelessWidget {
   Widget build(BuildContext context) => GridView.count(
     crossAxisCount: 4,
     childAspectRatio: 1,
-    crossAxisSpacing: FlowSpacing.sm,
-    mainAxisSpacing: FlowSpacing.sm,
+    crossAxisSpacing: FlowSpacing.lg,
+    mainAxisSpacing: FlowSpacing.lg,
     physics: const NeverScrollableScrollPhysics(),
     shrinkWrap: true,
     children: [
@@ -392,27 +392,24 @@ class _QuickMenuCard extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: FlowSpacing.xs,
-          vertical: FlowSpacing.xs,
-        ),
+        padding: const EdgeInsets.all(FlowSpacing.xxs),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               item.icon,
-              size: 18,
+              size: 24,
               color: Theme.of(context).colorScheme.primary,
             ),
-            const SizedBox(height: FlowSpacing.xxs),
+            const SizedBox(height: 2),
             Text(
               item.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontSize: 10,
-                height: 1.05,
+                fontSize: 9,
+                height: 1,
               ),
             ),
           ],
