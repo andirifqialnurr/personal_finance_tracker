@@ -83,6 +83,7 @@ class PlansPage extends StatelessWidget {
                     ? null
                     : _categoryName(template.categoryId!),
                 currency: currency,
+                onOpenDetails: () => _openRecurringDetails(context, template),
                 onUse: () => onUseRecurringTemplate(template),
                 onDelete: template.id == null
                     ? null
@@ -238,6 +239,30 @@ class PlansPage extends StatelessWidget {
     if (template != null) onSaveRecurringTemplate(template);
   }
 
+  Future<void> _openRecurringDetails(
+    BuildContext context,
+    RecurringTemplate template,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _RecurringDetailsSheet(
+        template: template,
+        accountName: _accountName(template.accountId),
+        categoryName: template.categoryId == null
+            ? null
+            : _categoryName(template.categoryId!),
+        currency: currency,
+        onUse: () {
+          Navigator.of(context).pop();
+          onUseRecurringTemplate(template);
+        },
+      ),
+    );
+  }
+
+
   Future<void> _openBudgetForm(BuildContext context) async {
     final budget = await showModalBottomSheet<MonthlyBudget>(
       context: context,
@@ -352,6 +377,7 @@ class _RecurringCard extends StatelessWidget {
     required this.accountName,
     required this.categoryName,
     required this.currency,
+    required this.onOpenDetails,
     required this.onUse,
     required this.onDelete,
   });
@@ -360,11 +386,15 @@ class _RecurringCard extends StatelessWidget {
   final String accountName;
   final String? categoryName;
   final String currency;
+  final VoidCallback onOpenDetails;
   final VoidCallback onUse;
   final VoidCallback? onDelete;
 
   @override
-  Widget build(BuildContext context) => FlowCard(
+  Widget build(BuildContext context) => InkWell(
+    onTap: onOpenDetails,
+    borderRadius: BorderRadius.circular(FlowRadii.card),
+    child: FlowCard(
     density: FlowCardDensity.standard,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,6 +435,7 @@ class _RecurringCard extends StatelessWidget {
         ),
       ],
     ),
+    ),
   );
 
   static String _typeLabel(TransactionType type) => switch (type) {
@@ -417,6 +448,95 @@ class _RecurringCard extends StatelessWidget {
       template.frequency == RecurringFrequency.weekly
       ? 'Weekly day ${template.weekday ?? 1}'
       : 'Monthly day ${template.dayOfMonth ?? 1}';
+}
+
+class _RecurringDetailsSheet extends StatelessWidget {
+  const _RecurringDetailsSheet({
+    required this.template,
+    required this.accountName,
+    required this.categoryName,
+    required this.currency,
+    required this.onUse,
+  });
+
+  final RecurringTemplate template;
+  final String accountName;
+  final String? categoryName;
+  final String currency;
+  final VoidCallback onUse;
+
+  @override
+  Widget build(BuildContext context) => _SheetScaffold(
+    title: template.name,
+    children: [
+      _DetailRow(label: 'Type', value: _RecurringCard._typeLabel(template.type)),
+      const SizedBox(height: FlowSpacing.gapGroup),
+      _DetailRow(
+        label: 'Frequency',
+        value: _RecurringCard._frequencyLabel(template),
+      ),
+      const SizedBox(height: FlowSpacing.gapGroup),
+      _DetailRow(label: 'Account', value: accountName),
+      if (categoryName != null) ...[
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(label: 'Category', value: categoryName!),
+      ],
+      if (template.destinationAccountId != null) ...[
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(
+          label: 'Destination',
+          value: 'Account ${template.destinationAccountId}',
+        ),
+      ],
+      const SizedBox(height: FlowSpacing.gapGroup),
+      _DetailRow(
+        label: 'Amount',
+        value: formatCurrency(template.amount, currency),
+      ),
+      if (template.note?.isNotEmpty == true) ...[
+        const SizedBox(height: FlowSpacing.gapGroup),
+        _DetailRow(label: 'Note', value: template.note!),
+      ],
+      const SizedBox(height: FlowSpacing.gapBlock),
+      Text(
+        'This is a reusable transaction template. It does not change balances until you review and save the generated transaction.',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      const SizedBox(height: FlowSpacing.gapGroup),
+      Text(
+        'History is not inferred yet. A future migration should add a transaction template relation before listing generated transactions here.',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      const SizedBox(height: FlowSpacing.lg),
+      FlowButton(
+        label: 'Review transaction',
+        icon: Icons.open_in_new,
+        onPressed: onUse,
+      ),
+    ],
+  );
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(
+        width: 112,
+        child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ),
+      const SizedBox(width: FlowSpacing.sm),
+      Expanded(
+        child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+      ),
+    ],
+  );
 }
 
 class _BudgetCard extends StatelessWidget {

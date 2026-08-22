@@ -315,10 +315,10 @@ Catatan arah produk: fitur import dan restore tidak menjadi menu utama. Fokus us
 ### 15.3 Recurring templates sebagai halaman khusus
 
 - [x] Pisahkan section recurring dari `PlansPage` menjadi halaman/list khusus.
-- [ ] Jelaskan alur produk sebagai template transaksi rutin, bukan transaksi otomatis yang langsung mengubah saldo.
+- [x] Jelaskan alur produk sebagai template transaksi rutin, bukan transaksi otomatis yang langsung mengubah saldo.
 - [x] Pertahankan aksi `Review`/buat transaksi dari template supaya transaksi tetap dikonfirmasi user sebelum masuk income/expense/transfer.
-- [ ] Tambahkan detail item recurring yang menampilkan metadata template dan riwayat transaksi yang dibuat dari template bila sudah tersedia penanda relasi.
-- [ ] Jika belum ada field relasi template di transaksi, tentukan migration/model yang aman sebelum menampilkan riwayat berbasis relasi.
+- [x] Tambahkan detail item recurring yang menampilkan metadata template dan riwayat transaksi yang dibuat dari template bila sudah tersedia penanda relasi.
+- [x] Jika belum ada field relasi template di transaksi, tentukan migration/model yang aman sebelum menampilkan riwayat berbasis relasi.
 
 ### 15.4 Monthly budgets sebagai halaman khusus
 
