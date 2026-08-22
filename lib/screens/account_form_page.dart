@@ -120,6 +120,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
     AccountType.cash => 'Cash',
     AccountType.bank => 'Bank',
     AccountType.eWallet => 'E-wallet',
+    AccountType.savings => 'Savings',
     AccountType.other => 'Other',
   };
 
@@ -127,6 +128,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
     AccountType.cash => 'wallet',
     AccountType.bank => 'account_balance',
     AccountType.eWallet => 'phone_android',
+    AccountType.savings => 'savings',
     AccountType.other => 'savings',
   };
 }

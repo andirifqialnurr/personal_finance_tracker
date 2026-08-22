@@ -293,6 +293,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     AccountType.cash => 'Cash',
     AccountType.bank => 'Bank',
     AccountType.eWallet => 'E-wallet',
+    AccountType.savings => 'Savings',
     AccountType.other => 'Other',
   };
 }

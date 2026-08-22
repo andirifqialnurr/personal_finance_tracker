@@ -471,7 +471,7 @@ void main() {
               Account(
                 id: 7,
                 name: 'Savings',
-                type: AccountType.bank,
+                type: AccountType.savings,
                 openingBalance: 1000000,
                 icon: 'bank',
                 color: '#168C78',
@@ -515,5 +515,107 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(savedGoal?.manualContribution, 300000);
+  });
+
+  testWidgets('savings goal ignores non-savings linked account balances', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 8, 17);
+    final goal = SavingsGoal(
+      id: 52,
+      name: 'Travel fund',
+      targetAmount: 1000000,
+      accountId: 8,
+      manualContribution: 0,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlansPage(
+            section: PlansPageSection.savingsGoals,
+            accounts: [
+              Account(
+                id: 8,
+                name: 'Main bank',
+                type: AccountType.bank,
+                openingBalance: 10520000,
+                icon: 'bank',
+                color: '#168C78',
+                createdAt: now,
+                updatedAt: now,
+              ),
+            ],
+            categories: const [],
+            transactions: const [],
+            recurringTemplates: const [],
+            monthlyBudgets: const [],
+            savingsGoals: [goal],
+            currency: 'IDR',
+            onSaveRecurringTemplate: (_) {},
+            onDeleteRecurringTemplate: (_) {},
+            onUseRecurringTemplate: (_) {},
+            onSaveMonthlyBudget: (_) {},
+            onDeleteMonthlyBudget: (_) {},
+            onSaveSavingsGoal: (_) {},
+            onDeleteSavingsGoal: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Rp 0 of Rp 1.000.000'), findsOneWidget);
+    expect(find.text('(0.0%)'), findsOneWidget);
+  });
+
+  testWidgets('savings goal form only lists savings accounts', (tester) async {
+    final now = DateTime.utc(2026, 8, 17);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => PlansPage.showSavingsGoalForm(
+                context,
+                accounts: [
+                  Account(
+                    id: 7,
+                    name: 'Savings vault',
+                    type: AccountType.savings,
+                    openingBalance: 0,
+                    icon: 'savings',
+                    color: '#168C78',
+                    createdAt: now,
+                    updatedAt: now,
+                  ),
+                  Account(
+                    id: 8,
+                    name: 'Main bank',
+                    type: AccountType.bank,
+                    openingBalance: 10520000,
+                    icon: 'bank',
+                    color: '#168C78',
+                    createdAt: now,
+                    updatedAt: now,
+                  ),
+                ],
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Manual only'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Savings vault'), findsOneWidget);
+    expect(find.text('Main bank'), findsNothing);
   });
 }

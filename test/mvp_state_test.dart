@@ -4,6 +4,7 @@ import 'package:personal_finance_tracker/app.dart';
 import 'package:personal_finance_tracker/data/flow_store.dart';
 import 'package:personal_finance_tracker/data/models/models.dart';
 import 'package:personal_finance_tracker/screens/account_detail_page.dart';
+import 'package:personal_finance_tracker/screens/accounts_page.dart';
 import 'package:personal_finance_tracker/screens/home_dashboard.dart';
 import 'package:personal_finance_tracker/screens/transaction_detail_page.dart';
 import 'package:personal_finance_tracker/screens/transactions_page.dart';
@@ -157,6 +158,43 @@ void main() {
     expect(find.text('Account transactions'), findsOneWidget);
     expect(find.text('Lunch'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Accounts filters active accounts by type', (tester) async {
+    final savingsAccount = Account(
+      id: 2,
+      name: 'Emergency savings',
+      type: AccountType.savings,
+      openingBalance: 750000,
+      icon: 'savings',
+      color: '#168C78',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    );
+
+    await tester.pumpWidget(
+      harness(
+        AccountsPage(
+          accounts: [account, savingsAccount],
+          transactions: const [],
+          onAdd: () {},
+          onEdit: (_) {},
+          onArchive: (_) {},
+          onRestore: (_) {},
+          onOpenDetail: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Filter accounts'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Savings').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Filter: Savings'), findsOneWidget);
+    expect(find.text('Emergency savings'), findsOneWidget);
+    expect(find.textContaining('Cash account'), findsNothing);
+    expect(find.text('Rp 750.000'), findsWidgets);
   });
 
   testWidgets('app restores a populated snapshot from its store', (tester) async {

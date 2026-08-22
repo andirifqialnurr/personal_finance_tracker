@@ -266,8 +266,20 @@ class PlansPage extends StatelessWidget {
   int _linkedGoalBalance(SavingsGoal goal) {
     if (goal.accountId == null) return 0;
     return accounts
-        .where((account) => account.id == goal.accountId)
+        .where(
+          (account) =>
+              account.id == goal.accountId && account.type == AccountType.savings,
+        )
         .fold<int>(0, (sum, account) => sum + _balanceFor(account));
+  }
+
+  String? _savingsAccountName(int id) {
+    for (final account in accounts) {
+      if (account.id == id && account.type == AccountType.savings) {
+        return account.name;
+      }
+    }
+    return null;
   }
 
   int _balanceFor(Account account) {
@@ -322,7 +334,11 @@ class PlansPage extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => _SavingsGoalSheet(accounts: accounts),
+      builder: (_) => _SavingsGoalSheet(
+        accounts: accounts
+            .where((account) => account.type == AccountType.savings)
+            .toList(),
+      ),
     );
   }
 
@@ -396,13 +412,20 @@ class PlansPage extends StatelessWidget {
   Future<void> _openGoalForm(BuildContext context) async {
     final goal = await showSavingsGoalForm(
       context,
-      accounts: accounts.where((account) => !account.isArchived).toList(),
+      accounts: accounts
+          .where(
+            (account) =>
+                !account.isArchived && account.type == AccountType.savings,
+          )
+          .toList(),
     );
     if (goal != null) onSaveSavingsGoal(goal);
   }
 
   Future<void> _openGoalDetails(BuildContext context, SavingsGoal goal) async {
-    final accountName = goal.accountId == null ? null : _accountName(goal.accountId!);
+    final accountName = goal.accountId == null
+        ? null
+        : _savingsAccountName(goal.accountId!);
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,

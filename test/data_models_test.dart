@@ -7,7 +7,7 @@ void main() {
   test('account round-trips its SQLite map', () {
     final account = Account(
       name: 'Cash',
-      type: AccountType.cash,
+      type: AccountType.savings,
       openingBalance: 250000,
       icon: 'wallet',
       color: '#168C78',
@@ -20,6 +20,22 @@ void main() {
     expect(restored.type, account.type);
     expect(restored.openingBalance, account.openingBalance);
     expect(restored.isArchived, isFalse);
+  });
+
+  test('account falls back to other for unknown legacy type', () {
+    final account = Account.fromMap({
+      'id': 1,
+      'name': 'Legacy',
+      'type': 'unexpected',
+      'opening_balance': 0,
+      'icon': 'account',
+      'color': '#168C78',
+      'is_archived': 0,
+      'created_at': timestamp.toIso8601String(),
+      'updated_at': timestamp.toIso8601String(),
+    });
+
+    expect(account.type, AccountType.other);
   });
 
   test('transaction preserves positive amount and optional references', () {

@@ -1,4 +1,4 @@
-enum AccountType { cash, bank, eWallet, other }
+enum AccountType { cash, bank, eWallet, savings, other }
 
 class Account {
   const Account({
@@ -26,7 +26,7 @@ class Account {
   factory Account.fromMap(Map<String, Object?> map) => Account(
     id: map['id'] as int?,
     name: map['name'] as String,
-    type: AccountType.values.byName(map['type'] as String),
+    type: _accountTypeFromName(map['type'] as String?),
     openingBalance: map['opening_balance'] as int,
     icon: map['icon'] as String,
     color: map['color'] as String,
@@ -46,4 +46,11 @@ class Account {
     'created_at': createdAt.toIso8601String(),
     'updated_at': updatedAt.toIso8601String(),
   };
+}
+
+AccountType _accountTypeFromName(String? name) {
+  for (final type in AccountType.values) {
+    if (type.name == name) return type;
+  }
+  return AccountType.other;
 }

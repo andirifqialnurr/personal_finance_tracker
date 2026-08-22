@@ -673,7 +673,10 @@ class _PlansSectionAddAction extends ConsumerWidget {
           context,
           accounts: ref
               .read(accountsProvider)
-              .where((account) => !account.isArchived)
+              .where(
+                (account) =>
+                    !account.isArchived && account.type == AccountType.savings,
+              )
               .toList(),
         );
         if (goal != null) {
