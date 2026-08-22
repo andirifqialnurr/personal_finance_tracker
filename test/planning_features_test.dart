@@ -298,6 +298,79 @@ void main() {
     expect(detailFill.height, 12);
   });
 
+  testWidgets('budget delete uses destructive icon and confirmation sheet', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 8, 17);
+    int? deletedBudgetId;
+    const category = Category(
+      id: 11,
+      name: 'Food',
+      transactionType: TransactionType.expense,
+      icon: 'restaurant',
+      color: '#C96B6B',
+    );
+    final budget = MonthlyBudget(
+      id: 41,
+      categoryId: 11,
+      month: DateTime(2026, 8),
+      amount: 300000,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PlansPage(
+            section: PlansPageSection.monthlyBudgets,
+            accounts: const [],
+            categories: const [category],
+            transactions: const [],
+            recurringTemplates: const [],
+            monthlyBudgets: [budget],
+            savingsGoals: const [],
+            currency: 'IDR',
+            onSaveRecurringTemplate: (_) {},
+            onDeleteRecurringTemplate: (_) {},
+            onUseRecurringTemplate: (_) {},
+            onSaveMonthlyBudget: (_) {},
+            onDeleteMonthlyBudget: (id) => deletedBudgetId = id,
+            onSaveSavingsGoal: (_) {},
+            onDeleteSavingsGoal: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    final deleteButton = find.byTooltip('Delete budget');
+    final deleteIcon = tester.widget<Icon>(
+      find.descendant(
+        of: deleteButton,
+        matching: find.byIcon(Icons.delete_outline),
+      ),
+    );
+    expect(
+      deleteIcon.color,
+      Theme.of(tester.element(deleteButton)).colorScheme.error,
+    );
+
+    await tester.tap(deleteButton);
+    await tester.pumpAndSettle();
+
+    expect(deletedBudgetId, isNull);
+    expect(find.text('Delete budget?'), findsOneWidget);
+    expect(
+      find.textContaining('Existing transactions are not changed'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Delete budget'));
+    await tester.pumpAndSettle();
+
+    expect(deletedBudgetId, 41);
+  });
+
   testWidgets('savings goal detail and contribution update manual amount', (
     tester,
   ) async {

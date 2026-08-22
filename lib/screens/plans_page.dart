@@ -85,7 +85,15 @@ class PlansPage extends StatelessWidget {
                 onUse: () => onUseRecurringTemplate(template),
                 onDelete: template.id == null
                     ? null
-                    : () => onDeleteRecurringTemplate(template.id!),
+                    : () => _confirmDelete(
+                          context,
+                          title: 'Delete recurring template?',
+                          message:
+                              'This removes "${template.name}" from recurring templates. Existing transactions are not changed.',
+                          confirmLabel: 'Delete template',
+                          onConfirmed: () =>
+                              onDeleteRecurringTemplate(template.id!),
+                        ),
               ),
               const SizedBox(height: FlowSpacing.sm),
             ],
@@ -115,7 +123,15 @@ class PlansPage extends StatelessWidget {
                 onOpenDetails: () => _openBudgetDetails(context, budget),
                 onDelete: budget.id == null
                     ? null
-                    : () => onDeleteMonthlyBudget(budget.id!),
+                    : () => _confirmDelete(
+                          context,
+                          title: 'Delete budget?',
+                          message:
+                              'This removes the ${_budgetLabel(budget)} budget for ${_monthLabel(budget.month)}. Existing transactions are not changed.',
+                          confirmLabel: 'Delete budget',
+                          onConfirmed: () =>
+                              onDeleteMonthlyBudget(budget.id!),
+                        ),
               ),
               const SizedBox(height: FlowSpacing.sm),
             ],
@@ -149,7 +165,14 @@ class PlansPage extends StatelessWidget {
                 onAddContribution: () => _openContributionForm(context, goal),
                 onDelete: goal.id == null
                     ? null
-                    : () => onDeleteSavingsGoal(goal.id!),
+                    : () => _confirmDelete(
+                          context,
+                          title: 'Delete savings goal?',
+                          message:
+                              'This removes "${goal.name}" from savings goals. Existing transactions and account balances are not changed.',
+                          confirmLabel: 'Delete goal',
+                          onConfirmed: () => onDeleteSavingsGoal(goal.id!),
+                        ),
               ),
               const SizedBox(height: FlowSpacing.sm),
             ],
@@ -188,6 +211,32 @@ class PlansPage extends StatelessWidget {
           ),
         )
         .name;
+  }
+
+  String _budgetLabel(MonthlyBudget budget) {
+    return budget.categoryId == null
+        ? 'Uncategorized'
+        : _categoryName(budget.categoryId!);
+  }
+
+  String _monthLabel(DateTime month) {
+    return '${month.year}-${month.month.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String confirmLabel,
+    required VoidCallback onConfirmed,
+  }) async {
+    final confirmed = await FlowConfirmationSheet.show(
+      context: context,
+      title: title,
+      message: message,
+      confirmLabel: confirmLabel,
+    );
+    if (confirmed == true) onConfirmed();
   }
 
   int _spentForBudget(MonthlyBudget budget) {
@@ -450,7 +499,12 @@ class _RecurringCard extends StatelessWidget {
             IconButton(
               onPressed: onDelete,
               tooltip: 'Delete template',
-              icon: const Icon(Icons.delete_outline),
+              icon: Icon(
+                Icons.delete_outline,
+                color: onDelete == null
+                    ? null
+                    : Theme.of(context).colorScheme.error,
+              ),
             ),
           ],
         ),
@@ -617,7 +671,12 @@ class _BudgetCard extends StatelessWidget {
               IconButton(
                 onPressed: onDelete,
                 tooltip: 'Delete budget',
-                icon: const Icon(Icons.delete_outline),
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: onDelete == null
+                      ? null
+                      : Theme.of(context).colorScheme.error,
+                ),
               ),
             ],
           ),
@@ -770,7 +829,12 @@ class _SavingsGoalCard extends StatelessWidget {
               IconButton(
                 onPressed: onDelete,
                 tooltip: 'Delete goal',
-                icon: const Icon(Icons.delete_outline),
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: onDelete == null
+                      ? null
+                      : Theme.of(context).colorScheme.error,
+                ),
               ),
             ],
           ),
