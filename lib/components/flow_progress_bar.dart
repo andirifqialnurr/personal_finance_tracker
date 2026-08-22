@@ -49,6 +49,7 @@ class FlowProgressBar extends StatelessWidget {
                   child: SizedBox(
                     key: const Key('flow-progress-fill'),
                     width: progressWidth,
+                    height: double.infinity,
                     child: ColoredBox(color: color),
                   ),
                 ),
@@ -58,6 +59,7 @@ class FlowProgressBar extends StatelessWidget {
                     child: SizedBox(
                       key: const Key('flow-progress-overfill'),
                       width: overWidth,
+                      height: double.infinity,
                       child: const ColoredBox(color: FlowColors.expense),
                     ),
                   ),

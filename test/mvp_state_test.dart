@@ -92,6 +92,8 @@ void main() {
           grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
       expect(delegate.crossAxisCount, 4);
       expect(delegate.childAspectRatio, 1);
+      expect(delegate.crossAxisSpacing, 32);
+      expect(delegate.mainAxisSpacing, 32);
       expect(tester.takeException(), isNull);
     }
     addTearDown(() => tester.binding.setSurfaceSize(null));

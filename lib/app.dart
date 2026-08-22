@@ -358,7 +358,6 @@ class _FlowShellState extends ConsumerState<FlowShell> {
               child: StatisticsPage(
                 transactions: transactions,
                 categories: categories,
-                monthlyBudgets: monthlyBudgets,
                 currency: currency,
               ),
             ),

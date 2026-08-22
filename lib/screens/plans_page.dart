@@ -621,7 +621,13 @@ class _BudgetCard extends StatelessWidget {
               ),
             ],
           ),
-          FlowProgressBar(value: ratio, color: FlowColors.income),
+          FlowProgressBar(
+            key: const Key('monthly-budget-card-progress'),
+            value: ratio,
+            color: FlowColors.income,
+            height: 12,
+            minVisibleWidth: 24,
+          ),
           const SizedBox(height: FlowSpacing.gapGroup),
           FlowBudgetProgressValue(
             spent: spent,
@@ -676,7 +682,13 @@ class _BudgetDetailsSheet extends StatelessWidget {
           value: formatCurrency(remaining.abs(), currency),
         ),
         const SizedBox(height: FlowSpacing.gapBlock),
-        FlowProgressBar(value: ratio, color: FlowColors.income),
+        FlowProgressBar(
+          key: const Key('monthly-budget-detail-progress'),
+          value: ratio,
+          color: FlowColors.income,
+          height: 12,
+          minVisibleWidth: 24,
+        ),
         const SizedBox(height: FlowSpacing.gapGroup),
         FlowBudgetProgressValue(
           spent: spent,

@@ -3,10 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../components/flow_apex_chart.dart';
-import '../components/flow_budget_progress_value.dart';
 import '../components/flow_card.dart';
 import '../components/flow_empty_state.dart';
-import '../components/flow_progress_bar.dart';
 import '../components/flow_segmented_control.dart';
 import '../data/models/models.dart';
 import '../theme/flow_colors.dart';
@@ -18,13 +16,11 @@ class StatisticsPage extends StatefulWidget {
     super.key,
     required this.transactions,
     this.categories = const [],
-    this.monthlyBudgets = const [],
     this.currency = 'IDR',
   });
 
   final List<Transaction> transactions;
   final List<Category> categories;
-  final List<MonthlyBudget> monthlyBudgets;
   final String currency;
 
   @override
@@ -99,22 +95,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
               currency: widget.currency,
             ),
           ),
-          if (widget.monthlyBudgets.isNotEmpty) ...[
-            const SizedBox(height: FlowSpacing.md),
-            const _SectionHeading(title: 'Budget progress'),
-            const SizedBox(height: FlowSpacing.sm),
-            FlowCard(
-              variant: FlowCardVariant.summary,
-              density: FlowCardDensity.standard,
-              child: _BudgetProgressList(
-                budgets: widget.monthlyBudgets,
-                transactions: widget.transactions,
-                categories: widget.categories,
-                currency: widget.currency,
-                month: _selectedDate,
-              ),
-            ),
-          ],
         ] else
           const FlowEmptyState(
             icon: Icons.insights_outlined,
@@ -156,115 +136,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
       initialDate: _selectedDate,
     );
     if (selected != null && mounted) setState(() => _selectedDate = selected);
-  }
-}
-
-class _BudgetProgressList extends StatelessWidget {
-  const _BudgetProgressList({
-    required this.budgets,
-    required this.transactions,
-    required this.categories,
-    required this.currency,
-    required this.month,
-  });
-
-  final List<MonthlyBudget> budgets;
-  final List<Transaction> transactions;
-  final List<Category> categories;
-  final String currency;
-  final DateTime month;
-
-  @override
-  Widget build(BuildContext context) {
-    final currentBudgets = budgets
-        .where(
-          (budget) =>
-              budget.month.year == month.year && budget.month.month == month.month,
-        )
-        .toList();
-    if (currentBudgets.isEmpty) {
-      return Text(
-        'No budget is set for this month.',
-        style: Theme.of(context).textTheme.bodyMedium,
-      );
-    }
-    return Column(
-      children: [
-        for (final budget in currentBudgets) ...[
-          _BudgetProgressRow(
-            label: _categoryName(budget.categoryId),
-            spent: _spent(budget),
-            limit: budget.amount,
-            currency: currency,
-          ),
-          if (budget != currentBudgets.last)
-            const SizedBox(height: FlowSpacing.sm),
-        ],
-      ],
-    );
-  }
-
-  String _categoryName(int? id) {
-    if (id == null) return 'Uncategorized';
-    final matches = categories.where((category) => category.id == id);
-    return matches.isEmpty ? 'Category $id' : matches.first.name;
-  }
-
-  int _spent(MonthlyBudget budget) {
-    return transactions.where((transaction) {
-      return transaction.type == TransactionType.expense &&
-          transaction.categoryId == budget.categoryId &&
-          transaction.occurredAt.year == budget.month.year &&
-          transaction.occurredAt.month == budget.month.month;
-    }).fold<int>(0, (sum, transaction) => sum + transaction.amount);
-  }
-}
-
-class _BudgetProgressRow extends StatelessWidget {
-  const _BudgetProgressRow({
-    required this.label,
-    required this.spent,
-    required this.limit,
-    required this.currency,
-  });
-
-  final String label;
-  final int spent;
-  final int limit;
-  final String currency;
-
-  @override
-  Widget build(BuildContext context) {
-    final ratio = limit == 0 ? 0.0 : spent / limit;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            const SizedBox(width: FlowSpacing.sm),
-            Flexible(
-              child: FlowBudgetProgressValue(
-                spent: spent,
-                limit: limit,
-                currency: currency,
-                textAlign: TextAlign.end,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: FlowSpacing.gapGroup),
-        FlowProgressBar(value: ratio, color: FlowColors.income),
-      ],
-    );
   }
 }
 

@@ -268,6 +268,14 @@ void main() {
       find.text('Rp 50.000 of Rp 300.000 (16.7%)', findRichText: true),
       findsOneWidget,
     );
+    final cardFill = tester.getSize(
+      find.descendant(
+        of: find.byKey(const Key('monthly-budget-card-progress')),
+        matching: find.byKey(const Key('flow-progress-fill')),
+      ),
+    );
+    expect(cardFill.width, greaterThanOrEqualTo(24));
+    expect(cardFill.height, 12);
 
     await tester.tap(find.text('Food'));
     await tester.pumpAndSettle();
@@ -280,6 +288,14 @@ void main() {
       find.text('Rp 50.000 of Rp 300.000 (16.7%)', findRichText: true),
       findsWidgets,
     );
+    final detailFill = tester.getSize(
+      find.descendant(
+        of: find.byKey(const Key('monthly-budget-detail-progress')),
+        matching: find.byKey(const Key('flow-progress-fill')),
+      ),
+    );
+    expect(detailFill.width, greaterThanOrEqualTo(24));
+    expect(detailFill.height, 12);
   });
 
   testWidgets('savings goal detail and contribution update manual amount', (
