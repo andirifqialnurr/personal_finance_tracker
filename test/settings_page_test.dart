@@ -23,7 +23,7 @@ void main() {
               color: '#168C78',
             ),
           ],
-          onCategoriesChanged: (_) {},
+          onCategoriesChanged: (categories) async => categories,
           onDeleteAll: () {},
           showAppBar: false,
         ),

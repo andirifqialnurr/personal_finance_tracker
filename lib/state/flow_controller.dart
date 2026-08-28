@@ -107,17 +107,22 @@ class FlowController extends StateNotifier<AsyncValue<FlowState>> {
     });
   }
 
-  Future<void> saveCategories(List<Category> categories) async {
+  Future<List<Category>> saveCategories(List<Category> categories) async {
+    var savedCategories = <Category>[];
     await _guardMutation(() async {
       final current = _currentState();
-      final savedCategories = <Category>[];
+      savedCategories = <Category>[];
       for (final category in categories) {
         savedCategories.add(await _store.saveCategory(category));
       }
+      savedCategories = List.unmodifiable(savedCategories);
       state = AsyncValue.data(
-        current.copyWith(categories: List.unmodifiable(savedCategories)),
+        current.copyWith(categories: savedCategories),
       );
     });
+    return savedCategories.isEmpty
+        ? _currentState().categories
+        : savedCategories;
   }
 
   Future<void> changeHideBalance(bool value) async {

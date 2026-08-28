@@ -22,7 +22,7 @@ class FlowSettingsPage extends StatefulWidget {
   final String currency;
   final ValueChanged<String> onCurrencyChanged;
   final List<Category> categories;
-  final ValueChanged<List<Category>> onCategoriesChanged;
+  final Future<List<Category>> Function(List<Category>) onCategoriesChanged;
   final VoidCallback onDeleteAll;
   final bool showAppBar;
 

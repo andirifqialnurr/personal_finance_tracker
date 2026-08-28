@@ -406,7 +406,7 @@ class _FlowShellState extends ConsumerState<FlowShell> {
                     unawaited(controller.changeCurrency(value)),
                 categories: categories,
                 onCategoriesChanged: (value) =>
-                    unawaited(controller.saveCategories(value)),
+                    controller.saveCategories(value),
                 onDeleteAll: () => unawaited(controller.deleteAllData()),
                 showAppBar: false,
               ),
