@@ -187,6 +187,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     final selected = await showModalBottomSheet<Account>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (context) => _SelectionSheet<Account>(
         title: 'Select account',
         items: widget.accounts,
@@ -205,6 +206,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     final selected = await showModalBottomSheet<Category>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (context) => _SelectionSheet<Category>(
         title: 'Select category',
         items: _availableCategories
@@ -231,6 +233,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     return showModalBottomSheet<Account>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (context) => _SelectionSheet<Account>(
         title: title,
         items: widget.accounts,
@@ -314,44 +317,63 @@ class _SelectionSheet<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(
-        FlowSpacing.lg,
-        FlowSpacing.sm,
-        FlowSpacing.lg,
-        FlowSpacing.lg,
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.72,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: FlowSpacing.sm),
-          if (items.isEmpty)
-            Text(
-              'No options available yet.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            )
-          else
-            for (final item in items)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: FlowIconContainer(icon: iconOf(item)),
-                title: Text(
-                  titleOf(item),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyLarge,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          FlowSpacing.lg,
+          FlowSpacing.sm,
+          FlowSpacing.lg,
+          FlowSpacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: FlowSpacing.sm),
+            if (items.isEmpty)
+              Text(
+                'No options available yet.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              )
+            else
+              Flexible(
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(
+                    context,
+                  ).copyWith(scrollbars: false),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: FlowIconContainer(icon: iconOf(item)),
+                        title: Text(
+                          titleOf(item),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        subtitle: Text(
+                          subtitleOf(item),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        onTap: () => Navigator.of(context).pop(item),
+                      );
+                    },
+                  ),
                 ),
-                subtitle: Text(
-                  subtitleOf(item),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                onTap: () => Navigator.of(context).pop(item),
               ),
-        ],
+          ],
+        ),
       ),
     ),
   );

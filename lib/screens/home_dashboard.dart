@@ -586,9 +586,10 @@ class _CashFlowChartPainter extends CustomPainter {
     final height = value == 0
         ? 2.0
         : math.max(3.0, chartRect.height * (value / maxValue));
-    final rect = RRect.fromRectAndRadius(
+    final rect = RRect.fromRectAndCorners(
       Rect.fromLTWH(x, chartRect.bottom - height, width, height),
-      const Radius.circular(4),
+      topLeft: const Radius.circular(4),
+      topRight: const Radius.circular(4),
     );
     canvas.drawRRect(rect, Paint()..color = color);
   }
