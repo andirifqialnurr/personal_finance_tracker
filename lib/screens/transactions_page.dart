@@ -74,7 +74,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
       (grouped[day] ??= []).add(transaction);
     }
     return ListView(
-      padding: const EdgeInsets.all(FlowSpacing.md),
+      padding: const EdgeInsets.fromLTRB(
+        FlowSpacing.md,
+        FlowSpacing.xxs,
+        FlowSpacing.md,
+        FlowSpacing.md,
+      ),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,

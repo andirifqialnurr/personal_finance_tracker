@@ -48,7 +48,12 @@ class _FlowSettingsPageState extends State<FlowSettingsPage> {
             )
           : null,
       body: ListView(
-        padding: const EdgeInsets.all(FlowSpacing.md),
+        padding: const EdgeInsets.fromLTRB(
+          FlowSpacing.md,
+          FlowSpacing.xxs,
+          FlowSpacing.md,
+          FlowSpacing.md,
+        ),
         children: [
           Text('Appearance', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: FlowSpacing.gapBlock),

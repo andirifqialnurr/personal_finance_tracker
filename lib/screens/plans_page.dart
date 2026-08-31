@@ -57,11 +57,14 @@ class PlansPage extends StatelessWidget {
     final showGoals =
         section == PlansPageSection.all || section == PlansPageSection.savingsGoals;
     return ListView(
-      padding: const EdgeInsets.all(FlowSpacing.md),
+      padding: const EdgeInsets.fromLTRB(
+        FlowSpacing.md,
+        FlowSpacing.xxs,
+        FlowSpacing.md,
+        FlowSpacing.md,
+      ),
       children: [
-        SizedBox(
-          height: showSectionHeaders ? FlowSpacing.gapSection : FlowSpacing.sm,
-        ),
+        if (showSectionHeaders) const SizedBox(height: FlowSpacing.gapSection),
         if (showRecurring) ...[
           if (showSectionHeaders) ...[
             _SectionHeader(

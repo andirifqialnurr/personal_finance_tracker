@@ -50,7 +50,7 @@ class AccountsPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         FlowSpacing.md,
-        FlowSpacing.sm,
+        FlowSpacing.xxs,
         FlowSpacing.md,
         FlowSpacing.md,
       ),

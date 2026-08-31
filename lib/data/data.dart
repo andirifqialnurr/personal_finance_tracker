@@ -1,4 +1,5 @@
 export 'default_category_seeder.dart';
+export 'cash_flow_data.dart';
 export 'flow_backup_codec.dart';
 export 'flow_csv_exporter.dart';
 export 'flow_csv_importer.dart';

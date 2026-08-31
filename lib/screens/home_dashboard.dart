@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../components/flow_components.dart';
+import '../data/cash_flow_data.dart';
 import '../data/models/models.dart';
 import '../theme/flow_colors.dart';
 import '../theme/flow_tokens.dart';
@@ -60,11 +61,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
     final totalBalance = activeAccounts.fold<int>(
       0,
       (sum, account) => sum + _balanceFor(account),
-    );
-    final monthTransactions = widget.transactions.where(
-      (transaction) =>
-          transaction.occurredAt.year == now.year &&
-          transaction.occurredAt.month == now.month,
     );
     return ListView(
       padding: const EdgeInsets.all(FlowSpacing.md),
@@ -182,10 +178,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
           ],
         ),
         const SizedBox(height: FlowSpacing.gapSection),
-        _CashFlowCard(
-          transactions: monthTransactions.toList(growable: false),
-          currency: widget.currency,
-        ),
+        _CashFlowCard(transactions: widget.transactions),
         if (widget.recurringTemplates
             .where((template) => !template.isArchived)
             .isNotEmpty) ...[
@@ -256,7 +249,10 @@ class _RecurringReminderCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Recurring reminders', style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  'Recurring reminders',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 const SizedBox(height: FlowSpacing.xxs),
                 Text(
                   '$active template${active == 1 ? '' : 's'} ready to review.',
@@ -284,9 +280,7 @@ class _QuickMenuGrid extends StatelessWidget {
     mainAxisSpacing: FlowSpacing.xl,
     physics: const NeverScrollableScrollPhysics(),
     shrinkWrap: true,
-    children: [
-      for (final item in items) _QuickMenuCard(item: item),
-    ],
+    children: [for (final item in items) _QuickMenuCard(item: item)],
   );
 }
 
@@ -335,10 +329,9 @@ class _QuickMenuCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontSize: 8.5,
-                height: 1,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(fontSize: 8.5, height: 1),
             ),
           ],
         ),
@@ -347,61 +340,100 @@ class _QuickMenuCard extends StatelessWidget {
   );
 }
 
-class _CashFlowCard extends StatelessWidget {
-  const _CashFlowCard({required this.transactions, required this.currency});
+class _CashFlowCard extends StatefulWidget {
+  const _CashFlowCard({required this.transactions});
 
   final List<Transaction> transactions;
-  final String currency;
+
+  @override
+  State<_CashFlowCard> createState() => _CashFlowCardState();
+}
+
+class _CashFlowCardState extends State<_CashFlowCard> {
+  late int _pageIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _pageIndex = (now.month - 1) ~/ CashFlowYearData.pageSize;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final incomeByWeek = List<int>.filled(5, 0);
-    final expenseByWeek = List<int>.filled(5, 0);
-    for (final transaction in transactions) {
-      final week = ((transaction.occurredAt.day - 1) ~/ 7).clamp(0, 4);
-      switch (transaction.type) {
-        case TransactionType.income:
-          incomeByWeek[week] += transaction.amount;
-        case TransactionType.expense:
-          expenseByWeek[week] += transaction.amount;
-        case TransactionType.transfer:
-          break;
-      }
-    }
+    final year = DateTime.now().year;
+    final data = CashFlowYearData.fromTransactions(
+      year: year,
+      transactions: widget.transactions,
+    );
+    final visibleMonths = data.page(_pageIndex);
     return FlowCard(
       variant: FlowCardVariant.chart,
       density: FlowCardDensity.standard,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Cash flow', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: FlowSpacing.gapGroup),
-          Text(
-            'Income and expense by week',
-            style: Theme.of(context).textTheme.bodySmall,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  'Cash Flow $year',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              const SizedBox(width: FlowSpacing.xs),
+              _CashFlowPageButton(
+                icon: Icons.chevron_left,
+                tooltip: 'Previous four months',
+                onPressed: _pageIndex == 0
+                    ? null
+                    : () => setState(() => _pageIndex -= 1),
+              ),
+              _CashFlowPageButton(
+                icon: Icons.chevron_right,
+                tooltip: 'Next four months',
+                onPressed: _pageIndex == CashFlowYearData.pageCount - 1
+                    ? null
+                    : () => setState(() => _pageIndex += 1),
+              ),
+            ],
           ),
           const SizedBox(height: FlowSpacing.gapBlock),
-          _CashFlowMiniChart(
-            incomeByWeek: incomeByWeek,
-            expenseByWeek: expenseByWeek,
-            currency: currency,
-          ),
+          _CashFlowMiniChart(months: visibleMonths),
         ],
       ),
     );
   }
 }
 
-class _CashFlowMiniChart extends StatelessWidget {
-  const _CashFlowMiniChart({
-    required this.incomeByWeek,
-    required this.expenseByWeek,
-    required this.currency,
+class _CashFlowPageButton extends StatelessWidget {
+  const _CashFlowPageButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
   });
 
-  final List<int> incomeByWeek;
-  final List<int> expenseByWeek;
-  final String currency;
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    onPressed: onPressed,
+    tooltip: tooltip,
+    visualDensity: VisualDensity.compact,
+    constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+    padding: EdgeInsets.zero,
+    iconSize: 20,
+    icon: Icon(icon),
+  );
+}
+
+class _CashFlowMiniChart extends StatelessWidget {
+  const _CashFlowMiniChart({required this.months});
+
+  final List<CashFlowMonthTotal> months;
 
   @override
   Widget build(BuildContext context) {
@@ -416,9 +448,7 @@ class _CashFlowMiniChart extends StatelessWidget {
           width: double.infinity,
           child: CustomPaint(
             painter: _CashFlowChartPainter(
-              incomeByWeek: incomeByWeek,
-              expenseByWeek: expenseByWeek,
-              currency: currency,
+              months: months,
               incomeColor: FlowColors.income,
               expenseColor: FlowColors.expense,
               labelColor: labelColor,
@@ -488,18 +518,14 @@ class _CashFlowLegendItem extends StatelessWidget {
 
 class _CashFlowChartPainter extends CustomPainter {
   const _CashFlowChartPainter({
-    required this.incomeByWeek,
-    required this.expenseByWeek,
-    required this.currency,
+    required this.months,
     required this.incomeColor,
     required this.expenseColor,
     required this.labelColor,
     required this.gridColor,
   });
 
-  final List<int> incomeByWeek;
-  final List<int> expenseByWeek;
-  final String currency;
+  final List<CashFlowMonthTotal> months;
   final Color incomeColor;
   final Color expenseColor;
   final Color labelColor;
@@ -507,13 +533,9 @@ class _CashFlowChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final maxValue = math.max(
-      1,
-      [
-        ...incomeByWeek,
-        ...expenseByWeek,
-      ].fold<int>(0, (current, value) => math.max(current, value)),
-    );
+    final scale = CashFlowAxisScale.fromValues([
+      for (final month in months) ...[month.income, month.expense],
+    ]);
     final left = 44.0;
     final right = 4.0;
     final top = 8.0;
@@ -528,12 +550,17 @@ class _CashFlowChartPainter extends CustomPainter {
       ..color = gridColor.withValues(alpha: 0.42)
       ..strokeWidth = 1;
 
-    for (final ratio in [0.0, 0.5, 1.0]) {
+    for (var index = 0; index < CashFlowAxisScale.tickCount; index += 1) {
+      final ratio = index / (CashFlowAxisScale.tickCount - 1);
       final y = chartRect.bottom - chartRect.height * ratio;
-      canvas.drawLine(Offset(chartRect.left, y), Offset(chartRect.right, y), gridPaint);
+      canvas.drawLine(
+        Offset(chartRect.left, y),
+        Offset(chartRect.right, y),
+        gridPaint,
+      );
       _drawText(
         canvas,
-        _axisLabel((maxValue * ratio).round()),
+        formatCashFlowAxisValue(scale.ticks[index]),
         Offset(0, y - 6),
         maxWidth: left - 6,
         color: labelColor,
@@ -541,17 +568,18 @@ class _CashFlowChartPainter extends CustomPainter {
       );
     }
 
-    final groupWidth = chartRect.width / 5;
+    final groupWidth = chartRect.width / months.length;
     final barWidth = math.min(12.0, groupWidth * 0.22);
-    for (var index = 0; index < 5; index++) {
+    for (var index = 0; index < months.length; index += 1) {
+      final month = months[index];
       final centerX = chartRect.left + groupWidth * (index + 0.5);
       _drawBar(
         canvas,
         centerX - barWidth - 2,
         chartRect,
         barWidth,
-        incomeByWeek[index],
-        maxValue,
+        month.income,
+        scale.maximum,
         incomeColor,
       );
       _drawBar(
@@ -559,13 +587,13 @@ class _CashFlowChartPainter extends CustomPainter {
         centerX + 2,
         chartRect,
         barWidth,
-        expenseByWeek[index],
-        maxValue,
+        month.expense,
+        scale.maximum,
         expenseColor,
       );
       _drawText(
         canvas,
-        'W${index + 1}',
+        month.label,
         Offset(centerX - groupWidth / 2, chartRect.bottom + 6),
         maxWidth: groupWidth,
         color: labelColor,
@@ -583,9 +611,8 @@ class _CashFlowChartPainter extends CustomPainter {
     int maxValue,
     Color color,
   ) {
-    final height = value == 0
-        ? 2.0
-        : math.max(3.0, chartRect.height * (value / maxValue));
+    if (value <= 0) return;
+    final height = math.max(3.0, chartRect.height * (value / maxValue));
     final rect = RRect.fromRectAndCorners(
       Rect.fromLTWH(x, chartRect.bottom - height, width, height),
       topLeft: const Radius.circular(4),
@@ -620,20 +647,9 @@ class _CashFlowChartPainter extends CustomPainter {
     painter.paint(canvas, offset);
   }
 
-  String _axisLabel(int amount) {
-    final symbol = currencySymbol(currency);
-    if (amount >= 1000000) {
-      return '$symbol ${(amount / 1000000).toStringAsFixed(1)} jt';
-    }
-    if (amount >= 1000) return '$symbol ${(amount / 1000).round()} rb';
-    return '$symbol $amount';
-  }
-
   @override
   bool shouldRepaint(covariant _CashFlowChartPainter oldDelegate) {
-    return oldDelegate.incomeByWeek != incomeByWeek ||
-        oldDelegate.expenseByWeek != expenseByWeek ||
-        oldDelegate.currency != currency ||
+    return oldDelegate.months != months ||
         oldDelegate.labelColor != labelColor ||
         oldDelegate.gridColor != gridColor;
   }

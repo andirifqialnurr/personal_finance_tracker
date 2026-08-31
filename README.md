@@ -55,6 +55,7 @@ flutter build apk --debug
 - Monthly CSV exports use stable headers and sorted transaction rows for spreadsheet use.
 - Monthly PDF exports include the report title, selected period, summary, transaction table, export timestamp, and page footer.
 - Local backup export is available in the Reports backup section. CSV import and local backup restore are intentionally not primary Settings actions.
+- After CSV, PDF, or database-backup export, use `Open file` to launch a compatible app or `Choose file location` to save a copy in a visible device folder.
 
 ## Product Boundaries
 

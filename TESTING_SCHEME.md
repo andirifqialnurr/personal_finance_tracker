@@ -21,17 +21,16 @@ Coverage utama:
 
 ## 2. Pengujian Flow Manual
 
-Backup dan restore:
+Backup dan export laporan:
 
-1. Buka Settings.
-2. Pilih `Export local backup`.
-3. Pastikan snackbar menampilkan path file `flow-backup-*.json`.
-4. Pilih `Restore local backup`.
-5. Paste isi JSON backup.
-6. Pilih `Preview`.
-7. Pastikan preview menampilkan jumlah accounts, categories, transactions, recurring, budgets, goals, dan currency.
-8. Pilih `Restore`, lalu konfirmasi `Restore backup`.
-9. Pastikan data lokal terganti sesuai preview.
+1. Buka `Home > Reports`.
+2. Pilih `Export monthly CSV` dan pastikan sheet hasil export menampilkan nama serta path file.
+3. Pilih `Open file` dan pastikan CSV dibuka oleh aplikasi yang sesuai.
+4. Export ulang, pilih `Choose file location`, lalu simpan ke folder yang dipilih melalui file manager.
+5. Pastikan salinan CSV dapat ditemukan di folder tersebut.
+6. Pilih `Export database backup` dan ulangi pemeriksaan `Open file` serta `Choose file location` untuk file `flow-backup-*.json`.
+7. Pastikan backup tetap bisa di-preview oleh `FlowBackupCodec` dan menampilkan jumlah accounts, categories, transactions, recurring, budgets, goals, serta currency.
+8. Pastikan pemilihan lokasi yang dibatalkan tidak menghapus file export asli atau mengubah data aplikasi.
 
 Recurring templates:
 

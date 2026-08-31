@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path name="flow_internal_exports" path="../app_flutter/" />
+    <external-files-path name="flow_external_exports" path="." />
+</paths>

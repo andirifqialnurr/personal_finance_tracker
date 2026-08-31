@@ -14,6 +14,8 @@ class ReportsPage extends StatefulWidget {
     required this.onExportMonthlyCsv,
     required this.onExportMonthlyPdf,
     required this.onExportBackup,
+    required this.onOpenExportedFile,
+    required this.onChooseExportLocation,
   });
 
   final List<Transaction> transactions;
@@ -22,6 +24,8 @@ class ReportsPage extends StatefulWidget {
   final Future<String> Function(DateTime month) onExportMonthlyCsv;
   final Future<String> Function(DateTime month) onExportMonthlyPdf;
   final Future<String> Function() onExportBackup;
+  final Future<void> Function(String path) onOpenExportedFile;
+  final Future<String?> Function(String path) onChooseExportLocation;
 
   @override
   State<ReportsPage> createState() => _ReportsPageState();
@@ -42,11 +46,13 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final monthTransactions = widget.transactions.where(
-      (transaction) =>
-          transaction.occurredAt.year == _selectedMonth.year &&
-          transaction.occurredAt.month == _selectedMonth.month,
-    ).toList(growable: false);
+    final monthTransactions = widget.transactions
+        .where(
+          (transaction) =>
+              transaction.occurredAt.year == _selectedMonth.year &&
+              transaction.occurredAt.month == _selectedMonth.month,
+        )
+        .toList(growable: false);
     final income = monthTransactions
         .where((transaction) => transaction.type == TransactionType.income)
         .fold<int>(0, (sum, transaction) => sum + transaction.amount);
@@ -61,9 +67,13 @@ class _ReportsPageState extends State<ReportsPage> {
     final hasReportData = monthTransactions.isNotEmpty;
 
     return ListView(
-      padding: const EdgeInsets.all(FlowSpacing.md),
+      padding: const EdgeInsets.fromLTRB(
+        FlowSpacing.md,
+        FlowSpacing.xxs,
+        FlowSpacing.md,
+        FlowSpacing.md,
+      ),
       children: [
-        const SizedBox(height: FlowSpacing.gapSection),
         Row(
           children: [
             IconButton(
@@ -123,10 +133,7 @@ class _ReportsPageState extends State<ReportsPage> {
                   value: '$transactionCount',
                 ),
                 const SizedBox(height: FlowSpacing.gapGroup),
-                _ReportMetric(
-                  label: 'Top expense',
-                  value: topCategory,
-                ),
+                _ReportMetric(label: 'Top expense', value: topCategory),
               ],
             ),
           ),
@@ -150,14 +157,14 @@ class _ReportsPageState extends State<ReportsPage> {
         Text('Backup', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: FlowSpacing.gapBlock),
         Text(
-          'Backup stores the app data file. Use CSV or PDF for readable financial reports.',
+          'Database backup stores a restorable copy of all app data. Use CSV or PDF for readable financial reports.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: FlowSpacing.gapGroup),
         FlowButton(
           label: _isExportingBackup
               ? 'Exporting backup...'
-              : 'Export local backup',
+              : 'Export database backup',
           variant: FlowButtonVariant.secondary,
           icon: Icons.backup_outlined,
           onPressed: _isExportingBackup ? null : _exportBackup,
@@ -170,7 +177,7 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => _isExportingCsv = true);
     try {
       final path = await widget.onExportMonthlyCsv(_selectedMonth);
-      _showMessage('CSV exported to $path');
+      await _showExportedFile('CSV report', path);
     } catch (error) {
       _showMessage('CSV export failed: $error');
     } finally {
@@ -182,7 +189,7 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => _isExportingPdf = true);
     try {
       final path = await widget.onExportMonthlyPdf(_selectedMonth);
-      _showMessage('PDF exported to $path');
+      await _showExportedFile('PDF report', path);
     } catch (error) {
       _showMessage('PDF export failed: $error');
     } finally {
@@ -194,7 +201,7 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => _isExportingBackup = true);
     try {
       final path = await widget.onExportBackup();
-      _showMessage('Backup exported to $path');
+      await _showExportedFile('Database backup', path);
     } catch (error) {
       _showMessage('Backup export failed: $error');
     } finally {
@@ -204,8 +211,79 @@ class _ReportsPageState extends State<ReportsPage> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _showExportedFile(String label, String path) async {
+    if (!mounted) return;
+    final fileName = path.replaceAll('\\', '/').split('/').last;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            FlowSpacing.lg,
+            FlowSpacing.md,
+            FlowSpacing.lg,
+            FlowSpacing.lg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$label ready',
+                style: Theme.of(sheetContext).textTheme.titleMedium,
+              ),
+              const SizedBox(height: FlowSpacing.gapGroup),
+              Text(fileName, style: Theme.of(sheetContext).textTheme.bodyLarge),
+              const SizedBox(height: FlowSpacing.gapTight),
+              SelectableText(
+                path,
+                style: Theme.of(sheetContext).textTheme.bodySmall,
+              ),
+              const SizedBox(height: FlowSpacing.gapBlock),
+              Text(
+                'Open the exported file now, or choose a visible folder on this device so it is easy to locate later.',
+                style: Theme.of(sheetContext).textTheme.bodySmall,
+              ),
+              const SizedBox(height: FlowSpacing.gapSection),
+              FlowButton(
+                label: 'Open file',
+                icon: Icons.open_in_new,
+                onPressed: () async {
+                  Navigator.of(sheetContext).pop();
+                  try {
+                    await widget.onOpenExportedFile(path);
+                  } catch (error) {
+                    _showMessage('Could not open file: $error');
+                  }
+                },
+              ),
+              const SizedBox(height: FlowSpacing.gapGroup),
+              FlowButton(
+                label: 'Choose file location',
+                variant: FlowButtonVariant.secondary,
+                icon: Icons.folder_open_outlined,
+                onPressed: () async {
+                  Navigator.of(sheetContext).pop();
+                  try {
+                    final location = await widget.onChooseExportLocation(path);
+                    if (location != null) {
+                      _showMessage('Export saved to $location');
+                    }
+                  } catch (error) {
+                    _showMessage('Could not save file: $error');
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -9,6 +9,7 @@ import 'screens/account_form_page.dart';
 import 'screens/account_detail_page.dart';
 import 'screens/accounts_page.dart';
 import 'screens/add_transaction_page.dart';
+import 'screens/exported_file_preview_page.dart';
 import 'screens/settings_page.dart';
 import 'screens/plans_page.dart';
 import 'screens/reports_page.dart';
@@ -20,6 +21,7 @@ import 'screens/home_dashboard.dart';
 import 'state/state.dart';
 import 'theme/flow_theme.dart';
 import 'theme/flow_tokens.dart';
+import 'utils/flow_file_access.dart';
 
 class FlowApp extends StatelessWidget {
   const FlowApp({super.key, this.store});
@@ -602,6 +604,8 @@ class _ReportsContent extends ConsumerWidget {
       onExportMonthlyCsv: controller.exportMonthlyCsv,
       onExportMonthlyPdf: controller.exportMonthlyPdf,
       onExportBackup: controller.exportBackup,
+      onOpenExportedFile: (path) => ExportedFilePreviewPage.open(context, path),
+      onChooseExportLocation: FlowFileAccess.chooseLocation,
     );
   }
 }
@@ -637,6 +641,7 @@ class _StandaloneFlowPage extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       centerTitle: true,
+      toolbarHeight: FlowControlSize.minTouchTarget,
       title: Text(
         title,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 15),
@@ -729,12 +734,12 @@ class _FlowPageTitle extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(
       FlowSpacing.md,
-      FlowSpacing.sm,
-      FlowSpacing.md,
       FlowSpacing.xs,
+      FlowSpacing.md,
+      0,
     ),
     child: SizedBox(
-      height: kToolbarHeight,
+      height: FlowControlSize.minTouchTarget,
       child: Stack(
         alignment: Alignment.center,
         children: [
