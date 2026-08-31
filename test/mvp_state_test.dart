@@ -117,6 +117,29 @@ void main() {
     expect(find.text('No matching transactions'), findsOneWidget);
   });
 
+  testWidgets('Transactions date groups expand on tap', (tester) async {
+    await tester.pumpWidget(
+      harness(
+        TransactionsPage(
+          transactions: [transaction],
+          accounts: [account],
+          categories: const [category],
+          onOpenDetail: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('09/08/2026'), findsOneWidget);
+    expect(find.text('1 transaction'), findsOneWidget);
+    expect(find.textContaining('Lunch'), findsNothing);
+
+    await tester.tap(find.text('09/08/2026'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Lunch'), findsOneWidget);
+  });
+
   testWidgets('delete confirmation requires an explicit action', (tester) async {
     var deleted = false;
     await tester.pumpWidget(

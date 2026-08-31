@@ -392,6 +392,7 @@ class _FlowShellState extends ConsumerState<FlowShell> {
                     unawaited(controller.restoreAccount(account)),
                 transactions: transactions,
                 currency: currency,
+                hideBalance: hideBalance,
                 onOpenDetail: widget.onOpenAccountDetail,
                 filterType: _accountsFilterType,
                 onClearFilter: () => setState(() => _accountsFilterType = null),

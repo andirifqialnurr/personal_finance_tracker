@@ -27,6 +27,7 @@ class TransactionsPage extends StatefulWidget {
 
 class _TransactionsPageState extends State<TransactionsPage> {
   final _searchController = TextEditingController();
+  final _expandedDates = <DateTime>{};
   String _query = '';
   TransactionType? _typeFilter;
   int? _accountFilter;
@@ -196,32 +197,19 @@ class _TransactionsPageState extends State<TransactionsPage> {
           )
         else
           for (final entry in grouped.entries) ...[
-            Text(
-              _dateLabel(entry.key),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: FlowSpacing.xs),
-            FlowCard(
-              variant: FlowCardVariant.transaction,
-              density: FlowCardDensity.standard,
-              child: Column(
-                children: [
-                  for (final transaction in entry.value)
-                    FlowTransactionTile(
-                      title: _typeLabel(transaction.type),
-                      subtitle: _subtitle(
-                        transaction,
-                        accountNames,
-                        categoryNames,
-                      ),
-                      amount:
-                          '${transaction.type == TransactionType.expense ? '-' : '+'} ${formatCurrency(transaction.amount, widget.currency)}',
-                      icon: _icon(transaction.type),
-                      amountVariant: _amountVariant(transaction.type),
-                      onTap: () => widget.onOpenDetail(transaction),
-                    ),
-                ],
-              ),
+            _TransactionDateGroup(
+              date: entry.key,
+              transactions: entry.value,
+              accountNames: accountNames,
+              categoryNames: categoryNames,
+              currency: widget.currency,
+              isExpanded: _expandedDates.contains(entry.key),
+              onToggle: () => setState(() {
+                if (!_expandedDates.add(entry.key)) {
+                  _expandedDates.remove(entry.key);
+                }
+              }),
+              onOpenDetail: widget.onOpenDetail,
             ),
             const SizedBox(height: FlowSpacing.md),
           ],
@@ -300,6 +288,91 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
 String _dateLabel(DateTime date) =>
     '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+class _TransactionDateGroup extends StatelessWidget {
+  const _TransactionDateGroup({
+    required this.date,
+    required this.transactions,
+    required this.accountNames,
+    required this.categoryNames,
+    required this.currency,
+    required this.isExpanded,
+    required this.onToggle,
+    required this.onOpenDetail,
+  });
+
+  final DateTime date;
+  final List<Transaction> transactions;
+  final Map<int?, String> accountNames;
+  final Map<int, String> categoryNames;
+  final String currency;
+  final bool isExpanded;
+  final VoidCallback onToggle;
+  final ValueChanged<Transaction> onOpenDetail;
+
+  @override
+  Widget build(BuildContext context) {
+    return FlowCard(
+      variant: FlowCardVariant.transaction,
+      density: FlowCardDensity.compact,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(FlowRadii.input),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: FlowSpacing.xxs),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _dateLabel(date),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: FlowSpacing.xxs),
+                        Text(
+                          '${transactions.length} transaction${transactions.length == 1 ? '' : 's'}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isExpanded) ...[
+            const SizedBox(height: FlowSpacing.xs),
+            for (final transaction in transactions)
+              FlowTransactionTile(
+                title: _TransactionsPageState._typeLabel(transaction.type),
+                subtitle: _TransactionsPageState._subtitle(
+                  transaction,
+                  accountNames,
+                  categoryNames,
+                ),
+                amount:
+                    '${transaction.type == TransactionType.expense ? '-' : '+'} ${formatCurrency(transaction.amount, currency)}',
+                icon: _TransactionsPageState._icon(transaction.type),
+                amountVariant: _TransactionsPageState._amountVariant(
+                  transaction.type,
+                ),
+                onTap: () => onOpenDetail(transaction),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
 
 class _TransactionFilterValues {
   const _TransactionFilterValues({

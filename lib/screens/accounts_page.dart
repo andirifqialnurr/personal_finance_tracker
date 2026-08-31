@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../components/flow_components.dart';
 import '../data/models/models.dart';
+import '../theme/flow_colors.dart';
 import '../theme/flow_tokens.dart';
 import '../utils/flow_format.dart';
 
@@ -16,6 +17,7 @@ class AccountsPage extends StatelessWidget {
     required this.transactions,
     required this.onOpenDetail,
     this.currency = 'IDR',
+    this.hideBalance = false,
     this.filterType,
     this.onClearFilter,
   });
@@ -28,6 +30,7 @@ class AccountsPage extends StatelessWidget {
   final List<Transaction> transactions;
   final ValueChanged<Account> onOpenDetail;
   final String currency;
+  final bool hideBalance;
   final AccountType? filterType;
   final VoidCallback? onClearFilter;
 
@@ -86,7 +89,9 @@ class AccountsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: FlowSpacing.gapGroup),
                 FlowAmountText(
-                  amount: formatCurrency(totalBalance, currency),
+                  amount: hideBalance
+                      ? formatMaskedCurrency(totalBalance, currency)
+                      : formatCurrency(totalBalance, currency),
                   style: const TextStyle(fontSize: 18),
                 ),
                 const SizedBox(height: FlowSpacing.gapTight),
@@ -100,35 +105,62 @@ class AccountsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: FlowSpacing.sm),
-          for (final account in activeAccounts) ...[
-            _AccountCard(
-              account: account,
-              balance: _balanceFor(account),
-              currency: currency,
-              onTap: () => onOpenDetail(account),
-              trailing: IconButton(
-                onPressed: () => _confirmArchive(context, account),
-                tooltip: 'Archive account',
-                icon: const Icon(Icons.archive_outlined),
-              ),
+          SizedBox(
+            height: 188,
+            child: ListView.separated(
+              clipBehavior: Clip.none,
+              scrollDirection: Axis.horizontal,
+              itemCount: activeAccounts.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(width: FlowSpacing.sm),
+              itemBuilder: (context, index) {
+                final account = activeAccounts[index];
+                return SizedBox(
+                  width: _accountCardWidth(context),
+                  child: _AccountCard(
+                    account: account,
+                    balance: _balanceFor(account),
+                    currency: currency,
+                    hideBalance: hideBalance,
+                    onTap: () => onOpenDetail(account),
+                    trailing: IconButton(
+                      onPressed: () => _confirmArchive(context, account),
+                      tooltip: 'Archive account',
+                      color: Colors.white,
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: .16),
+                      ),
+                      icon: const Icon(Icons.archive_outlined),
+                    ),
+                  ),
+                );
+              },
             ),
-            const SizedBox(height: FlowSpacing.sm),
-          ],
+          ),
+          const SizedBox(height: FlowSpacing.sm),
         ],
         if (archivedAccounts.isNotEmpty) ...[
           const SizedBox(height: FlowSpacing.gapSection),
-          Text('Archived accounts', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Archived accounts',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: FlowSpacing.xs),
           for (final account in archivedAccounts) ...[
             _AccountCard(
               account: account,
               balance: _balanceFor(account),
               currency: currency,
+              hideBalance: hideBalance,
               onTap: () => onOpenDetail(account),
-              trailing: TextButton.icon(
+              trailing: IconButton(
                 onPressed: () => onRestore(account),
+                tooltip: 'Restore account',
+                color: Colors.white,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: .16),
+                ),
                 icon: const Icon(Icons.unarchive_outlined),
-                label: const Text('Restore'),
               ),
             ),
             const SizedBox(height: FlowSpacing.sm),
@@ -167,6 +199,11 @@ class AccountsPage extends StatelessWidget {
 
   bool _matchesFilter(Account account) =>
       filterType == null || account.type == filterType;
+
+  double _accountCardWidth(BuildContext context) {
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    return (viewportWidth - FlowSpacing.lg).clamp(280.0, 340.0).toDouble();
+  }
 
   int _balanceFor(Account account) =>
       account.openingBalance +
@@ -295,6 +332,7 @@ class _AccountCard extends StatelessWidget {
     required this.account,
     required this.balance,
     required this.currency,
+    required this.hideBalance,
     required this.onTap,
     required this.trailing,
   });
@@ -302,75 +340,170 @@ class _AccountCard extends StatelessWidget {
   final Account account;
   final int balance;
   final String currency;
+  final bool hideBalance;
   final VoidCallback onTap;
   final Widget trailing;
 
   @override
   Widget build(BuildContext context) {
-    return FlowCard(
-      variant: FlowCardVariant.action,
-      density: FlowCardDensity.standard,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(FlowRadii.card),
-        child: Column(
-          children: [
-            Row(
+    final gradient = _gradientFor(account.type);
+    return Card(
+      color: Colors.transparent,
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradient,
+          ),
+          borderRadius: BorderRadius.circular(FlowRadii.card),
+          boxShadow: FlowShadows.card,
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 176,
+            child: Stack(
               children: [
-                FlowIconContainer(
-                  icon: AccountsPage._iconFor(account.type),
-                  variant: FlowIconContainerVariant.account,
+                const Positioned(
+                  right: -40,
+                  top: -46,
+                  child: _CardOrnament(size: 128, alpha: .13),
                 ),
-                const SizedBox(width: FlowSpacing.sm),
-                Expanded(
+                const Positioned(
+                  right: 34,
+                  bottom: -54,
+                  child: _CardOrnament(size: 116, alpha: .08),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(FlowSpacing.cardStandard),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        account.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyLarge,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              account.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: FlowSpacing.xs),
+                          trailing,
+                        ],
                       ),
-                      const SizedBox(height: FlowSpacing.xxs),
-                      Text(
-                        AccountsPage._typeLabel(account.type),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall,
+                      Row(
+                        children: [
+                          Container(
+                            width: 34,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE6C36A).withValues(
+                                alpha: .9,
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          const SizedBox(width: FlowSpacing.sm),
+                          Icon(
+                            AccountsPage._iconFor(account.type),
+                            color: Colors.white.withValues(alpha: .88),
+                            size: 22,
+                          ),
+                        ],
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Current balance',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: Colors.white.withValues(
+                                          alpha: .72,
+                                        ),
+                                      ),
+                                ),
+                                const SizedBox(height: FlowSpacing.xxs),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    hideBalance
+                                        ? formatMaskedCurrency(balance, currency)
+                                        : formatCurrency(balance, currency),
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontFeatures: const [
+                                            FontFeature.tabularFigures(),
+                                          ],
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: FlowSpacing.sm),
+                          Text(
+                            AccountsPage._typeLabel(account.type),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: .78),
+                                ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                trailing,
               ],
             ),
-            const SizedBox(height: FlowSpacing.gapGroup),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Current balance',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                ),
-                const SizedBox(width: FlowSpacing.sm),
-                Flexible(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: FlowAmountText(
-                      amount: formatCurrency(balance, currency),
-                      style: const TextStyle(fontSize: 15),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  List<Color> _gradientFor(AccountType type) => switch (type) {
+    AccountType.cash => const [FlowColors.accent, Color(0xFF0B4F45)],
+    AccountType.bank => const [FlowColors.chartBlue, Color(0xFF2F456F)],
+    AccountType.eWallet => const [FlowColors.chartPurple, Color(0xFF58406F)],
+    AccountType.savings => const [Color(0xFF2E9F75), Color(0xFF1E5C48)],
+    AccountType.other => const [Color(0xFF6F7B78), Color(0xFF303B38)],
+  };
+}
+
+class _CardOrnament extends StatelessWidget {
+  const _CardOrnament({required this.size, required this.alpha});
+
+  final double size;
+  final double alpha;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white.withValues(alpha: alpha)),
+    ),
+  );
 }

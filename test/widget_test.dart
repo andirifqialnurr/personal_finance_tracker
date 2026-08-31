@@ -142,7 +142,7 @@ void main() {
     expect(find.text('Create account'), findsOneWidget);
     expect(find.text('Archived accounts'), findsOneWidget);
 
-    await tester.tap(find.text('Restore'));
+    await tester.tap(find.byTooltip('Restore account'));
     await tester.pumpAndSettle();
 
     expect(find.text('No accounts yet'), findsNothing);

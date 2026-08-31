@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:personal_finance_tracker/app.dart';
 import 'package:personal_finance_tracker/data/flow_store.dart';
 import 'package:personal_finance_tracker/data/models/models.dart';
+import 'package:personal_finance_tracker/screens/accounts_page.dart';
 import 'package:personal_finance_tracker/screens/home_dashboard.dart';
 import 'package:personal_finance_tracker/theme/flow_theme.dart';
 import 'package:personal_finance_tracker/utils/flow_format.dart';
@@ -106,6 +107,32 @@ void main() {
 
     expect(find.text(formatCurrency(100000, 'IDR')), findsOneWidget);
     expect((await store.load()).settings.hideBalance, isFalse);
+  });
+
+  testWidgets('masks total and per-account balances on Accounts', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: FlowTheme.light(),
+        home: Scaffold(
+          body: AccountsPage(
+            accounts: [account],
+            transactions: const [],
+            hideBalance: true,
+            onAdd: () {},
+            onEdit: (_) {},
+            onArchive: (_) {},
+            onRestore: (_) {},
+            onOpenDetail: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(formatMaskedCurrency(100000, 'IDR')), findsWidgets);
+    expect(find.text(formatCurrency(100000, 'IDR')), findsNothing);
   });
 }
 
